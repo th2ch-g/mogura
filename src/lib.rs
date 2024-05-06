@@ -703,7 +703,8 @@ impl State {
         );
         // assume only line model
         match self.settings.borrow().move_mode {
-            crate::settings::MoveMode::MoveWithNNP | crate::settings::MoveMode::MoveWithoutNNP => {
+            // crate::settings::MoveMode::MoveWithNNP | crate::settings::MoveMode::MoveWithoutNNP => {
+            crate::settings::MoveMode::Move => {
                 self.pdbsystem.set_line_model();
                 self.queue.write_buffer(
                     &self.vertex_buffers[0],
@@ -720,7 +721,8 @@ impl State {
         let move_mode = self.settings.borrow().move_mode;
         let group_to_select = self.settings.borrow().group_to_select;
         self.settings.borrow_mut().selected_group.atoms = match move_mode {
-            settings::MoveMode::MoveWithNNP | settings::MoveMode::MoveWithoutNNP => {
+            // settings::MoveMode::MoveWithNNP | settings::MoveMode::MoveWithoutNNP => {
+            settings::MoveMode::Move => {
                 let mouse_gazer = self.camera_controller.mouse_gazer(
                     &self.camera,
                     &self.projection,
@@ -747,15 +749,16 @@ impl State {
         let nvec = self.camera_controller.sphere.nvec();
         let mvec = self.camera_controller.sphere.mvec();
         match settings.move_mode {
-            crate::settings::MoveMode::MoveWithNNP => {
-                self.pdbsystem.move_with_nnp(
-                    delta_x as f32,
-                    delta_y as f32,
-                    (nvec, mvec),
-                    &settings.selected_group,
-                );
-            }
-            crate::settings::MoveMode::MoveWithoutNNP => {
+            // crate::settings::MoveMode::MoveWithNNP => {
+            //     self.pdbsystem.move_with_nnp(
+            //         delta_x as f32,
+            //         delta_y as f32,
+            //         (nvec, mvec),
+            //         &settings.selected_group,
+            //     );
+            // }
+            // crate::settings::MoveMode::MoveWithoutNNP => {
+            crate::settings::MoveMode::Move => {
                 self.pdbsystem.move_without_nnp(
                     delta_x as f32,
                     delta_y as f32,

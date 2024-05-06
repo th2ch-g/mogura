@@ -93,18 +93,19 @@ impl EguiGUI {
                 ui.separator();
 
                 ui.label("MoveMode Selection");
+                // ui.radio_value(
+                //     &mut self.settings.borrow_mut().move_mode,
+                //     crate::settings::MoveMode::MoveWithNNP,
+                //     "Move with NNP",
+                // )
+                // .on_hover_text("Move groups using Neural Network Potential");
                 ui.radio_value(
                     &mut self.settings.borrow_mut().move_mode,
-                    crate::settings::MoveMode::MoveWithNNP,
-                    "Move with NNP",
+                    // crate::settings::MoveMode::MoveWithoutNNP,
+                    crate::settings::MoveMode::Move,
+                    "Move",
                 )
-                .on_hover_text("Move groups using Neural Network Potential");
-                ui.radio_value(
-                    &mut self.settings.borrow_mut().move_mode,
-                    crate::settings::MoveMode::MoveWithoutNNP,
-                    "Move without NNP",
-                )
-                .on_hover_text("Move groups without Neural Network Potential");
+                .on_hover_text("Move selected groups");
                 ui.radio_value(
                     &mut self.settings.borrow_mut().move_mode,
                     crate::settings::MoveMode::Off,

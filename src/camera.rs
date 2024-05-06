@@ -467,14 +467,12 @@ impl CameraController {
                     nvec,
                     -self.rotate_horizontal / 300.0,
                 );
-                // let q_camera = Quaternion::new(xyz[0], xyz[1], xyz[2], 0.0);
                 let q_camera = crate::quaternion::Quaternion::new(sxyz[0], sxyz[1], sxyz[2], 0.0);
                 let q_camera_r = q_theta * q_phi * q_camera * q_phi.inverse() * q_theta.inverse();
                 let camera_position: [f32; 3] = q_camera_r.into();
-                // dbg!(&camera_position, (camera_position[0].powi(2) + camera_position[1].powi(2) + camera_position[2].powi(2)).sqrt());
                 let camera_theta = camera_position[1].asin();
-                let camera_phi = (camera_position[0] / camera_position[2]).atan();
-                // dbg!(&camera_theta, camera_phi);
+                let camera_phi = camera_position[0].atan2(camera_position[2]);
+                dbg!(&camera_theta, &camera_phi);
                 let camera_position = [
                     self.center[0] + self.sphere.radius * camera_theta.cos() * camera_phi.sin(),
                     self.center[1] + self.sphere.radius * camera_theta.sin(),
@@ -558,7 +556,8 @@ impl CameraSphere {
         let radius = (ix.powi(2) + iy.powi(2) + iz.powi(2)).sqrt();
         // let theta = (iz / radius).acos();
         // let phi = (iy / ix).atan();
-        let phi = (ix / iz).atan();
+        // let phi = (ix / iz).atan();
+        let phi = ix.atan2(iz);
         let theta = (iy / radius).asin();
 
         // self.ix = ix;

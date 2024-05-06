@@ -30,8 +30,9 @@ impl Settings {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MoveMode {
-    MoveWithNNP,
-    MoveWithoutNNP,
+    // MoveWithNNP,
+    // MoveWithoutNNP,
+    Move,
     Off,
 }
 
