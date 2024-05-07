@@ -70,19 +70,24 @@ impl EguiGUI {
                             )
                             .hint_text("PDB ID here")
                             .show(ui);
-                            let pdbid = self.settings.borrow().download_pdbid.clone();
-                            if ui.button("Start to download").clicked() {
-                                match download_pdbfile_from_pdbid(&pdbid) {
-                                    Ok(pdbfile) => {
-                                        self.settings.borrow_mut().renew_render = true;
-                                        self.settings.borrow_mut().pdbfile = Some(pdbfile);
-                                        self.settings.borrow_mut().show_download_dialog = false;
-                                    }
-                                    Err(s) => {
-                                        eprintln!("Error occurred: {}", s);
+                            ui.horizontal(|ui| {
+                                if ui.button("Start to download").clicked() {
+                                    let pdbid = self.settings.borrow().download_pdbid.clone();
+                                    match download_pdbfile_from_pdbid(&pdbid) {
+                                        Ok(pdbfile) => {
+                                            self.settings.borrow_mut().renew_render = true;
+                                            self.settings.borrow_mut().pdbfile = Some(pdbfile);
+                                            self.settings.borrow_mut().show_download_dialog = false;
+                                        }
+                                        Err(s) => {
+                                            eprintln!("Error occurred: {}", s);
+                                        }
                                     }
                                 }
-                            }
+                                if ui.button("Close this window").clicked() {
+                                    self.settings.borrow_mut().show_download_dialog = false;
+                                }
+                            });
                         });
                 }
                 ui.separator();
