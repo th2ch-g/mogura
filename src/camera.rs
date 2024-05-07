@@ -515,12 +515,15 @@ impl CameraController {
                 let nvec = self.sphere.nvec();
                 let mvec = self.sphere.mvec();
                 let sxyz = self.sphere.sxyz();
-                camera.position[0] +=
-                    self.rotate_vertical / 10.0 * nvec[0] - self.rotate_horizontal / 10.0 * mvec[0];
-                camera.position[1] +=
-                    self.rotate_vertical / 10.0 * nvec[1] - self.rotate_horizontal / 10.0 * mvec[1];
-                camera.position[2] +=
-                    self.rotate_vertical / 10.0 * nvec[2] - self.rotate_horizontal / 10.0 * mvec[2];
+                let delta_x = self.rotate_vertical / 10.0 * nvec[0] - self.rotate_horizontal / 10.0 * mvec[0];
+                let delta_y = self.rotate_vertical / 10.0 * nvec[1] - self.rotate_horizontal / 10.0 * mvec[1];
+                let delta_z = self.rotate_vertical / 10.0 * nvec[2] - self.rotate_horizontal / 10.0 * mvec[2];
+                camera.position[0] += delta_x;
+                camera.position[1] += delta_y;
+                camera.position[2] += delta_z;
+                self.center[0] += delta_x;
+                self.center[1] += delta_y;
+                self.center[2] += delta_z;
                 camera.position[0] += -self.scroll * sxyz[0] / 100.0;
                 camera.position[1] += -self.scroll * sxyz[1] / 100.0;
                 camera.position[2] += -self.scroll * sxyz[2] / 100.0;
