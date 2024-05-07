@@ -205,26 +205,24 @@ impl CameraController {
 
         if self.settings.borrow().show_download_dialog {
             false
-        } else {
-            if let winit::keyboard::PhysicalKey::Code(keycode) = event.physical_key {
-                match keycode {
-                    winit::keyboard::KeyCode::KeyN => {
-                        self.settings.borrow_mut().camera_mode = CameraMode::Normal;
-                        true
-                    }
-                    winit::keyboard::KeyCode::KeyR => {
-                        self.settings.borrow_mut().camera_mode = CameraMode::Rotation;
-                        true
-                    }
-                    winit::keyboard::KeyCode::KeyT => {
-                        self.settings.borrow_mut().camera_mode = CameraMode::Translation;
-                        true
-                    }
-                    _ => false,
+        } else if let winit::keyboard::PhysicalKey::Code(keycode) = event.physical_key {
+            match keycode {
+                winit::keyboard::KeyCode::KeyN => {
+                    self.settings.borrow_mut().camera_mode = CameraMode::Normal;
+                    true
                 }
-            } else {
-                false
+                winit::keyboard::KeyCode::KeyR => {
+                    self.settings.borrow_mut().camera_mode = CameraMode::Rotation;
+                    true
+                }
+                winit::keyboard::KeyCode::KeyT => {
+                    self.settings.borrow_mut().camera_mode = CameraMode::Translation;
+                    true
+                }
+                _ => false,
             }
+        } else {
+            false
         }
 
         // match key {
@@ -484,9 +482,8 @@ impl CameraController {
                 ];
                 camera.position =
                     cgmath::Point3::new(camera_position[0], camera_position[1], camera_position[2]);
-                camera.pitch = cgmath::Rad::from(cgmath::Deg(
-                    -camera_theta * 180.0 / std::f32::consts::PI,
-                ));
+                camera.pitch =
+                    cgmath::Rad::from(cgmath::Deg(-camera_theta * 180.0 / std::f32::consts::PI));
                 // for tmp coordinate
                 camera.yaw = cgmath::Rad::from(cgmath::Deg(
                     -90.0 - camera_phi * 180.0 / std::f32::consts::PI,
@@ -520,9 +517,12 @@ impl CameraController {
                 let nvec = self.sphere.nvec();
                 let mvec = self.sphere.mvec();
                 let sxyz = self.sphere.sxyz();
-                let delta_x = self.rotate_vertical / 10.0 * nvec[0] - self.rotate_horizontal / 10.0 * mvec[0];
-                let delta_y = self.rotate_vertical / 10.0 * nvec[1] - self.rotate_horizontal / 10.0 * mvec[1];
-                let delta_z = self.rotate_vertical / 10.0 * nvec[2] - self.rotate_horizontal / 10.0 * mvec[2];
+                let delta_x =
+                    self.rotate_vertical / 10.0 * nvec[0] - self.rotate_horizontal / 10.0 * mvec[0];
+                let delta_y =
+                    self.rotate_vertical / 10.0 * nvec[1] - self.rotate_horizontal / 10.0 * mvec[1];
+                let delta_z =
+                    self.rotate_vertical / 10.0 * nvec[2] - self.rotate_horizontal / 10.0 * mvec[2];
                 camera.position[0] += delta_x;
                 camera.position[1] += delta_y;
                 camera.position[2] += delta_z;

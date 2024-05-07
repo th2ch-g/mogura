@@ -2,23 +2,12 @@ use itertools::Itertools;
 
 const ATOMCAPA: usize = 50000;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct PDBSystem {
     pub atoms: Vec<PDBAtom>,
     pub bonds: Vec<crate::bond::Bond>,
     pub vertices: Vec<crate::model::Vertex>,
     pub indecies: Vec<crate::model::Index>,
-}
-
-impl Default for PDBSystem {
-    fn default() -> Self {
-        Self {
-            atoms: vec![],
-            bonds: vec![],
-            vertices: vec![],
-            indecies: vec![],
-        }
-    }
 }
 
 impl From<&pdbtbx::PDB> for PDBSystem {
@@ -72,12 +61,12 @@ impl PDBSystem {
             y += atom.y;
             z += atom.z;
         }
-        let n = if self.atoms.is_empty() { 1 } else { self.atoms.len() };
-        [
-            x / n as f32,
-            y / n as f32,
-            z / n as f32,
-        ]
+        let n = if self.atoms.is_empty() {
+            1
+        } else {
+            self.atoms.len()
+        };
+        [x / n as f32, y / n as f32, z / n as f32]
     }
 
     pub fn set_line_model(&mut self) {
@@ -180,14 +169,14 @@ impl PDBSystem {
         group
     }
 
-    pub fn move_with_nnp(
-        &mut self,
-        delta_x: f32,
-        delta_y: f32,
-        move_vec: ([f32; 3], [f32; 3]),
-        selected_group: &crate::settings::SelectedGroup,
-    ) {
-    }
+    // pub fn move_with_nnp(
+    //     &mut self,
+    //     delta_x: f32,
+    //     delta_y: f32,
+    //     move_vec: ([f32; 3], [f32; 3]),
+    //     selected_group: &crate::settings::SelectedGroup,
+    // ) {
+    // }
 
     pub fn move_without_nnp(
         &mut self,

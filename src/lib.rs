@@ -44,11 +44,13 @@ pub struct State {
 
 impl State {
     pub async fn new(window: winit::window::Window, pdbfile: Option<String>) -> Self {
-        let settings = std::rc::Rc::new(std::cell::RefCell::new(settings::Settings::new(pdbfile.clone())));
+        let settings = std::rc::Rc::new(std::cell::RefCell::new(settings::Settings::new(
+            pdbfile.clone(),
+        )));
 
         let mut pdbsystem = if let Some(pdbfile) = pdbfile {
             let (input_pdb, _errors) = pdbtbx::open(
-                &pdbfile,
+                pdbfile,
                 pdbtbx::StrictnessLevel::Loose, // Strict, Medium, Loose
             )
             .unwrap();
@@ -130,7 +132,8 @@ impl State {
             100.0,
             settings.clone(),
         );
-        let camera_controller = camera::CameraController::new(settings.clone(), 4.0, 0.4, pdbsystem.center());
+        let camera_controller =
+            camera::CameraController::new(settings.clone(), 4.0, 0.4, pdbsystem.center());
         // let camera_controller = camera::CameraController::new(4.0, 0.4);
         // let camera_controller = camera::CameraController::new(1.0, 0.1); // more sensitive
 
@@ -616,11 +619,8 @@ impl State {
 
     pub fn renew(&mut self) {
         let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
-            let (input_pdb, _errors) = pdbtbx::open(
-                &pdbfile,
-                pdbtbx::StrictnessLevel::Loose,
-            )
-            .unwrap();
+            let (input_pdb, _errors) =
+                pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap();
             let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
             pdbsystem.update_bonds_all();
             pdbsystem
@@ -628,7 +628,8 @@ impl State {
             pdb::PDBSystem::default()
         };
 
-        let camera_controller = camera::CameraController::new(self.settings.clone(), 4.0, 0.4, pdbsystem.center());
+        let camera_controller =
+            camera::CameraController::new(self.settings.clone(), 4.0, 0.4, pdbsystem.center());
 
         // line model
         let mut vertex_buffers = Vec::new();
@@ -636,19 +637,20 @@ impl State {
         let mut num_indices = Vec::new();
         if !pdbsystem.atoms.is_empty() {
             pdbsystem.set_line_model();
-            vertex_buffers.push(
-                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            vertex_buffers.push(self.device.create_buffer_init(
+                &wgpu::util::BufferInitDescriptor {
                     label: Some("Vertex Buffer"),
                     contents: bytemuck::cast_slice(&pdbsystem.vertices),
                     usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                }),
-            );
+                },
+            ));
             index_buffers.push(
-                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Index Buffer"),
-                    contents: bytemuck::cast_slice(&pdbsystem.indecies),
-                    usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-                }),
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Index Buffer"),
+                        contents: bytemuck::cast_slice(&pdbsystem.indecies),
+                        usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                    }),
             );
             num_indices.push(pdbsystem.indecies.len() as u32);
         }
@@ -656,18 +658,20 @@ impl State {
         // center
         let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
         vertex_buffers.push(
-            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(&center.vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            }),
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex Buffer"),
+                    contents: bytemuck::cast_slice(&center.vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                }),
         );
         index_buffers.push(
-            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(&center.indices),
-                usage: wgpu::BufferUsages::INDEX,
-            }),
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index Buffer"),
+                    contents: bytemuck::cast_slice(&center.indices),
+                    usage: wgpu::BufferUsages::INDEX,
+                }),
         );
         num_indices.push(center.indices.len() as u32);
 
@@ -677,19 +681,20 @@ impl State {
         let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
 
         for axis in [xaxis, yaxis, zaxis] {
-            vertex_buffers.push(
-                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            vertex_buffers.push(self.device.create_buffer_init(
+                &wgpu::util::BufferInitDescriptor {
                     label: Some("Vertex Buffer"),
                     contents: bytemuck::cast_slice(&axis.vertices),
                     usage: wgpu::BufferUsages::VERTEX,
-                }),
-            );
+                },
+            ));
             index_buffers.push(
-                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Index Buffer"),
-                    contents: bytemuck::cast_slice(&axis.indices),
-                    usage: wgpu::BufferUsages::INDEX,
-                }),
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Index Buffer"),
+                        contents: bytemuck::cast_slice(&axis.indices),
+                        usage: wgpu::BufferUsages::INDEX,
+                    }),
             );
             num_indices.push(axis.indices.len() as u32);
         }

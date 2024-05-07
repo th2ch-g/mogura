@@ -1,2 +1,11 @@
-# mogura
-Molecular Visualizer in Rust
+# mogura: A molecular Visualizer in Rust
+
+## Quick Start
+~~~bash
+
+~~~
+
+## About the name
+"mogura" means mole in Japanese. Molecule is made up of mole and cule, with mole meaning lump and cule meaning small.
+The association of these two words led to the name "mogura".
+

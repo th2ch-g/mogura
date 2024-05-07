@@ -3,7 +3,7 @@ name = "mogura"
 version = "0.1.0"
 edition = "2021"
 authors = ["th"]
-description = "Molecular Visualizer in Rust"
+description = "A molecular Visualizer in Rust"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
