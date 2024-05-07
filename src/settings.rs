@@ -1,5 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct Settings {
+    pub renew_render: bool,
     pub pdbfile: Option<String>,
     pub camera_mode: crate::camera::CameraMode,
     pub camera_pmode: crate::camera::CameraMode,
@@ -14,6 +15,7 @@ pub struct Settings {
 impl Settings {
     pub fn new(pdbfile: Option<String>) -> Self {
         Self {
+            renew_render: false,
             pdbfile,
             camera_mode: crate::camera::CameraMode::Rotation,
             camera_pmode: crate::camera::CameraMode::Rotation,

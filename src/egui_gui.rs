@@ -46,6 +46,7 @@ impl EguiGUI {
                         .pick_file()
                     {
                         self.settings.borrow_mut().pdbfile = Some(path.display().to_string());
+                        self.settings.borrow_mut().renew_render = true;
                     }
                 }
                 ui.separator();

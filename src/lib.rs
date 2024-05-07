@@ -618,6 +618,93 @@ impl State {
         }
     }
 
+    pub fn renew(&mut self) {
+        let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
+            let (input_pdb, _errors) = pdbtbx::open(
+                &pdbfile,
+                pdbtbx::StrictnessLevel::Loose,
+            )
+            .unwrap();
+            let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
+            pdbsystem.update_bonds_all();
+            pdbsystem
+        } else {
+            pdb::PDBSystem::default()
+        };
+
+        let camera_controller = camera::CameraController::new(self.settings.clone(), 4.0, 0.4, pdbsystem.center());
+
+        // line model
+        let mut vertex_buffers = Vec::new();
+        let mut index_buffers = Vec::new();
+        let mut num_indices = Vec::new();
+        if !pdbsystem.atoms.is_empty() {
+            pdbsystem.set_line_model();
+            vertex_buffers.push(
+                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex Buffer"),
+                    contents: bytemuck::cast_slice(&pdbsystem.vertices),
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                }),
+            );
+            index_buffers.push(
+                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index Buffer"),
+                    contents: bytemuck::cast_slice(&pdbsystem.indecies),
+                    usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                }),
+            );
+            num_indices.push(pdbsystem.indecies.len() as u32);
+        }
+
+        // center
+        let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
+        vertex_buffers.push(
+            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(&center.vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            }),
+        );
+        index_buffers.push(
+            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(&center.indices),
+                usage: wgpu::BufferUsages::INDEX,
+            }),
+        );
+        num_indices.push(center.indices.len() as u32);
+
+        // axises
+        let xaxis = model::Line::new([1.0, 0.0, 0.0], vec![[0.0, 0.0, 0.0], [100.0, 0.0, 0.0]]);
+        let yaxis = model::Line::new([0.0, 1.0, 0.0], vec![[0.0, 0.0, 0.0], [0.0, 100.0, 0.0]]);
+        let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
+
+        for axis in [xaxis, yaxis, zaxis] {
+            vertex_buffers.push(
+                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex Buffer"),
+                    contents: bytemuck::cast_slice(&axis.vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                }),
+            );
+            index_buffers.push(
+                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index Buffer"),
+                    contents: bytemuck::cast_slice(&axis.indices),
+                    usage: wgpu::BufferUsages::INDEX,
+                }),
+            );
+            num_indices.push(axis.indices.len() as u32);
+        }
+
+        self.pdbsystem = pdbsystem;
+        self.vertex_buffers = vertex_buffers;
+        self.index_buffers = index_buffers;
+        self.num_indices = num_indices;
+        self.camera_controller = camera_controller;
+    }
+
     pub fn window(&self) -> &winit::window::Window {
         &self.window
     }
@@ -968,7 +1055,11 @@ pub async fn mogura_run() {
                 if windowstate.settings.borrow().allowed_to_close {
                     elwt.exit();
                 }
-                // dbg!(&windowstate.settings);
+                if windowstate.settings.borrow().renew_render {
+                    dbg!(&windowstate.settings);
+                    windowstate.settings.borrow_mut().renew_render = false;
+                    windowstate.renew();
+                }
             }
             _ => {} // *control_flow = winit::event_loop::ControlFlow::Poll;
                     //     winit::event::Event::MainEventsCleared => state.window().request_redraw(),
