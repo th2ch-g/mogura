@@ -472,21 +472,19 @@ impl CameraController {
                 let camera_position: [f32; 3] = q_camera_r.into();
                 let camera_theta = camera_position[1].asin();
                 let camera_phi = camera_position[0].atan2(camera_position[2]);
-                dbg!(&camera_theta, &camera_phi);
                 let camera_position = [
                     self.center[0] + self.sphere.radius * camera_theta.cos() * camera_phi.sin(),
                     self.center[1] + self.sphere.radius * camera_theta.sin(),
                     self.center[2] + self.sphere.radius * camera_theta.cos() * camera_phi.cos(),
                 ];
-                self.sphere.renew(camera_position, self.center);
                 camera.position =
                     cgmath::Point3::new(camera_position[0], camera_position[1], camera_position[2]);
                 camera.pitch = cgmath::Rad::from(cgmath::Deg(
-                    -self.sphere.theta * 180.0 / std::f32::consts::PI,
+                    -camera_theta * 180.0 / std::f32::consts::PI,
                 ));
                 // for tmp coordinate
                 camera.yaw = cgmath::Rad::from(cgmath::Deg(
-                    -90.0 - self.sphere.phi * 180.0 / std::f32::consts::PI,
+                    -90.0 - camera_phi * 180.0 / std::f32::consts::PI,
                 ));
 
                 settings.camera_pmode = CameraMode::Rotation;

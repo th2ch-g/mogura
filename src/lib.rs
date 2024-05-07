@@ -717,7 +717,6 @@ impl State {
     }
 
     pub fn check_is_touched(&mut self) {
-        dbg!(&self.is_touched);
         let move_mode = self.settings.borrow().move_mode;
         let group_to_select = self.settings.borrow().group_to_select;
         self.settings.borrow_mut().selected_group.atoms = match move_mode {
@@ -934,7 +933,6 @@ pub async fn mogura_run() {
                         ..
                     } => {
                         windowstate.mouse_pressed = *state == winit::event::ElementState::Pressed;
-                        dbg!(windowstate.mouse_pressed);
                         if windowstate.mouse_pressed {
                             windowstate.check_is_touched();
                         }
