@@ -45,7 +45,7 @@ impl EguiGUI {
                         .add_filter("pdb", &["pdb"])
                         .pick_file()
                     {
-                        self.settings.borrow_mut().pdbfile = path.display().to_string();
+                        self.settings.borrow_mut().pdbfile = Some(path.display().to_string());
                     }
                 }
                 ui.separator();

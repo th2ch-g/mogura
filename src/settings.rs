@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct Settings {
-    pub pdbfile: String,
+    pub pdbfile: Option<String>,
     pub camera_mode: crate::camera::CameraMode,
     pub camera_pmode: crate::camera::CameraMode,
     pub projection_mode: crate::camera::ProjectionMode,
@@ -12,7 +12,7 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new(pdbfile: String) -> Self {
+    pub fn new(pdbfile: Option<String>) -> Self {
         Self {
             pdbfile,
             camera_mode: crate::camera::CameraMode::Rotation,

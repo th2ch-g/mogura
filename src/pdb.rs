@@ -10,6 +10,17 @@ pub struct PDBSystem {
     pub indecies: Vec<crate::model::Index>,
 }
 
+impl Default for PDBSystem {
+    fn default() -> Self {
+        Self {
+            atoms: vec![],
+            bonds: vec![],
+            vertices: vec![],
+            indecies: vec![],
+        }
+    }
+}
+
 impl From<&pdbtbx::PDB> for PDBSystem {
     fn from(from: &pdbtbx::PDB) -> Self {
         let mut atoms = Vec::with_capacity(ATOMCAPA);
@@ -61,10 +72,11 @@ impl PDBSystem {
             y += atom.y;
             z += atom.z;
         }
+        let n = if self.atoms.is_empty() { 1 } else { self.atoms.len() };
         [
-            x / self.atoms.len() as f32,
-            y / self.atoms.len() as f32,
-            z / self.atoms.len() as f32,
+            x / n as f32,
+            y / n as f32,
+            z / n as f32,
         ]
     }
 
