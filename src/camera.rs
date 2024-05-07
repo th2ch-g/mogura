@@ -202,24 +202,29 @@ impl CameraController {
         // };
 
         // let is_pressed = event.state.is_pressed();
-        if let winit::keyboard::PhysicalKey::Code(keycode) = event.physical_key {
-            match keycode {
-                winit::keyboard::KeyCode::KeyN => {
-                    self.settings.borrow_mut().camera_mode = CameraMode::Normal;
-                    true
-                }
-                winit::keyboard::KeyCode::KeyR => {
-                    self.settings.borrow_mut().camera_mode = CameraMode::Rotation;
-                    true
-                }
-                winit::keyboard::KeyCode::KeyT => {
-                    self.settings.borrow_mut().camera_mode = CameraMode::Translation;
-                    true
-                }
-                _ => false,
-            }
-        } else {
+
+        if self.settings.borrow().show_download_dialog {
             false
+        } else {
+            if let winit::keyboard::PhysicalKey::Code(keycode) = event.physical_key {
+                match keycode {
+                    winit::keyboard::KeyCode::KeyN => {
+                        self.settings.borrow_mut().camera_mode = CameraMode::Normal;
+                        true
+                    }
+                    winit::keyboard::KeyCode::KeyR => {
+                        self.settings.borrow_mut().camera_mode = CameraMode::Rotation;
+                        true
+                    }
+                    winit::keyboard::KeyCode::KeyT => {
+                        self.settings.borrow_mut().camera_mode = CameraMode::Translation;
+                        true
+                    }
+                    _ => false,
+                }
+            } else {
+                false
+            }
         }
 
         // match key {

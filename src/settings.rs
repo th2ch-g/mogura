@@ -10,6 +10,8 @@ pub struct Settings {
     pub selected_group: SelectedGroup,
     pub show_close_dialog: bool,
     pub allowed_to_close: bool,
+    pub show_download_dialog: bool,
+    pub download_pdbid: String,
 }
 
 impl Settings {
@@ -26,6 +28,8 @@ impl Settings {
             selected_group: SelectedGroup::default(),
             show_close_dialog: false,
             allowed_to_close: false,
+            show_download_dialog: false,
+            download_pdbid: "".to_string(),
         }
     }
 }

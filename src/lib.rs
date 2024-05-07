@@ -579,14 +579,10 @@ impl State {
             num_indices.push(axis.indices.len() as u32);
         }
 
-        dbg!(&vertex_buffers.len(), &index_buffers.len(), &num_indices.len());
-
         let egui_renderer =
             egui_renderer::EguiRenderer::new(&device, config.format, None, 1, &window);
 
         let egui_gui = egui_gui::EguiGUI::new(settings.clone());
-
-        dbg!("state ok!");
 
         Self {
             settings,

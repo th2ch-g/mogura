@@ -25,6 +25,7 @@ egui-wgpu = "0.25.0"
 egui-winit = "0.25.0"
 rfd = "0.13.0"
 itertools = "0.12.1"
+reqwest = { version = "0.12.4", features = ["blocking"] }
 
 # [profile.release]
 # lto = true

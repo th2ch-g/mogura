@@ -1,3 +1,5 @@
+use std::io::Write;
+
 #[derive(Debug, Clone)]
 pub struct EguiGUI {
     pub settings: std::rc::Rc<std::cell::RefCell<crate::settings::Settings>>,
@@ -48,6 +50,32 @@ impl EguiGUI {
                         self.settings.borrow_mut().pdbfile = Some(path.display().to_string());
                         self.settings.borrow_mut().renew_render = true;
                     }
+                }
+                ui.separator();
+                if ui.button("Download").on_hover_text("Download from RCSB PDB").clicked() {
+                    self.settings.borrow_mut().show_download_dialog = true;
+                }
+                if self.settings.borrow().show_download_dialog {
+                    egui::Window::new("Input PDB ID to download")
+                        .collapsible(false)
+                        .resizable(false)
+                        // .open(&mut self.settings.borrow_mut().show_download_dialog)
+                        .show(ctx, |ui| {
+                            let response = egui::TextEdit::singleline(&mut self.settings.borrow_mut().download_pdbid).hint_text("PDB ID here").show(ui);
+                            let pdbid = self.settings.borrow().download_pdbid.clone();
+                            if ui.button("Start to download").clicked() {
+                                match download_pdbfile_from_pdbid(&pdbid) {
+                                    Ok(pdbfile) => {
+                                        self.settings.borrow_mut().renew_render = true;
+                                        self.settings.borrow_mut().pdbfile = Some(pdbfile);
+                                        self.settings.borrow_mut().show_download_dialog = false;
+                                    },
+                                    Err(s) => {
+                                        eprintln!("Error occurred: {}", s);
+                                    }
+                                }
+                            }
+                        });
                 }
                 ui.separator();
             });
@@ -144,3 +172,19 @@ impl EguiGUI {
             });
     }
 }
+
+fn download_pdbfile_from_pdbid(pdbid: &str) -> anyhow::Result<String, anyhow::Error> {
+    let response = reqwest::blocking::Client::new().get(format!("https://files.rcsb.org/view/{}.pdb", pdbid)).send()?;
+    let status_code = response.status().as_u16();
+    let content = response.text()?;
+
+    if status_code == 200 {
+        let pdbfile = format!("{}.{}.pdb", env!("CARGO_PKG_NAME"), pdbid);
+        let mut file = std::fs::File::create(&pdbfile)?;
+        file.write_all(content.as_bytes())?;
+        Ok(pdbfile)
+    } else {
+        Err(anyhow::anyhow!("Failed to download PDB file for {}", pdbid))
+    }
+}
+
