@@ -60,35 +60,32 @@ impl EguiGUI {
                     self.settings.borrow_mut().show_download_dialog = true;
                 }
                 if self.settings.borrow().show_download_dialog {
+                    let mut show_download_dialog = self.settings.borrow().show_download_dialog.clone();
                     egui::Window::new("Input PDB ID to download")
                         .collapsible(false)
                         .resizable(false)
-                        // .open(&mut self.settings.borrow_mut().show_download_dialog)
+                        .open(&mut show_download_dialog)
                         .show(ctx, |ui| {
                             let _response = egui::TextEdit::singleline(
                                 &mut self.settings.borrow_mut().download_pdbid,
                             )
                             .hint_text("PDB ID here")
                             .show(ui);
-                            ui.horizontal(|ui| {
-                                if ui.button("Start to download").clicked() {
-                                    let pdbid = self.settings.borrow().download_pdbid.clone();
-                                    match download_pdbfile_from_pdbid(&pdbid) {
-                                        Ok(pdbfile) => {
-                                            self.settings.borrow_mut().renew_render = true;
-                                            self.settings.borrow_mut().pdbfile = Some(pdbfile);
-                                            self.settings.borrow_mut().show_download_dialog = false;
-                                        }
-                                        Err(s) => {
-                                            eprintln!("Error occurred: {}", s);
-                                        }
+                            if ui.button("Start to download").clicked() {
+                                let pdbid = self.settings.borrow().download_pdbid.clone();
+                                match download_pdbfile_from_pdbid(&pdbid) {
+                                    Ok(pdbfile) => {
+                                        self.settings.borrow_mut().renew_render = true;
+                                        self.settings.borrow_mut().pdbfile = Some(pdbfile);
+                                        self.settings.borrow_mut().show_download_dialog = false;
+                                    }
+                                    Err(s) => {
+                                        eprintln!("Error occurred: {}", s);
                                     }
                                 }
-                                if ui.button("Close this window").clicked() {
-                                    self.settings.borrow_mut().show_download_dialog = false;
-                                }
-                            });
+                            }
                         });
+                    self.settings.borrow_mut().show_download_dialog = show_download_dialog;
                 }
                 ui.separator();
             });
