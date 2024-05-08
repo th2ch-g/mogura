@@ -21,12 +21,16 @@ pub struct State {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
-    render_pipeline: wgpu::RenderPipeline,
+    line_render_pipeline: wgpu::RenderPipeline,
+    triangle_render_pipeline: wgpu::RenderPipeline,
     camera: camera::Camera,
     projection: camera::Projection,
-    vertex_buffers: Vec<wgpu::Buffer>,
-    index_buffers: Vec<wgpu::Buffer>,
-    num_indices: Vec<u32>,
+    pdbsystem_unit_renders: Vec<crate::model::UnitRender>,
+    center_unit_render: crate::model::UnitRender,
+    axis_unit_renders: Vec<crate::model::UnitRender>,
+    // vertex_buffers: Vec<wgpu::Buffer>,
+    // index_buffers: Vec<wgpu::Buffer>,
+    // num_indices: Vec<u32>,
     camera_controller: camera::CameraController,
     camera_uniform: camera::CameraUniform,
     camera_buffer: wgpu::Buffer,
@@ -249,7 +253,7 @@ impl State {
         //     label: None,
         // });
 
-        let render_pipeline = {
+        let line_render_pipeline = {
             let render_pipeline_layout =
                 device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
@@ -267,7 +271,7 @@ impl State {
             });
 
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("Render Pipeline"),
+                label: Some("Line Render Pipeline"),
                 layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: &shader,
@@ -307,6 +311,91 @@ impl State {
                     unclipped_depth: false,
                     conservative: false,
                 },
+                // point
+                // primitive: wgpu::PrimitiveState {
+                //     topology: wgpu::PrimitiveTopology::PointList,
+                //     strip_index_format: None,
+                //     front_face: wgpu::FrontFace::Ccw,
+                //     cull_mode: Some(wgpu::Face::Back),
+                //     polygon_mode: wgpu::PolygonMode::Fill,
+                //     unclipped_depth: false,
+                //     conservative: false,
+                // },
+                // depth_stencil: None,
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: wgpu::TextureFormat::Depth32Float,
+                    depth_write_enabled: true,
+                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    stencil: wgpu::StencilState::default(),
+                    bias: wgpu::DepthBiasState::default(),
+                }),
+                multisample: wgpu::MultisampleState {
+                    count: 1,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+                multiview: None,
+            })
+        };
+
+        let triangle_render_pipeline = {
+            let render_pipeline_layout =
+                device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Render Pipeline Layout"),
+                    bind_group_layouts: &[
+                        // &camera_bind_group_layout,
+                        // &light_bind_group_layout,
+                        &uniform_bind_group_layout,
+                    ],
+                    push_constant_ranges: &[],
+                });
+
+            let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Shader"),
+                source: wgpu::ShaderSource::Wgsl(include_str!("./shader/shader.wgsl").into()),
+            });
+
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("Triangle Render Pipeline"),
+                layout: Some(&render_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader,
+                    entry_point: "vs_main",
+                    buffers: &[model::Vertex::desc()],
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &shader,
+                    entry_point: "fs_main",
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: config.format,
+                        blend: Some(wgpu::BlendState {
+                            alpha: wgpu::BlendComponent::REPLACE,
+                            color: wgpu::BlendComponent::REPLACE,
+                        }),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                }),
+                // sphere,
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    unclipped_depth: false,
+                    conservative: false,
+                },
+                // // line
+                // primitive: wgpu::PrimitiveState {
+                //     // topology: wgpu::PrimitiveTopology::LineStrip,
+                //     topology: wgpu::PrimitiveTopology::LineList,
+                //     strip_index_format: None,
+                //     front_face: wgpu::FrontFace::Ccw,
+                //     cull_mode: Some(wgpu::Face::Back),
+                //     polygon_mode: wgpu::PolygonMode::Fill,
+                //     unclipped_depth: false,
+                //     conservative: false,
+                // },
                 // point
                 // primitive: wgpu::PrimitiveState {
                 //     topology: wgpu::PrimitiveTopology::PointList,
@@ -518,72 +607,87 @@ impl State {
         //     .collect::<Vec<u32>>();
 
         // line model
-        let mut vertex_buffers = Vec::new();
-        let mut index_buffers = Vec::new();
-        let mut num_indices = Vec::new();
+        // let mut vertex_buffers = Vec::new();
+        // let mut index_buffers = Vec::new();
+        // let mut num_indices = Vec::new();
+
+        let mut pdbsystem_unit_renders = Vec::new();
         if !pdbsystem.atoms.is_empty() {
             pdbsystem.set_line_model();
-            vertex_buffers.push(
-                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Vertex Buffer"),
-                    contents: bytemuck::cast_slice(&pdbsystem.vertices),
-                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                }),
-            );
-            index_buffers.push(
-                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Index Buffer"),
-                    contents: bytemuck::cast_slice(&pdbsystem.indecies),
-                    usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-                }),
-            );
-            num_indices.push(pdbsystem.indecies.len() as u32);
+            pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices, &pdbsystem.indecies));
+            // vertex_buffers.push(
+            //     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            //         label: Some("Vertex Buffer"),
+            //         contents: bytemuck::cast_slice(&pdbsystem.vertices),
+            //         usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            //     }),
+            // );
+            // index_buffers.push(
+            //     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            //         label: Some("Index Buffer"),
+            //         contents: bytemuck::cast_slice(&pdbsystem.indecies),
+            //         usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+            //     }),
+            // );
+            // num_indices.push(pdbsystem.indecies.len() as u32);
         }
 
         // center
-        if settings.borrow().vis_center {
-            let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
-            vertex_buffers.push(
-                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Vertex Buffer"),
-                    contents: bytemuck::cast_slice(&center.vertices),
-                    usage: wgpu::BufferUsages::VERTEX,
-                }),
-            );
-            index_buffers.push(
-                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Index Buffer"),
-                    contents: bytemuck::cast_slice(&center.indices),
-                    usage: wgpu::BufferUsages::INDEX,
-                }),
-            );
-            num_indices.push(center.indices.len() as u32);
-        }
+        let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
+        let center_unit_render = model::UnitRender::new(&device, &center.vertices, &center.indices);
+
+        // if settings.borrow().vis_center {
+        //     let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
+        //     vertex_buffers.push(
+        //         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //             label: Some("Vertex Buffer"),
+        //             contents: bytemuck::cast_slice(&center.vertices),
+        //             usage: wgpu::BufferUsages::VERTEX,
+        //         }),
+        //     );
+        //     index_buffers.push(
+        //         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //             label: Some("Index Buffer"),
+        //             contents: bytemuck::cast_slice(&center.indices),
+        //             usage: wgpu::BufferUsages::INDEX,
+        //         }),
+        //     );
+        //     num_indices.push(center.indices.len() as u32);
+        // }
 
         // axises
-        if settings.borrow().vis_axis {
-            let xaxis = model::Line::new([1.0, 0.0, 0.0], vec![[0.0, 0.0, 0.0], [100.0, 0.0, 0.0]]);
-            let yaxis = model::Line::new([0.0, 1.0, 0.0], vec![[0.0, 0.0, 0.0], [0.0, 100.0, 0.0]]);
-            let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
-
-            for axis in [xaxis, yaxis, zaxis] {
-                vertex_buffers.push(
-                    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Vertex Buffer"),
-                        contents: bytemuck::cast_slice(&axis.vertices),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    }),
-                );
-                index_buffers.push(
-                    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Index Buffer"),
-                        contents: bytemuck::cast_slice(&axis.indices),
-                        usage: wgpu::BufferUsages::INDEX,
-                    }),
-                );
-                num_indices.push(axis.indices.len() as u32);
-            }
+        let xaxis = model::Line::new([1.0, 0.0, 0.0], vec![[0.0, 0.0, 0.0], [100.0, 0.0, 0.0]]);
+        let yaxis = model::Line::new([0.0, 1.0, 0.0], vec![[0.0, 0.0, 0.0], [0.0, 100.0, 0.0]]);
+        let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
+        let mut axis_unit_renders = Vec::new();
+        for axis in [&xaxis, &yaxis, &zaxis] {
+            axis_unit_renders.push(model::UnitRender::new(&device, &axis.vertices, &axis.indices));
         }
+
+        // if settings.borrow().vis_axis {
+        //     let xaxis = model::Line::new([1.0, 0.0, 0.0], vec![[0.0, 0.0, 0.0], [100.0, 0.0, 0.0]]);
+        //     let yaxis = model::Line::new([0.0, 1.0, 0.0], vec![[0.0, 0.0, 0.0], [0.0, 100.0, 0.0]]);
+        //     let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
+        //
+        //     for axis in [&xaxis, &yaxis, &zaxis] {
+        //         vertex_buffers.push(
+        //             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //                 label: Some("Vertex Buffer"),
+        //                 contents: bytemuck::cast_slice(&axis.vertices),
+        //                 usage: wgpu::BufferUsages::VERTEX,
+        //             }),
+        //         );
+        //         index_buffers.push(
+        //             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //                 label: Some("Index Buffer"),
+        //                 contents: bytemuck::cast_slice(&axis.indices),
+        //                 usage: wgpu::BufferUsages::INDEX,
+        //             }),
+        //         );
+        //         num_indices.push(axis.indices.len() as u32);
+        //     }
+        // }
+
 
         let egui_renderer =
             egui_renderer::EguiRenderer::new(&device, config.format, None, 1, &window);
@@ -598,10 +702,14 @@ impl State {
             device,
             queue,
             config,
-            render_pipeline,
-            vertex_buffers,
-            index_buffers,
-            num_indices,
+            line_render_pipeline,
+            triangle_render_pipeline,
+            // vertex_buffers,
+            // index_buffers,
+            // num_indices,
+            pdbsystem_unit_renders,
+            center_unit_render,
+            axis_unit_renders,
             camera,
             projection,
             camera_controller,
@@ -621,96 +729,96 @@ impl State {
     }
 
     pub fn renew(&mut self) {
-        let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
-            let (input_pdb, _errors) =
-                pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap();
-            let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
-            pdbsystem.update_bonds_all();
-            pdbsystem
-        } else {
-            pdb::PDBSystem::default()
-        };
-
-        let camera_controller =
-            camera::CameraController::new(self.settings.clone(), pdbsystem.center());
-
-        // line model
-        let mut vertex_buffers = Vec::new();
-        let mut index_buffers = Vec::new();
-        let mut num_indices = Vec::new();
-        if !pdbsystem.atoms.is_empty() {
-            pdbsystem.set_line_model();
-            vertex_buffers.push(self.device.create_buffer_init(
-                &wgpu::util::BufferInitDescriptor {
-                    label: Some("Vertex Buffer"),
-                    contents: bytemuck::cast_slice(&pdbsystem.vertices),
-                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                },
-            ));
-            index_buffers.push(
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Index Buffer"),
-                        contents: bytemuck::cast_slice(&pdbsystem.indecies),
-                        usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-                    }),
-            );
-            num_indices.push(pdbsystem.indecies.len() as u32);
-        }
-
-        // center
-        if self.settings.borrow().vis_center {
-            let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
-            vertex_buffers.push(
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Vertex Buffer"),
-                        contents: bytemuck::cast_slice(&center.vertices),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    }),
-            );
-            index_buffers.push(
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Index Buffer"),
-                        contents: bytemuck::cast_slice(&center.indices),
-                        usage: wgpu::BufferUsages::INDEX,
-                    }),
-            );
-            num_indices.push(center.indices.len() as u32);
-        }
-
-        // axises
-        if self.settings.borrow().vis_axis {
-            let xaxis = model::Line::new([1.0, 0.0, 0.0], vec![[0.0, 0.0, 0.0], [100.0, 0.0, 0.0]]);
-            let yaxis = model::Line::new([0.0, 1.0, 0.0], vec![[0.0, 0.0, 0.0], [0.0, 100.0, 0.0]]);
-            let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
-
-            for axis in [xaxis, yaxis, zaxis] {
-                vertex_buffers.push(self.device.create_buffer_init(
-                    &wgpu::util::BufferInitDescriptor {
-                        label: Some("Vertex Buffer"),
-                        contents: bytemuck::cast_slice(&axis.vertices),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    },
-                ));
-                index_buffers.push(
-                    self.device
-                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                            label: Some("Index Buffer"),
-                            contents: bytemuck::cast_slice(&axis.indices),
-                            usage: wgpu::BufferUsages::INDEX,
-                        }),
-                );
-                num_indices.push(axis.indices.len() as u32);
-            }
-        }
-
-        self.pdbsystem = pdbsystem;
-        self.vertex_buffers = vertex_buffers;
-        self.index_buffers = index_buffers;
-        self.num_indices = num_indices;
-        self.camera_controller = camera_controller;
+        // let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
+        //     let (input_pdb, _errors) =
+        //         pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap();
+        //     let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
+        //     pdbsystem.update_bonds_all();
+        //     pdbsystem
+        // } else {
+        //     pdb::PDBSystem::default()
+        // };
+        //
+        // let camera_controller =
+        //     camera::CameraController::new(self.settings.clone(), pdbsystem.center());
+        //
+        // // line model
+        // let mut vertex_buffers = Vec::new();
+        // let mut index_buffers = Vec::new();
+        // let mut num_indices = Vec::new();
+        // if !pdbsystem.atoms.is_empty() {
+        //     pdbsystem.set_line_model();
+        //     vertex_buffers.push(self.device.create_buffer_init(
+        //         &wgpu::util::BufferInitDescriptor {
+        //             label: Some("Vertex Buffer"),
+        //             contents: bytemuck::cast_slice(&pdbsystem.vertices),
+        //             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        //         },
+        //     ));
+        //     index_buffers.push(
+        //         self.device
+        //             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //                 label: Some("Index Buffer"),
+        //                 contents: bytemuck::cast_slice(&pdbsystem.indecies),
+        //                 usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+        //             }),
+        //     );
+        //     num_indices.push(pdbsystem.indecies.len() as u32);
+        // }
+        //
+        // // center
+        // if self.settings.borrow().vis_center {
+        //     let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
+        //     vertex_buffers.push(
+        //         self.device
+        //             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //                 label: Some("Vertex Buffer"),
+        //                 contents: bytemuck::cast_slice(&center.vertices),
+        //                 usage: wgpu::BufferUsages::VERTEX,
+        //             }),
+        //     );
+        //     index_buffers.push(
+        //         self.device
+        //             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //                 label: Some("Index Buffer"),
+        //                 contents: bytemuck::cast_slice(&center.indices),
+        //                 usage: wgpu::BufferUsages::INDEX,
+        //             }),
+        //     );
+        //     num_indices.push(center.indices.len() as u32);
+        // }
+        //
+        // // axises
+        // if self.settings.borrow().vis_axis {
+        //     let xaxis = model::Line::new([1.0, 0.0, 0.0], vec![[0.0, 0.0, 0.0], [100.0, 0.0, 0.0]]);
+        //     let yaxis = model::Line::new([0.0, 1.0, 0.0], vec![[0.0, 0.0, 0.0], [0.0, 100.0, 0.0]]);
+        //     let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
+        //
+        //     for axis in [xaxis, yaxis, zaxis] {
+        //         vertex_buffers.push(self.device.create_buffer_init(
+        //             &wgpu::util::BufferInitDescriptor {
+        //                 label: Some("Vertex Buffer"),
+        //                 contents: bytemuck::cast_slice(&axis.vertices),
+        //                 usage: wgpu::BufferUsages::VERTEX,
+        //             },
+        //         ));
+        //         index_buffers.push(
+        //             self.device
+        //                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //                     label: Some("Index Buffer"),
+        //                     contents: bytemuck::cast_slice(&axis.indices),
+        //                     usage: wgpu::BufferUsages::INDEX,
+        //                 }),
+        //         );
+        //         num_indices.push(axis.indices.len() as u32);
+        //     }
+        // }
+        //
+        // self.pdbsystem = pdbsystem;
+        // self.vertex_buffers = vertex_buffers;
+        // self.index_buffers = index_buffers;
+        // self.num_indices = num_indices;
+        // self.camera_controller = camera_controller;
     }
 
     pub fn window(&self) -> &winit::window::Window {
@@ -785,7 +893,7 @@ impl State {
             crate::settings::MoveMode::Move => {
                 self.pdbsystem.set_line_model();
                 self.queue.write_buffer(
-                    &self.vertex_buffers[0],
+                    &self.pdbsystem_unit_renders[0].vertex_buffer,
                     0,
                     bytemuck::cast_slice(&self.pdbsystem.vertices),
                 );
@@ -906,14 +1014,54 @@ impl State {
                 timestamp_writes: None,
             });
 
-            render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
-            for i in 0..self.vertex_buffers.len() {
-                render_pass.set_vertex_buffer(0, self.vertex_buffers[i].slice(..));
-                render_pass
-                    .set_index_buffer(self.index_buffers[i].slice(..), wgpu::IndexFormat::Uint16);
-                render_pass.draw_indexed(0..self.num_indices[i], 0, 0..1);
+            // pdbsystem
+            match self.settings.borrow().drawing_method {
+                crate::settings::DrawingMethod::Lines => {
+                    render_pass.set_pipeline(&self.line_render_pipeline);
+                    for unit_render in &self.pdbsystem_unit_renders {
+                        render_pass.set_vertex_buffer(0, unit_render.vertex_buffer.slice(..));
+                        render_pass.set_index_buffer(unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                        render_pass.draw_indexed(0..unit_render.num_indices, 0, 0..1);
+                    }
+                },
+                crate::settings::DrawingMethod::Licorice => {
+                    render_pass.set_pipeline(&self.triangle_render_pipeline);
+                    for unit_render in &self.pdbsystem_unit_renders {
+                        render_pass.set_vertex_buffer(0, unit_render.vertex_buffer.slice(..));
+                        render_pass.set_index_buffer(unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                        render_pass.draw_indexed(0..unit_render.num_indices, 0, 0..1);
+                    }
+                },
             }
+
+            // xyz-axis
+            if self.settings.borrow().vis_axis {
+                render_pass.set_pipeline(&self.line_render_pipeline);
+                for unit_render in &self.axis_unit_renders {
+                    render_pass.set_vertex_buffer(0, unit_render.vertex_buffer.slice(..));
+                    render_pass.set_index_buffer(unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                    render_pass.draw_indexed(0..unit_render.num_indices, 0, 0..1);
+                }
+            }
+
+            // center
+            if self.settings.borrow().vis_center {
+                render_pass.set_pipeline(&self.triangle_render_pipeline);
+                render_pass.set_vertex_buffer(0, self.center_unit_render.vertex_buffer.slice(..));
+                render_pass.set_index_buffer(self.center_unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                render_pass.draw_indexed(0..self.center_unit_render.num_indices, 0, 0..1);
+            }
+
+            // render_pass.set_pipeline(&self.line_render_pipeline);
+            // render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
+            // for i in 0..self.vertex_buffers.len() {
+            //     render_pass.set_vertex_buffer(0, self.vertex_buffers[i].slice(..));
+            //     render_pass
+            //         .set_index_buffer(self.index_buffers[i].slice(..), wgpu::IndexFormat::Uint16);
+            //     render_pass.draw_indexed(0..self.num_indices[i], 0, 0..1);
+            // }
+
             // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             // render_pass.draw_indexed(0..self.num_indices, 0, 0..1);

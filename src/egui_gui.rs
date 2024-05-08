@@ -218,8 +218,14 @@ impl EguiGUI {
 
                 ui.separator();
 
-                ui.menu_button("Drawing Method", |ui| {
-                    ui.label("Choose!");
+                ui.collapsing("Drawing Method", |ui| {
+                    let mut drawing_method = self.settings.borrow().drawing_method.clone();
+                    ui.radio_value(&mut drawing_method, crate::settings::DrawingMethod::Lines, "Lines");
+                    ui.radio_value(&mut drawing_method, crate::settings::DrawingMethod::Licorice, "Licorice");
+                    if drawing_method != self.settings.borrow().drawing_method {
+                        self.settings.borrow_mut().renew_render = true;
+                        self.settings.borrow_mut().drawing_method = drawing_method;
+                    }
                 });
             });
     }

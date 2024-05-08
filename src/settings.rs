@@ -17,6 +17,7 @@ pub struct Settings {
     pub camera_speed: u32,
     pub vis_axis: bool,
     pub vis_center: bool,
+    pub drawing_method: DrawingMethod,
 }
 
 impl Settings {
@@ -40,8 +41,15 @@ impl Settings {
             camera_speed: 2,
             vis_axis: true,
             vis_center: true,
+            drawing_method: DrawingMethod::Lines,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DrawingMethod {
+    Lines,
+    Licorice,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
