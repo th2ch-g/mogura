@@ -12,10 +12,15 @@ pub struct Settings {
     pub allowed_to_close: bool,
     pub show_download_dialog: bool,
     pub download_pdbid: String,
+    pub show_settings_window: bool,
+    pub backend_info: wgpu::AdapterInfo,
+    pub camera_speed: u32,
+    pub vis_axis: bool,
+    pub vis_center: bool,
 }
 
 impl Settings {
-    pub fn new(pdbfile: Option<String>) -> Self {
+    pub fn new(pdbfile: Option<String>, backend_info: wgpu::AdapterInfo) -> Self {
         Self {
             renew_render: false,
             pdbfile,
@@ -30,6 +35,11 @@ impl Settings {
             allowed_to_close: false,
             show_download_dialog: false,
             download_pdbid: "".to_string(),
+            show_settings_window: false,
+            backend_info,
+            camera_speed: 2,
+            vis_axis: true,
+            vis_center: true,
         }
     }
 }

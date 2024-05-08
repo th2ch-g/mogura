@@ -5,7 +5,7 @@ pub struct EguiGUI {
     pub settings: std::rc::Rc<std::cell::RefCell<crate::settings::Settings>>,
 }
 
-const LEFT_SIDE_PANEL_DEFAULT_WIDTH: f32 = 150.0;
+const LEFT_SIDE_PANEL_DEFAULT_WIDTH: f32 = 200.0;
 
 impl EguiGUI {
     pub fn new(settings: std::rc::Rc<std::cell::RefCell<crate::settings::Settings>>) -> Self {
@@ -77,7 +77,6 @@ impl EguiGUI {
                                     Ok(pdbfile) => {
                                         self.settings.borrow_mut().renew_render = true;
                                         self.settings.borrow_mut().pdbfile = Some(pdbfile);
-                                        self.settings.borrow_mut().show_download_dialog = false;
                                     }
                                     Err(s) => {
                                         eprintln!("Error occurred: {}", s);
@@ -86,6 +85,49 @@ impl EguiGUI {
                             }
                         });
                     self.settings.borrow_mut().show_download_dialog = show_download_dialog;
+                }
+                ui.separator();
+                if ui.button("Settings").clicked() {
+                    self.settings.borrow_mut().show_settings_window ^= true;
+                }
+                if self.settings.borrow().show_settings_window {
+                    let mut show_settings_window = self.settings.borrow().show_settings_window.clone();
+                    egui::Window::new("Settings")
+                        .collapsible(true)
+                        .resizable(true)
+                        .open(&mut show_settings_window)
+                        .default_width(1000.0)
+                        .default_height(1000.0)
+                        .show(ctx, |ui| {
+                            ui.collapsing("Move Speed", |ui| {
+
+                            });
+
+                            ui.collapsing("Camera Speed", |ui| {
+                                ui.add(egui::Slider::new(&mut self.settings.borrow_mut().camera_speed, 1..=10).text("age"));
+                                ui.add_space(5.0);
+                            });
+
+                            ui.collapsing("For Debug", |ui| {
+                                let mut vis_axis =  self.settings.borrow().vis_axis.clone();
+                                let mut vis_center = self.settings.borrow().vis_center.clone();
+                                ui.checkbox(&mut vis_axis, "Visualize XYZ axis");
+                                ui.checkbox(&mut vis_center, "Visualize Center");
+                                if vis_axis != self.settings.borrow().vis_axis {
+                                    self.settings.borrow_mut().vis_axis = vis_axis;
+                                    self.settings.borrow_mut().renew_render = true;
+                                }
+                                if vis_center != self.settings.borrow().vis_center {
+                                    self.settings.borrow_mut().vis_center = vis_center;
+                                    self.settings.borrow_mut().renew_render = true;
+                                }
+                            });
+
+                            ui.collapsing("About Backend", |ui| {
+                                ui.label(format!("{:?}", self.settings.borrow().backend_info));
+                            });
+                        });
+                    self.settings.borrow_mut().show_settings_window = show_settings_window;
                 }
                 ui.separator();
             });
