@@ -613,8 +613,19 @@ impl State {
 
         let mut pdbsystem_unit_renders = Vec::new();
         if !pdbsystem.atoms.is_empty() {
-            pdbsystem.set_line_model();
-            pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices, &pdbsystem.indecies));
+            match settings.borrow().drawing_method {
+                crate::settings::DrawingMethod::Lines => {
+                    pdbsystem.set_line_model();
+                    pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
+                },
+                crate::settings::DrawingMethod::VDW => {
+                    pdbsystem.set_vdw_model();
+                    for i in 0..pdbsystem.atoms.len() {
+                        pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[i], &pdbsystem.indecies[i]));
+                    }
+                    // pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
+                },
+            }
             // vertex_buffers.push(
             //     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             //         label: Some("Vertex Buffer"),
@@ -729,19 +740,40 @@ impl State {
     }
 
     pub fn renew(&mut self) {
-        // let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
-        //     let (input_pdb, _errors) =
-        //         pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap();
-        //     let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
-        //     pdbsystem.update_bonds_all();
-        //     pdbsystem
-        // } else {
-        //     pdb::PDBSystem::default()
-        // };
-        //
-        // let camera_controller =
-        //     camera::CameraController::new(self.settings.clone(), pdbsystem.center());
-        //
+        let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
+            let (input_pdb, _errors) =
+                pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap();
+            let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
+            pdbsystem.update_bonds_all();
+            pdbsystem
+        } else {
+            pdb::PDBSystem::default()
+        };
+
+        let camera_controller =
+            camera::CameraController::new(self.settings.clone(), pdbsystem.center());
+
+        let mut pdbsystem_unit_renders = Vec::new();
+        if !pdbsystem.atoms.is_empty() {
+            match self.settings.borrow().drawing_method {
+                crate::settings::DrawingMethod::Lines => {
+                    pdbsystem.set_line_model();
+                    pdbsystem_unit_renders.push(model::UnitRender::new(&self.device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
+                },
+                crate::settings::DrawingMethod::VDW => {
+                    pdbsystem.set_vdw_model();
+                    for i in 0..pdbsystem.atoms.len() {
+                        pdbsystem_unit_renders.push(model::UnitRender::new(&self.device, &pdbsystem.vertices[i], &pdbsystem.indecies[i]));
+                    }
+                    // pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
+                },
+            }
+        }
+
+        // center
+        let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
+        let center_unit_render = model::UnitRender::new(&self.device, &center.vertices, &center.indices);
+
         // // line model
         // let mut vertex_buffers = Vec::new();
         // let mut index_buffers = Vec::new();
@@ -765,7 +797,7 @@ impl State {
         //     );
         //     num_indices.push(pdbsystem.indecies.len() as u32);
         // }
-        //
+
         // // center
         // if self.settings.borrow().vis_center {
         //     let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
@@ -813,12 +845,11 @@ impl State {
         //         num_indices.push(axis.indices.len() as u32);
         //     }
         // }
-        //
-        // self.pdbsystem = pdbsystem;
-        // self.vertex_buffers = vertex_buffers;
-        // self.index_buffers = index_buffers;
-        // self.num_indices = num_indices;
-        // self.camera_controller = camera_controller;
+
+        self.pdbsystem = pdbsystem;
+        self.pdbsystem_unit_renders = pdbsystem_unit_renders;
+        self.center_unit_render = center_unit_render;
+        self.camera_controller = camera_controller;
     }
 
     pub fn window(&self) -> &winit::window::Window {
@@ -887,16 +918,30 @@ impl State {
             0,
             bytemuck::cast_slice(&[self.light_uniform]),
         );
-        // assume only line model
-        match self.settings.borrow().move_mode {
+        let settings = self.settings.borrow().clone();
+        match settings.move_mode {
             // crate::settings::MoveMode::MoveWithNNP | crate::settings::MoveMode::MoveWithoutNNP => {
             crate::settings::MoveMode::Move => {
-                self.pdbsystem.set_line_model();
-                self.queue.write_buffer(
-                    &self.pdbsystem_unit_renders[0].vertex_buffer,
-                    0,
-                    bytemuck::cast_slice(&self.pdbsystem.vertices),
-                );
+                match settings.drawing_method {
+                    crate::settings::DrawingMethod::Lines => {
+                        self.pdbsystem.set_line_model();
+                        self.queue.write_buffer(
+                            &self.pdbsystem_unit_renders[0].vertex_buffer,
+                            0,
+                            bytemuck::cast_slice(&self.pdbsystem.vertices[0]),
+                        );
+                    },
+                    crate::settings::DrawingMethod::VDW => {
+                        self.pdbsystem.set_vdw_model();
+                        for i in 0..self.pdbsystem.atoms.len() {
+                            self.queue.write_buffer(
+                                &self.pdbsystem_unit_renders[i].vertex_buffer,
+                                0,
+                                bytemuck::cast_slice(&self.pdbsystem.vertices[i])
+                            );
+                        }
+                    },
+                }
             }
             _ => {}
         }
@@ -1025,7 +1070,7 @@ impl State {
                         render_pass.draw_indexed(0..unit_render.num_indices, 0, 0..1);
                     }
                 },
-                crate::settings::DrawingMethod::Licorice => {
+                crate::settings::DrawingMethod::VDW => {
                     render_pass.set_pipeline(&self.triangle_render_pipeline);
                     for unit_render in &self.pdbsystem_unit_renders {
                         render_pass.set_vertex_buffer(0, unit_render.vertex_buffer.slice(..));

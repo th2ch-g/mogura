@@ -6,8 +6,10 @@ const ATOMCAPA: usize = 50000;
 pub struct PDBSystem {
     pub atoms: Vec<PDBAtom>,
     pub bonds: Vec<crate::bond::Bond>,
-    pub vertices: Vec<crate::model::Vertex>,
-    pub indecies: Vec<crate::model::Index>,
+    // pub vertices: Vec<crate::model::Vertex>,
+    // pub indecies: Vec<crate::model::Index>,
+    pub vertices: Vec<Vec<crate::model::Vertex>>,
+    pub indecies: Vec<Vec<crate::model::Index>>,
 }
 
 impl From<&pdbtbx::PDB> for PDBSystem {
@@ -72,20 +74,57 @@ impl PDBSystem {
     pub fn set_line_model(&mut self) {
         self.vertices = Vec::with_capacity(ATOMCAPA);
         self.indecies = Vec::with_capacity(ATOMCAPA);
+
+        let mut line_vertices = Vec::with_capacity(ATOMCAPA);
+        let mut line_indecies = Vec::with_capacity(ATOMCAPA);
         for atom in self.atoms.iter() {
-            self.vertices.push(crate::model::Vertex {
+            line_vertices.push(crate::model::Vertex {
                 position: atom.xyz(),
                 normal: atom.xyz(),
                 color: [0.0, 0.5, 1.0],
             });
         }
         for bond in self.bonds.iter() {
-            self.indecies.push(crate::model::Index {
+            line_indecies.push(crate::model::Index {
                 ids: bond.pair1 as u16,
             });
-            self.indecies.push(crate::model::Index {
+            line_indecies.push(crate::model::Index {
                 ids: bond.pair2 as u16,
             });
+        }
+        self.vertices.push(line_vertices);
+        self.indecies.push(line_indecies);
+
+        // for atom in self.atoms.iter() {
+        //     self.vertices.push(crate::model::Vertex {
+        //         position: atom.xyz(),
+        //         normal: atom.xyz(),
+        //         color: [0.0, 0.5, 1.0],
+        //     });
+        // }
+        // for bond in self.bonds.iter() {
+        //     self.indecies.push(crate::model::Index {
+        //         ids: bond.pair1 as u16,
+        //     });
+        //     self.indecies.push(crate::model::Index {
+        //         ids: bond.pair2 as u16,
+        //     });
+        // }
+    }
+
+    pub fn set_vdw_model(&mut self) {
+        self.vertices = Vec::with_capacity(ATOMCAPA);
+        self.indecies = Vec::with_capacity(ATOMCAPA);
+        for atom in self.atoms.iter() {
+            let atom_sphere = crate::model::Sphere::new(1.0, atom.xyz(), [0.0, 0.5, 1.0], 10);
+            self.vertices.push(atom_sphere.vertices);
+            self.indecies.push(atom_sphere.indices);
+            // for vertex in atom_sphere.vertices.iter() {
+            //     self.vertices.push(*vertex);
+            // }
+            // for index in atom_sphere.indices.iter() {
+            //     self.indecies.push(*index);
+            // }
         }
     }
 

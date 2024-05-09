@@ -42,6 +42,7 @@ impl Settings {
             vis_axis: true,
             vis_center: true,
             drawing_method: DrawingMethod::Lines,
+            // drawing_method: DrawingMethod::VDW,
         }
     }
 }
@@ -49,7 +50,7 @@ impl Settings {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DrawingMethod {
     Lines,
-    Licorice,
+    VDW,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
