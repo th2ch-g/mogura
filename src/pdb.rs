@@ -286,34 +286,33 @@ impl PDBAtom {
                     pdbtbx::Element::O => {
                         // red
                         [1.0, 0.0, 0.0]
-                    },
+                    }
                     pdbtbx::Element::C => {
                         // blue green
                         [0.0, 1.0, 1.0]
-                    },
+                    }
                     pdbtbx::Element::N => {
                         // blue
                         [0.0, 0.0, 1.0]
-                    },
+                    }
                     pdbtbx::Element::S => {
                         // yellow
                         [1.0, 1.0, 0.0]
-                    },
+                    }
                     pdbtbx::Element::H => {
                         // white
                         [1.0, 1.0, 1.0]
-                    },
+                    }
                     _ => {
                         // white
                         [1.0, 1.0, 1.0]
                     }
                 }
-            },
+            }
             None => {
                 // white
                 [1.0, 1.0, 1.0]
-            },
+            }
         }
     }
 }
-

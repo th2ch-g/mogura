@@ -7,7 +7,12 @@ pub struct Bond {
 }
 
 impl Bond {
-    pub fn new(pair1: usize, pair2: usize, ty1: &Option<pdbtbx::Element>, ty2: &Option<pdbtbx::Element>) -> Self {
+    pub fn new(
+        pair1: usize,
+        pair2: usize,
+        ty1: &Option<pdbtbx::Element>,
+        ty2: &Option<pdbtbx::Element>,
+    ) -> Self {
         Self {
             pair1,
             pair2,
@@ -40,4 +45,3 @@ impl Bond {
         self.distance(pdbatoms) <= 1.6
     }
 }
-

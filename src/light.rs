@@ -9,21 +9,15 @@ pub struct LightUniform {
     // is_two_side: i32,
 }
 
-impl LightUniform {
-    pub fn new() -> Self {
-        Self {
-            specular_color: [0.0, 0.0, 0.0, 0.0],
-            ambient_intensity: 0.1,
-            diffuse_intensity: 0.8,
-            specular_intensity: 0.4,
-            specular_shininess: 30.0,
-            // is_two_side: 1,
-        }
-    }
-}
-
 impl Default for LightUniform {
     fn default() -> Self {
-        Self::new()
+        Self {
+            specular_color: [0.0, 0.0, 0.0, 0.0],
+            ambient_intensity: 0.2,
+            diffuse_intensity: 0.6,
+            specular_intensity: 0.4,
+            specular_shininess: 32.0,
+            // is_two_side: 1,
+        }
     }
 }
