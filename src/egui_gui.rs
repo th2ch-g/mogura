@@ -60,7 +60,7 @@ impl EguiGUI {
                     self.settings.borrow_mut().show_download_dialog = true;
                 }
                 if self.settings.borrow().show_download_dialog {
-                    let mut show_download_dialog = self.settings.borrow().show_download_dialog.clone();
+                    let mut show_download_dialog = self.settings.borrow().show_download_dialog;
                     egui::Window::new("Input PDB ID to download")
                         .collapsible(false)
                         .resizable(false)
@@ -91,7 +91,7 @@ impl EguiGUI {
                     self.settings.borrow_mut().show_settings_window ^= true;
                 }
                 if self.settings.borrow().show_settings_window {
-                    let mut show_settings_window = self.settings.borrow().show_settings_window.clone();
+                    let mut show_settings_window = self.settings.borrow().show_settings_window;
                     egui::Window::new("Settings")
                         .collapsible(true)
                         .resizable(true)
@@ -99,18 +99,22 @@ impl EguiGUI {
                         .default_width(1000.0)
                         .default_height(1000.0)
                         .show(ctx, |ui| {
-                            ui.collapsing("Move Speed", |ui| {
-
-                            });
+                            // ui.collapsing("Move Speed", |ui| {});
 
                             ui.collapsing("Camera Speed", |ui| {
-                                ui.add(egui::Slider::new(&mut self.settings.borrow_mut().camera_speed, 1..=10).text("age"));
+                                ui.add(
+                                    egui::Slider::new(
+                                        &mut self.settings.borrow_mut().camera_speed,
+                                        1..=10,
+                                    )
+                                    .text("age"),
+                                );
                                 ui.add_space(5.0);
                             });
 
                             ui.collapsing("For Debug", |ui| {
-                                let mut vis_axis =  self.settings.borrow().vis_axis.clone();
-                                let mut vis_center = self.settings.borrow().vis_center.clone();
+                                let mut vis_axis = self.settings.borrow().vis_axis;
+                                let mut vis_center = self.settings.borrow().vis_center;
                                 ui.checkbox(&mut vis_axis, "Visualize XYZ axis");
                                 ui.checkbox(&mut vis_center, "Visualize Center");
                                 if vis_axis != self.settings.borrow().vis_axis {
@@ -219,9 +223,17 @@ impl EguiGUI {
                 ui.separator();
 
                 ui.collapsing("Drawing Method", |ui| {
-                    let mut drawing_method = self.settings.borrow().drawing_method.clone();
-                    ui.radio_value(&mut drawing_method, crate::settings::DrawingMethod::Lines, "Lines");
-                    ui.radio_value(&mut drawing_method, crate::settings::DrawingMethod::VDW, "VDW");
+                    let mut drawing_method = self.settings.borrow().drawing_method;
+                    ui.radio_value(
+                        &mut drawing_method,
+                        crate::settings::DrawingMethod::Lines,
+                        "Lines",
+                    );
+                    ui.radio_value(
+                        &mut drawing_method,
+                        crate::settings::DrawingMethod::VDW,
+                        "VDW",
+                    );
                     if drawing_method != self.settings.borrow().drawing_method {
                         self.settings.borrow_mut().renew_render = true;
                         self.settings.borrow_mut().drawing_method = drawing_method;

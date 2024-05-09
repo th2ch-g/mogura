@@ -48,7 +48,6 @@ pub struct State {
 
 impl State {
     pub async fn new(window: winit::window::Window, pdbfile: Option<String>) -> Self {
-
         let mut pdbsystem = if let Some(ref pdbfile) = pdbfile {
             let (input_pdb, _errors) = pdbtbx::open(
                 pdbfile,
@@ -83,7 +82,7 @@ impl State {
 
         let settings = std::rc::Rc::new(std::cell::RefCell::new(settings::Settings::new(
             pdbfile.clone(),
-            adapter.get_info()
+            adapter.get_info(),
         )));
 
         let (device, queue) = adapter
@@ -135,8 +134,7 @@ impl State {
             100.0,
             settings.clone(),
         );
-        let camera_controller =
-            camera::CameraController::new(settings.clone(), pdbsystem.center());
+        let camera_controller = camera::CameraController::new(settings.clone(), pdbsystem.center());
         // let camera_controller = camera::CameraController::new(4.0, 0.4);
         // let camera_controller = camera::CameraController::new(1.0, 0.1); // more sensitive
 
@@ -616,15 +614,23 @@ impl State {
             match settings.borrow().drawing_method {
                 crate::settings::DrawingMethod::Lines => {
                     pdbsystem.set_line_model();
-                    pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
-                },
+                    pdbsystem_unit_renders.push(model::UnitRender::new(
+                        &device,
+                        &pdbsystem.vertices[0],
+                        &pdbsystem.indecies[0],
+                    ));
+                }
                 crate::settings::DrawingMethod::VDW => {
                     pdbsystem.set_vdw_model();
                     for i in 0..pdbsystem.atoms.len() {
-                        pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[i], &pdbsystem.indecies[i]));
+                        pdbsystem_unit_renders.push(model::UnitRender::new(
+                            &device,
+                            &pdbsystem.vertices[i],
+                            &pdbsystem.indecies[i],
+                        ));
                     }
                     // pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
-                },
+                }
             }
             // vertex_buffers.push(
             //     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -672,7 +678,11 @@ impl State {
         let zaxis = model::Line::new([0.0, 0.0, 1.0], vec![[0.0, 0.0, 0.0], [0.0, 0.0, 100.0]]);
         let mut axis_unit_renders = Vec::new();
         for axis in [&xaxis, &yaxis, &zaxis] {
-            axis_unit_renders.push(model::UnitRender::new(&device, &axis.vertices, &axis.indices));
+            axis_unit_renders.push(model::UnitRender::new(
+                &device,
+                &axis.vertices,
+                &axis.indices,
+            ));
         }
 
         // if settings.borrow().vis_axis {
@@ -698,7 +708,6 @@ impl State {
         //         num_indices.push(axis.indices.len() as u32);
         //     }
         // }
-
 
         let egui_renderer =
             egui_renderer::EguiRenderer::new(&device, config.format, None, 1, &window);
@@ -758,21 +767,30 @@ impl State {
             match self.settings.borrow().drawing_method {
                 crate::settings::DrawingMethod::Lines => {
                     pdbsystem.set_line_model();
-                    pdbsystem_unit_renders.push(model::UnitRender::new(&self.device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
-                },
+                    pdbsystem_unit_renders.push(model::UnitRender::new(
+                        &self.device,
+                        &pdbsystem.vertices[0],
+                        &pdbsystem.indecies[0],
+                    ));
+                }
                 crate::settings::DrawingMethod::VDW => {
                     pdbsystem.set_vdw_model();
                     for i in 0..pdbsystem.atoms.len() {
-                        pdbsystem_unit_renders.push(model::UnitRender::new(&self.device, &pdbsystem.vertices[i], &pdbsystem.indecies[i]));
+                        pdbsystem_unit_renders.push(model::UnitRender::new(
+                            &self.device,
+                            &pdbsystem.vertices[i],
+                            &pdbsystem.indecies[i],
+                        ));
                     }
                     // pdbsystem_unit_renders.push(model::UnitRender::new(&device, &pdbsystem.vertices[0], &pdbsystem.indecies[0]));
-                },
+                }
             }
         }
 
         // center
         let center = model::Sphere::new(1.0, pdbsystem.center(), [1.0, 0.0, 0.0], 100);
-        let center_unit_render = model::UnitRender::new(&self.device, &center.vertices, &center.indices);
+        let center_unit_render =
+            model::UnitRender::new(&self.device, &center.vertices, &center.indices);
 
         // // line model
         // let mut vertex_buffers = Vec::new();
@@ -921,28 +939,32 @@ impl State {
         let settings = self.settings.borrow().clone();
         match settings.move_mode {
             // crate::settings::MoveMode::MoveWithNNP | crate::settings::MoveMode::MoveWithoutNNP => {
-            crate::settings::MoveMode::Move => {
-                match settings.drawing_method {
-                    crate::settings::DrawingMethod::Lines => {
+            crate::settings::MoveMode::Move => match settings.drawing_method {
+                crate::settings::DrawingMethod::Lines => {
+                    dbg!(&settings.selected_group.atoms.len());
+                    if !settings.selected_group.atoms.is_empty() {
                         self.pdbsystem.set_line_model();
                         self.queue.write_buffer(
                             &self.pdbsystem_unit_renders[0].vertex_buffer,
                             0,
                             bytemuck::cast_slice(&self.pdbsystem.vertices[0]),
                         );
-                    },
-                    crate::settings::DrawingMethod::VDW => {
+                    }
+                }
+                crate::settings::DrawingMethod::VDW => {
+                    dbg!(&settings.selected_group.atoms.len());
+                    if !settings.selected_group.atoms.is_empty() {
                         self.pdbsystem.set_vdw_model();
-                        for i in 0..self.pdbsystem.atoms.len() {
+                        for i in settings.selected_group.atoms.iter() {
                             self.queue.write_buffer(
-                                &self.pdbsystem_unit_renders[i].vertex_buffer,
+                                &self.pdbsystem_unit_renders[*i].vertex_buffer,
                                 0,
-                                bytemuck::cast_slice(&self.pdbsystem.vertices[i])
+                                bytemuck::cast_slice(&self.pdbsystem.vertices[*i]),
                             );
                         }
-                    },
+                    }
                 }
-            }
+            },
             _ => {}
         }
     }
@@ -1066,18 +1088,24 @@ impl State {
                     render_pass.set_pipeline(&self.line_render_pipeline);
                     for unit_render in &self.pdbsystem_unit_renders {
                         render_pass.set_vertex_buffer(0, unit_render.vertex_buffer.slice(..));
-                        render_pass.set_index_buffer(unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                        render_pass.set_index_buffer(
+                            unit_render.index_buffer.slice(..),
+                            wgpu::IndexFormat::Uint16,
+                        );
                         render_pass.draw_indexed(0..unit_render.num_indices, 0, 0..1);
                     }
-                },
+                }
                 crate::settings::DrawingMethod::VDW => {
                     render_pass.set_pipeline(&self.triangle_render_pipeline);
                     for unit_render in &self.pdbsystem_unit_renders {
                         render_pass.set_vertex_buffer(0, unit_render.vertex_buffer.slice(..));
-                        render_pass.set_index_buffer(unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                        render_pass.set_index_buffer(
+                            unit_render.index_buffer.slice(..),
+                            wgpu::IndexFormat::Uint16,
+                        );
                         render_pass.draw_indexed(0..unit_render.num_indices, 0, 0..1);
                     }
-                },
+                }
             }
 
             // xyz-axis
@@ -1085,7 +1113,10 @@ impl State {
                 render_pass.set_pipeline(&self.line_render_pipeline);
                 for unit_render in &self.axis_unit_renders {
                     render_pass.set_vertex_buffer(0, unit_render.vertex_buffer.slice(..));
-                    render_pass.set_index_buffer(unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                    render_pass.set_index_buffer(
+                        unit_render.index_buffer.slice(..),
+                        wgpu::IndexFormat::Uint16,
+                    );
                     render_pass.draw_indexed(0..unit_render.num_indices, 0, 0..1);
                 }
             }
@@ -1094,7 +1125,10 @@ impl State {
             if self.settings.borrow().vis_center {
                 render_pass.set_pipeline(&self.triangle_render_pipeline);
                 render_pass.set_vertex_buffer(0, self.center_unit_render.vertex_buffer.slice(..));
-                render_pass.set_index_buffer(self.center_unit_render.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                render_pass.set_index_buffer(
+                    self.center_unit_render.index_buffer.slice(..),
+                    wgpu::IndexFormat::Uint16,
+                );
                 render_pass.draw_indexed(0..self.center_unit_render.num_indices, 0, 0..1);
             }
 

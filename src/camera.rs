@@ -419,14 +419,17 @@ impl CameraController {
                 let scrollward =
                     cgmath::Vector3::new(pitch_cos * yaw_cos, pitch_sin, pitch_cos * yaw_sin)
                         .normalize();
-                camera.position += scrollward * self.scroll * settings.camera_speed as f32 * dt / 10.0;
+                camera.position +=
+                    scrollward * self.scroll * settings.camera_speed as f32 * dt / 10.0;
                 // camera.position += scrollward * self.scroll * self.speed * self.sensitivity * dt;
                 // camera.position.y += (self.amount_up - self.amount_down) * self.speed * dt;
 
-                camera.yaw += cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 * dt / 10.0;
+                camera.yaw +=
+                    cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 * dt / 10.0;
                 // camera.yaw += cgmath::Rad(self.rotate_horizontal) * self.settings.sensitivity * dt;
 
-                camera.pitch += cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 * dt / 10.0;
+                camera.pitch +=
+                    cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 * dt / 10.0;
                 // camera.pitch += cgmath::Rad(-self.rotate_vertical) * self.sensitivity * dt;
 
                 if camera.pitch < -cgmath::Rad(SAFE_FRAC_PI_2) {
@@ -469,8 +472,10 @@ impl CameraController {
                 let nvec = self.sphere.nvec();
                 let mvec = self.sphere.mvec();
 
-                let q_theta =
-                    crate::quaternion::Quaternion::new_rotater(mvec, -self.rotate_vertical * settings.camera_speed as f32 / 1000.0);
+                let q_theta = crate::quaternion::Quaternion::new_rotater(
+                    mvec,
+                    -self.rotate_vertical * settings.camera_speed as f32 / 1000.0,
+                );
                 let q_phi = crate::quaternion::Quaternion::new_rotater(
                     nvec,
                     -self.rotate_horizontal * settings.camera_speed as f32 / 1000.0,
@@ -522,9 +527,15 @@ impl CameraController {
                 let nvec = self.sphere.nvec();
                 let mvec = self.sphere.mvec();
                 let sxyz = self.sphere.sxyz();
-                let delta_x = (self.rotate_vertical * nvec[0] - self.rotate_horizontal * mvec[0]) * settings.camera_speed as f32 / 10.0;
-                let delta_y = (self.rotate_vertical * nvec[1] - self.rotate_horizontal * mvec[1]) * settings.camera_speed as f32 / 10.0;
-                let delta_z = (self.rotate_vertical * nvec[2] - self.rotate_horizontal * mvec[2]) * settings.camera_speed as f32 / 10.0;
+                let delta_x = (self.rotate_vertical * nvec[0] - self.rotate_horizontal * mvec[0])
+                    * settings.camera_speed as f32
+                    / 10.0;
+                let delta_y = (self.rotate_vertical * nvec[1] - self.rotate_horizontal * mvec[1])
+                    * settings.camera_speed as f32
+                    / 10.0;
+                let delta_z = (self.rotate_vertical * nvec[2] - self.rotate_horizontal * mvec[2])
+                    * settings.camera_speed as f32
+                    / 10.0;
                 camera.position[0] += delta_x;
                 camera.position[1] += delta_y;
                 camera.position[2] += delta_z;
