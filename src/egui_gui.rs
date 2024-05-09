@@ -119,11 +119,9 @@ impl EguiGUI {
                                 ui.checkbox(&mut vis_center, "Visualize Center");
                                 if vis_axis != self.settings.borrow().vis_axis {
                                     self.settings.borrow_mut().vis_axis = vis_axis;
-                                    self.settings.borrow_mut().renew_render = true;
                                 }
                                 if vis_center != self.settings.borrow().vis_center {
                                     self.settings.borrow_mut().vis_center = vis_center;
-                                    self.settings.borrow_mut().renew_render = true;
                                 }
                             });
 

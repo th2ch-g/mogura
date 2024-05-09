@@ -941,7 +941,6 @@ impl State {
             // crate::settings::MoveMode::MoveWithNNP | crate::settings::MoveMode::MoveWithoutNNP => {
             crate::settings::MoveMode::Move => match settings.drawing_method {
                 crate::settings::DrawingMethod::Lines => {
-                    dbg!(&settings.selected_group.atoms.len());
                     if !settings.selected_group.atoms.is_empty() {
                         self.pdbsystem.set_line_model();
                         self.queue.write_buffer(
@@ -952,7 +951,6 @@ impl State {
                     }
                 }
                 crate::settings::DrawingMethod::VDW => {
-                    dbg!(&settings.selected_group.atoms.len());
                     if !settings.selected_group.atoms.is_empty() {
                         self.pdbsystem.set_vdw_model();
                         for i in settings.selected_group.atoms.iter() {
