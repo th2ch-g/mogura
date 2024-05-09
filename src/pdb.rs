@@ -35,6 +35,7 @@ impl From<&pdbtbx::PDB> for PDBSystem {
                             },
                             atom_id: atom.serial_number(),
                             atom_name: atom.name().to_string(),
+                            element: atom.element().copied(),
                             x: atom.x() as f32,
                             y: atom.y() as f32,
                             z: atom.z() as f32,
@@ -81,7 +82,8 @@ impl PDBSystem {
             line_vertices.push(crate::model::Vertex {
                 position: atom.xyz(),
                 normal: atom.xyz(),
-                color: [0.0, 0.5, 1.0],
+                // color: [0.0, 0.5, 1.0],
+                color: atom.color(),
             });
         }
         for bond in self.bonds.iter() {
@@ -116,7 +118,7 @@ impl PDBSystem {
         self.vertices = Vec::with_capacity(ATOMCAPA);
         self.indecies = Vec::with_capacity(ATOMCAPA);
         for atom in self.atoms.iter() {
-            let atom_sphere = crate::model::Sphere::new(1.0, atom.xyz(), [0.0, 0.5, 1.0], 10);
+            let atom_sphere = crate::model::Sphere::new(1.0, atom.xyz(), atom.color(), 10);
             self.vertices.push(atom_sphere.vertices);
             self.indecies.push(atom_sphere.indices);
             // for vertex in atom_sphere.vertices.iter() {
@@ -246,8 +248,8 @@ impl PDBSystem {
             let bond = crate::bond::Bond::new(
                 comb[0],
                 comb[1],
-                &self.atoms[comb[0]].atom_name,
-                &self.atoms[comb[1]].atom_name,
+                &self.atoms[comb[0]].element,
+                &self.atoms[comb[1]].element,
             );
             if bond.is_formed(&self.atoms) {
                 self.bonds.push(bond);
@@ -265,6 +267,7 @@ pub struct PDBAtom {
     pub residue_name: String,
     pub atom_id: usize,
     pub atom_name: String,
+    pub element: Option<pdbtbx::Element>,
     pub x: f32, // angstrom
     pub y: f32,
     pub z: f32,
@@ -275,4 +278,42 @@ impl PDBAtom {
     pub fn xyz(&self) -> [f32; 3] {
         [self.x, self.y, self.z]
     }
+
+    pub fn color(&self) -> [f32; 3] {
+        match self.element {
+            Some(e) => {
+                match e {
+                    pdbtbx::Element::O => {
+                        // red
+                        [1.0, 0.0, 0.0]
+                    },
+                    pdbtbx::Element::C => {
+                        // blue green
+                        [0.0, 1.0, 1.0]
+                    },
+                    pdbtbx::Element::N => {
+                        // blue
+                        [0.0, 0.0, 1.0]
+                    },
+                    pdbtbx::Element::S => {
+                        // yellow
+                        [1.0, 1.0, 0.0]
+                    },
+                    pdbtbx::Element::H => {
+                        // white
+                        [1.0, 1.0, 1.0]
+                    },
+                    _ => {
+                        // white
+                        [1.0, 1.0, 1.0]
+                    }
+                }
+            },
+            None => {
+                // white
+                [1.0, 1.0, 1.0]
+            },
+        }
+    }
 }
+
