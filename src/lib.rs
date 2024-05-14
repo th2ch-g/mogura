@@ -771,8 +771,11 @@ impl State {
 
     pub fn renew(&mut self) {
         let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
-            let (input_pdb, _errors) =
-                pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap();
+            let (input_pdb, _errors) = if cfg!(target_arch = "wasm32") {
+                pdb::parse_pdb(&pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap()
+            } else {
+                pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap()
+            };
             let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
             pdbsystem.update_bonds_all();
             pdbsystem
