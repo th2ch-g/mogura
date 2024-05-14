@@ -55,7 +55,7 @@ docker build -t mogura .
 [tasks.run-docker]
 script = '''
 xhost +
-docker run --rm -e DISPLAY=host.docker.internal:0 -v ~/.Xauthority:/root/.Xauthority -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v $PWD:/mnt -w /mnt mogura mogura
+docker run --rm -e DISPLAY=host.docker.internal:0 -v ~/.Xauthority:/root/.Xauthority -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v $PWD:/mnt -w /mnt mogura mogura "${@}"
 xhost -
 '''
 

@@ -1362,7 +1362,6 @@ pub async fn run() {
                     elwt.exit();
                 }
                 if windowstate.settings.borrow().renew_render {
-                    dbg!(&windowstate.settings);
                     windowstate.settings.borrow_mut().renew_render = false;
                     windowstate.renew();
                 }
