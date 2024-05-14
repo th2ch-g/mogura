@@ -55,9 +55,8 @@ impl EguiGUI {
                             .add_filter("pdb", &["pdb"])
                             .pick_file()
                         {
-                            self.settings.borrow_mut().pdbcontent = Some(
-                                std::fs::read_to_string(path.display().to_string()).unwrap()
-                            );
+                            self.settings.borrow_mut().pdbcontent =
+                                Some(std::fs::read_to_string(path.display().to_string()).unwrap());
                             self.settings.borrow_mut().renew_render = true;
                         }
                     }
@@ -80,10 +79,13 @@ impl EguiGUI {
                                     let file_content = path.read().await;
                                     match String::from_utf8(file_content) {
                                         Ok(s) => {
-                                            let mut pdbcontent_lock = pdbcontent_sandbox_clone.lock().unwrap();
+                                            let mut pdbcontent_lock =
+                                                pdbcontent_sandbox_clone.lock().unwrap();
                                             *pdbcontent_lock = Some(s);
-                                        },
-                                        Err(e) => { panic!("Could not open the file: {:?}", e); }
+                                        }
+                                        Err(e) => {
+                                            panic!("Could not open the file: {:?}", e);
+                                        }
                                     }
                                 }
                             });
@@ -93,7 +95,8 @@ impl EguiGUI {
 
                 #[cfg(target_arch = "wasm32")]
                 {
-                    let pdbcontent2: Option<String> = self.pdbcontent_sandbox.lock().unwrap().clone();
+                    let pdbcontent2: Option<String> =
+                        self.pdbcontent_sandbox.lock().unwrap().clone();
 
                     if pdbcontent2 != self.settings.borrow().pdbcontent {
                         self.settings.borrow_mut().pdbcontent = pdbcontent2;
@@ -129,7 +132,8 @@ impl EguiGUI {
                                     match download_pdbcontent_from_pdbid(&pdbid) {
                                         Ok(pdbcontent) => {
                                             self.settings.borrow_mut().renew_render = true;
-                                            self.settings.borrow_mut().pdbcontent = Some(pdbcontent);
+                                            self.settings.borrow_mut().pdbcontent =
+                                                Some(pdbcontent);
                                         }
                                         Err(s) => {
                                             eprintln!("Error occurred: {}", s);
@@ -145,17 +149,34 @@ impl EguiGUI {
                                             let mut opts = web_sys::RequestInit::new();
                                             opts.method("GET");
                                             opts.mode(web_sys::RequestMode::Cors);
-                                            let url = format!("https://files.rcsb.org/view/{}.pdb", pdbid);
-                                            let request = web_sys::Request::new_with_str_and_init(&url, &opts).unwrap();
+                                            let url = format!(
+                                                "https://files.rcsb.org/view/{}.pdb",
+                                                pdbid
+                                            );
+                                            let request = web_sys::Request::new_with_str_and_init(
+                                                &url, &opts,
+                                            )
+                                            .unwrap();
                                             let window = gloo::utils::window();
-                                            let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request)).await.unwrap();
-                                            let resp: web_sys::Response = resp_value.dyn_into().unwrap();
-                                            let text = wasm_bindgen_futures::JsFuture::from(resp.text().unwrap()).await.unwrap();
-                                            let mut pdbcontent_lock = pdbcontent_sandbox_clone.lock().unwrap();
+                                            let resp_value = wasm_bindgen_futures::JsFuture::from(
+                                                window.fetch_with_request(&request),
+                                            )
+                                            .await
+                                            .unwrap();
+                                            let resp: web_sys::Response =
+                                                resp_value.dyn_into().unwrap();
+                                            let text = wasm_bindgen_futures::JsFuture::from(
+                                                resp.text().unwrap(),
+                                            )
+                                            .await
+                                            .unwrap();
+                                            let mut pdbcontent_lock =
+                                                pdbcontent_sandbox_clone.lock().unwrap();
                                             *pdbcontent_lock = Some(text.as_string().unwrap());
                                         });
                                     });
-                                    let pdbcontent2: Option<String> = self.pdbcontent_sandbox.lock().unwrap().clone();
+                                    let pdbcontent2: Option<String> =
+                                        self.pdbcontent_sandbox.lock().unwrap().clone();
 
                                     if pdbcontent2 != self.settings.borrow().pdbcontent {
                                         self.settings.borrow_mut().pdbcontent = pdbcontent2;

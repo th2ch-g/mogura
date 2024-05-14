@@ -60,7 +60,8 @@ impl State {
             //     pdbtbx::StrictnessLevel::Loose, // Strict, Medium, Loose
             // )
             // .unwrap();
-            let (input_pdb, _errors) = pdb::parse_pdb(&pdbcontent, pdbtbx::StrictnessLevel::Loose).unwrap();
+            let (input_pdb, _errors) =
+                pdb::parse_pdb(pdbcontent, pdbtbx::StrictnessLevel::Loose).unwrap();
 
             let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
             pdbsystem.update_bonds_all();
@@ -105,7 +106,7 @@ impl State {
                         wgpu::Limits::downlevel_webgl2_defaults()
                     } else {
                         wgpu::Limits::default()
-                    }
+                    },
                 },
                 None,
             )
@@ -777,7 +778,8 @@ impl State {
             // } else {
             //     pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap()
             // };
-            let (input_pdb, _errors) = pdb::parse_pdb(&pdbcontent, pdbtbx::StrictnessLevel::Loose).unwrap();
+            let (input_pdb, _errors) =
+                pdb::parse_pdb(pdbcontent, pdbtbx::StrictnessLevel::Loose).unwrap();
             let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
             pdbsystem.update_bonds_all();
             pdbsystem
@@ -1205,10 +1207,8 @@ impl State {
     }
 }
 
-
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
-
     // let (input_pdb, _errors) = pdbtbx::open(
     //     &cli.pdbfile,
     //     pdbtbx::StrictnessLevel::Loose, // Strict, Medium, Loose
@@ -1256,11 +1256,15 @@ pub async fn run() {
             None
         } else {
             let cli = arg::arg();
-            match cli.pdbfile {
-                Some(pdbfile) => { Some(std::fs::read_to_string(pdbfile).unwrap()) },
-                None => { None }
-            }
-        }).await;
+            // match cli.pdbfile {
+            //     Some(pdbfile) => Some(std::fs::read_to_string(pdbfile).unwrap()),
+            //     None => None,
+            // }
+            cli.pdbfile
+                .map(|pdbfile| std::fs::read_to_string(pdbfile).unwrap())
+        },
+    )
+    .await;
     // let mut last_render_time = std::time::Instant::now();
     event_loop
         .run(move |event, elwt| match event {

@@ -317,8 +317,10 @@ impl PDBAtom {
     }
 }
 
-pub fn parse_pdb(pdbcontent: &str, level: pdbtbx::StrictnessLevel) -> Result<(pdbtbx::PDB, Vec<pdbtbx::PDBError>), Vec<pdbtbx::PDBError>> {
+pub fn parse_pdb(
+    pdbcontent: &str,
+    level: pdbtbx::StrictnessLevel,
+) -> Result<(pdbtbx::PDB, Vec<pdbtbx::PDBError>), Vec<pdbtbx::PDBError>> {
     let reader = std::io::BufReader::new(std::io::Cursor::new(pdbcontent));
     pdbtbx::open_pdb_raw(reader, pdbtbx::Context::show("a.pdb"), level)
 }
-

@@ -428,11 +428,13 @@ impl CameraController {
                 // camera.position += scrollward * self.scroll * self.speed * self.sensitivity * dt;
                 // camera.position.y += (self.amount_up - self.amount_down) * self.speed * dt;
 
-                camera.yaw += cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 / 10000.0;
+                camera.yaw +=
+                    cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 / 10000.0;
                 // camera.yaw += cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 * dt / 10.0;
                 // camera.yaw += cgmath::Rad(self.rotate_horizontal) * self.settings.sensitivity * dt;
 
-                camera.pitch += cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 / 10000.0;
+                camera.pitch +=
+                    cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 / 10000.0;
                 // camera.pitch += cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 * dt / 10.0;
                 // camera.pitch += cgmath::Rad(-self.rotate_vertical) * self.sensitivity * dt;
 

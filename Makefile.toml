@@ -1,5 +1,6 @@
 [env]
 PORT = 8000
+WASM_TMP_DIR = "../mogura-wasm"
 
 [config]
 skip_core_tasks = true
@@ -35,3 +36,13 @@ cd dist
 python -m http.server $PORT
 '''
 
+[tasks.prepare-wasm]
+script = '''
+trunk build --release --public-url .
+rm -f $WASM_TMP_DIR/index.html
+rm -f $WASM_TMP_DIR/mogura-*.js
+rm -f $WASM_TMP_DIR/mogura-*.wasm
+cp -r ./dist/* $WASM_TMP_DIR
+sed -i -e "s/\/.\/mogura-/.\/mogura-/g" $WASM_TMP_DIR/index.html
+rm -f $WASM_TMP_DIR/index.html-e
+'''
