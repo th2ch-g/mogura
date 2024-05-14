@@ -46,3 +46,16 @@ cp -r ./dist/* $WASM_TMP_DIR
 sed -i -e "s/\/.\/mogura-/.\/mogura-/g" $WASM_TMP_DIR/index.html
 rm -f $WASM_TMP_DIR/index.html-e
 '''
+
+[tasks.build-docker]
+script = '''
+docker build -t mogura .
+'''
+
+[tasks.run-docker]
+script = '''
+xhost +
+docker run --rm -e DISPLAY=host.docker.internal:0 -v ~/.Xauthority:/root/.Xauthority -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v $PWD:/mnt -w /mnt mogura mogura
+xhost -
+'''
+
