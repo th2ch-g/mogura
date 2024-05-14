@@ -1,7 +1,8 @@
 #[derive(Debug, Clone)]
 pub struct Settings {
     pub renew_render: bool,
-    pub pdbfile: Option<String>,
+    // pub pdbfile: Option<String>,
+    pub pdbcontent: Option<String>,
     pub camera_mode: crate::camera::CameraMode,
     pub camera_pmode: crate::camera::CameraMode,
     pub projection_mode: crate::camera::ProjectionMode,
@@ -21,10 +22,11 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new(pdbfile: Option<String>, backend_info: wgpu::AdapterInfo) -> Self {
+    pub fn new(pdbcontent: Option<String>, backend_info: wgpu::AdapterInfo) -> Self {
         Self {
             renew_render: false,
-            pdbfile,
+            // pdbfile,
+            pdbcontent,
             camera_mode: crate::camera::CameraMode::Rotation,
             camera_pmode: crate::camera::CameraMode::Rotation,
             // projection_mode: crate::camera::ProjectionMode::Perspective,

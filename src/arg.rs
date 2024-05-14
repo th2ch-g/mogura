@@ -3,7 +3,7 @@ use clap::Parser;
 #[derive(Parser, Debug, Clone)]
 #[clap(version, about)]
 pub struct MainArg {
-    /// Path to PDB file (.pdb, .cif)
+    /// Path to PDB file (.pdb)
     pub pdbfile: Option<String>,
 }
 

@@ -53,13 +53,14 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: winit::window::Window, pdbfile: Option<String>) -> Self {
-        let mut pdbsystem = if let Some(ref pdbfile) = pdbfile {
-            let (input_pdb, _errors) = pdbtbx::open(
-                pdbfile,
-                pdbtbx::StrictnessLevel::Loose, // Strict, Medium, Loose
-            )
-            .unwrap();
+    pub async fn new(window: winit::window::Window, pdbcontent: Option<String>) -> Self {
+        let mut pdbsystem = if let Some(ref pdbcontent) = pdbcontent {
+            // let (input_pdb, _errors) = pdbtbx::open(
+            //     pdbfile,
+            //     pdbtbx::StrictnessLevel::Loose, // Strict, Medium, Loose
+            // )
+            // .unwrap();
+            let (input_pdb, _errors) = pdb::parse_pdb(&pdbcontent, pdbtbx::StrictnessLevel::Loose).unwrap();
 
             let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
             pdbsystem.update_bonds_all();
@@ -87,7 +88,7 @@ impl State {
             .unwrap();
 
         let settings = std::rc::Rc::new(std::cell::RefCell::new(settings::Settings::new(
-            pdbfile.clone(),
+            pdbcontent.clone(),
             adapter.get_info(),
         )));
 
@@ -770,12 +771,13 @@ impl State {
     }
 
     pub fn renew(&mut self) {
-        let mut pdbsystem = if let Some(pdbfile) = &self.settings.borrow().pdbfile {
-            let (input_pdb, _errors) = if cfg!(target_arch = "wasm32") {
-                pdb::parse_pdb(&pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap()
-            } else {
-                pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap()
-            };
+        let mut pdbsystem = if let Some(pdbcontent) = &self.settings.borrow().pdbcontent {
+            // let (input_pdb, _errors) = if cfg!(target_arch = "wasm32") {
+            //     pdb::parse_pdb(&pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap()
+            // } else {
+            //     pdbtbx::open(pdbfile, pdbtbx::StrictnessLevel::Loose).unwrap()
+            // };
+            let (input_pdb, _errors) = pdb::parse_pdb(&pdbcontent, pdbtbx::StrictnessLevel::Loose).unwrap();
             let mut pdbsystem = pdb::PDBSystem::from(&input_pdb);
             pdbsystem.update_bonds_all();
             pdbsystem
@@ -1254,7 +1256,10 @@ pub async fn run() {
             None
         } else {
             let cli = arg::arg();
-            cli.pdbfile
+            match cli.pdbfile {
+                Some(pdbfile) => { Some(std::fs::read_to_string(pdbfile).unwrap()) },
+                None => { None }
+            }
         }).await;
     // let mut last_render_time = std::time::Instant::now();
     event_loop
