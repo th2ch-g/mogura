@@ -3,13 +3,18 @@ use std::io::Write;
 #[derive(Debug, Clone)]
 pub struct EguiGUI {
     pub settings: std::rc::Rc<std::cell::RefCell<crate::settings::Settings>>,
+    pdbfile_sandbox: std::sync::Arc<std::sync::Mutex<Option<String>>>,
 }
 
 const LEFT_SIDE_PANEL_DEFAULT_WIDTH: f32 = 200.0;
 
 impl EguiGUI {
     pub fn new(settings: std::rc::Rc<std::cell::RefCell<crate::settings::Settings>>) -> Self {
-        Self { settings }
+        let pdbfile = settings.borrow().pdbfile.clone();
+        Self {
+            settings,
+            pdbfile_sandbox: std::sync::Arc::new(std::sync::Mutex::new(pdbfile)),
+        }
     }
     pub fn run_gui(&mut self, ctx: &egui::Context) {
         if ctx.input(|i| i.viewport().close_requested()) && !self.settings.borrow().allowed_to_close
@@ -43,14 +48,56 @@ impl EguiGUI {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
                 if ui.button("File").on_hover_text("Load PDB File").clicked() {
-                    if let Some(path) = rfd::FileDialog::new()
-                        .add_filter("pdb", &["pdb"])
-                        .pick_file()
+                    #[cfg(not(target_arch = "wasm32"))]
                     {
-                        self.settings.borrow_mut().pdbfile = Some(path.display().to_string());
+                        if let Some(path) = rfd::FileDialog::new()
+                            .add_filter("pdb", &["pdb"])
+                            .pick_file()
+                        {
+                            self.settings.borrow_mut().pdbfile = Some(path.display().to_string());
+                            self.settings.borrow_mut().renew_render = true;
+                        }
+                    }
+
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        let pdbfile_sandbox_clone = self.pdbfile_sandbox.clone();
+
+                        let task = rfd::AsyncFileDialog::new()
+                            .add_filter("pdb", &["pdb"])
+                            .pick_file();
+
+                        pollster::block_on(async {
+                            wasm_bindgen_futures::spawn_local(async move {
+                                let path = task.await;
+                                if let Some(path) = path {
+                                    // rfd in wasm, need to use read instead of file path
+                                    // let mut pdbfile_lock = pdbfile_sandbox_clone.lock().unwrap();
+                                    // *pdbfile_lock = Some(path.file_name().to_owned());
+                                    let file_content = path.read().await;
+                                    match String::from_utf8(file_content) {
+                                        Ok(s) => {
+                                            let mut pdbcontent_lock = pdbfile_sandbox_clone.lock().unwrap();
+                                            *pdbcontent_lock = Some(s);
+                                        },
+                                        Err(e) => { panic!("Could not open the file: {:?}", e); }
+                                    }
+                                }
+                            });
+                        });
+                    }
+                }
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let pdbfile2: Option<String> = self.pdbfile_sandbox.lock().unwrap().clone();
+
+                    if pdbfile2 != self.settings.borrow().pdbfile {
+                        self.settings.borrow_mut().pdbfile = pdbfile2;
                         self.settings.borrow_mut().renew_render = true;
                     }
                 }
+
                 ui.separator();
                 if ui
                     .button("Download")
@@ -73,14 +120,23 @@ impl EguiGUI {
                             .show(ui);
                             if ui.button("Start to download").clicked() {
                                 let pdbid = self.settings.borrow().download_pdbid.clone();
-                                match download_pdbfile_from_pdbid(&pdbid) {
-                                    Ok(pdbfile) => {
-                                        self.settings.borrow_mut().renew_render = true;
-                                        self.settings.borrow_mut().pdbfile = Some(pdbfile);
+
+                                #[cfg(not(target_arch = "wasm32"))]
+                                {
+                                    match download_pdbfile_from_pdbid(&pdbid) {
+                                        Ok(pdbfile) => {
+                                            self.settings.borrow_mut().renew_render = true;
+                                            self.settings.borrow_mut().pdbfile = Some(pdbfile);
+                                        }
+                                        Err(s) => {
+                                            eprintln!("Error occurred: {}", s);
+                                        }
                                     }
-                                    Err(s) => {
-                                        eprintln!("Error occurred: {}", s);
-                                    }
+                                }
+
+                                #[cfg(target_arch = "wasm32")]
+                                {
+
                                 }
                             }
                         });
@@ -241,6 +297,7 @@ impl EguiGUI {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn download_pdbfile_from_pdbid(pdbid: &str) -> anyhow::Result<String, anyhow::Error> {
     let response = reqwest::blocking::Client::new()
         .get(format!("https://files.rcsb.org/view/{}.pdb", pdbid))

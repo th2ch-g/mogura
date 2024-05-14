@@ -1,5 +1,5 @@
 [package]
-name = "mogura"
+name = "mogura-core"
 version = "0.1.0"
 edition = "2021"
 authors = ["th"]
@@ -15,17 +15,28 @@ cgmath = "0.18"
 env_logger = "0.10"
 pollster = "0.3"
 log = "0.4"
-wgpu = "0.18"
-# winit = "0.28"
 winit = { version = "0.29.10", features = ["rwh_05"] }
 clap = { version = "3.2.22", features = ["derive"] }
 pdbtbx = "0.11.0"
 egui = "0.25.0"
 egui-wgpu = "0.25.0"
-egui-winit = "0.25.0"
 rfd = "0.13.0"
 itertools = "0.12.1"
 reqwest = { version = "0.12.4", features = ["blocking"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+wgpu = "0.18"
+egui-winit = "0.25.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { version = "0.18", features = ["webgl"] }
+egui-winit = { version = "0.25.0", default-features = false, features = ["links"] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.34"
+web-sys = { version = "0.3", features = ["Document", "Window", "Element"] }
+console_error_panic_hook = "0.1.7"
+tracing-wasm = "0.2.1"
+console_log = "1.0"
 
 # [profile.release]
 # lto = true

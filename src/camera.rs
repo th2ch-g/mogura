@@ -400,8 +400,12 @@ impl CameraController {
         self.sphere.renew(position, self.center);
     }
 
-    pub fn update_camera(&mut self, camera: &mut Camera, dt: std::time::Duration) {
-        let dt = dt.as_secs_f32();
+    pub fn update_camera(
+        &mut self,
+        camera: &mut Camera,
+        // dt: std::time::Duration
+    ) {
+        // let dt = dt.as_secs_f32();
 
         let mut settings = self.settings.borrow_mut();
         match settings.camera_mode {
@@ -419,17 +423,17 @@ impl CameraController {
                 let scrollward =
                     cgmath::Vector3::new(pitch_cos * yaw_cos, pitch_sin, pitch_cos * yaw_sin)
                         .normalize();
-                camera.position +=
-                    scrollward * self.scroll * settings.camera_speed as f32 * dt / 10.0;
+                camera.position += scrollward * self.scroll * settings.camera_speed as f32 / 100.0;
+                // camera.position += scrollward * self.scroll * settings.camera_speed as f32 * dt / 10.0;
                 // camera.position += scrollward * self.scroll * self.speed * self.sensitivity * dt;
                 // camera.position.y += (self.amount_up - self.amount_down) * self.speed * dt;
 
-                camera.yaw +=
-                    cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 * dt / 10.0;
+                camera.yaw += cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 / 10000.0;
+                // camera.yaw += cgmath::Rad(self.rotate_horizontal) * settings.camera_speed as f32 * dt / 10.0;
                 // camera.yaw += cgmath::Rad(self.rotate_horizontal) * self.settings.sensitivity * dt;
 
-                camera.pitch +=
-                    cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 * dt / 10.0;
+                camera.pitch += cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 / 10000.0;
+                // camera.pitch += cgmath::Rad(-self.rotate_vertical) * settings.camera_speed as f32 * dt / 10.0;
                 // camera.pitch += cgmath::Rad(-self.rotate_vertical) * self.sensitivity * dt;
 
                 if camera.pitch < -cgmath::Rad(SAFE_FRAC_PI_2) {

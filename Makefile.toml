@@ -1,0 +1,37 @@
+[env]
+PORT = 8000
+
+[config]
+skip_core_tasks = true
+
+[tasks.test]
+script = '''
+echo $PORT
+'''
+
+[tasks.fmtlint]
+script = '''
+cargo fmt
+cargo clippy
+'''
+
+[tasks.build]
+command = "cargo"
+args = ["build", "-r"]
+
+[tasks.run]
+command = "cargo"
+args = ["run", "-r"]
+
+[tasks.build-wasm]
+command = "trunk"
+# args = ["build", "--release"]
+args = ["build"]
+
+[tasks.run-wasm]
+dependencies = ["build-wasm"]
+script = '''
+cd dist
+python -m http.server $PORT
+'''
+

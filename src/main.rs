@@ -1,3 +1,3 @@
 fn main() {
-    pollster::block_on(mogura::mogura_run());
+    pollster::block_on(mogura_core::run());
 }

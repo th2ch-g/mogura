@@ -12,6 +12,12 @@ pub mod settings;
 
 use wgpu::util::DeviceExt;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
+pub const WASM_WIDTH: u32 = 1500;
+pub const WASM_HEIGHT: u32 = 800;
+
 // State for wgpu
 pub struct State {
     settings: std::rc::Rc<std::cell::RefCell<settings::Settings>>,
@@ -93,7 +99,12 @@ impl State {
                     // from wgpu
                     // WebGL doesn't support all of wgpu's features, so if
                     // we're building for the web we'll have to disable some.
-                    limits: wgpu::Limits::default(),
+                    // limits: wgpu::Limits::default(),
+                    limits: if cfg!(target_arch = "wasm32") {
+                        wgpu::Limits::downlevel_webgl2_defaults()
+                    } else {
+                        wgpu::Limits::default()
+                    }
                 },
                 None,
             )
@@ -115,8 +126,18 @@ impl State {
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width,
-            height: size.height,
+            // width: size.width,
+            // height: size.height,
+            width: if cfg!(target_arch = "wasm32") {
+                WASM_WIDTH
+            } else {
+                size.width
+            },
+            height: if cfg!(target_arch = "wasm32") {
+                WASM_HEIGHT
+            } else {
+                size.height
+            },
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
@@ -874,13 +895,17 @@ impl State {
         &self.window
     }
 
+    #[allow(unused_variables)]
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        if new_size.width > 0 && new_size.height > 0 {
-            self.projection.resize(new_size.width, new_size.height);
-            self.size = new_size;
-            self.config.width = new_size.width;
-            self.config.height = new_size.height;
-            self.surface.configure(&self.device, &self.config);
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if new_size.width > 0 && new_size.height > 0 {
+                self.projection.resize(new_size.width, new_size.height);
+                self.size = new_size;
+                self.config.width = new_size.width;
+                self.config.height = new_size.height;
+                self.surface.configure(&self.device, &self.config);
+            }
         }
     }
 
@@ -919,11 +944,13 @@ impl State {
         // }
     }
 
-    pub fn update(&mut self, dt: std::time::Duration) {
+    // pub fn update(&mut self, dt: std::time::Duration) {
+    pub fn update(&mut self) {
         // if !self.is_touched {
         //     self.camera_controller.update_camera(&mut self.camera, dt);
         // }
-        self.camera_controller.update_camera(&mut self.camera, dt);
+        // self.camera_controller.update_camera(&mut self.camera, dt);
+        self.camera_controller.update_camera(&mut self.camera);
         self.camera_uniform
             .update_view_proj(&self.camera, &self.projection);
         self.queue.write_buffer(
@@ -1145,8 +1172,16 @@ impl State {
         }
 
         let screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
-            size_in_pixels: [self.config.width, self.config.height],
-            pixels_per_point: self.window().scale_factor() as f32,
+            size_in_pixels: if cfg!(target_arch = "wasm32") {
+                [WASM_WIDTH, WASM_HEIGHT]
+            } else {
+                [self.config.width, self.config.height]
+            },
+            pixels_per_point: if cfg!(target_arch = "wasm32") {
+                1.0
+            } else {
+                self.window().scale_factor() as f32
+            },
         };
 
         self.egui_renderer.draw(
@@ -1165,9 +1200,9 @@ impl State {
     }
 }
 
-// run with pollster::block_on()
-pub async fn mogura_run() {
-    let cli = arg::arg();
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
+pub async fn run() {
 
     // let (input_pdb, _errors) = pdbtbx::open(
     //     &cli.pdbfile,
@@ -1179,7 +1214,15 @@ pub async fn mogura_run() {
     // pdbsystem.update_bonds_all();
     // dbg!(&pdbsystem);
 
-    env_logger::init();
+    #[cfg(target_arch = "wasm32")]
+    {
+        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+        console_log::init_with_level(log::Level::Warn).expect("Could't initialize logger");
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        env_logger::init();
+    }
 
     let event_loop = winit::event_loop::EventLoop::new().unwrap();
     let title = env!("CARGO_PKG_NAME");
@@ -1189,11 +1232,28 @@ pub async fn mogura_run() {
         .build(&event_loop)
         .unwrap();
 
+    #[cfg(target_arch = "wasm32")]
+    {
+        use winit::platform::web::WindowExtWebSys;
+        let web_window = web_sys::window().unwrap();
+        let document = web_window.document().unwrap();
+        let body = document.body().unwrap();
+        let canvas = web_sys::Element::from(window.canvas().unwrap());
+        body.append_child(&canvas).expect("Could not append");
+    }
+
     // event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
     // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
 
-    let mut windowstate = State::new(window, cli.pdbfile).await;
-    let mut last_render_time = std::time::Instant::now();
+    let mut windowstate = State::new(
+        window,
+        if cfg!(target_arch = "wasm32") {
+            None
+        } else {
+            let cli = arg::arg();
+            cli.pdbfile
+        }).await;
+    // let mut last_render_time = std::time::Instant::now();
     event_loop
         .run(move |event, elwt| match event {
             winit::event::Event::DeviceEvent {
@@ -1266,10 +1326,11 @@ pub async fn mogura_run() {
                         // }
                     }
                     winit::event::WindowEvent::RedrawRequested => {
-                        let now = std::time::Instant::now();
-                        let dt = now - last_render_time;
-                        last_render_time = now;
-                        windowstate.update(dt);
+                        // let now = std::time::Instant::now();
+                        // let dt = now - last_render_time;
+                        // last_render_time = now;
+                        // windowstate.update(dt);
+                        windowstate.update();
                         match windowstate.render() {
                             Ok(_) => {}
                             Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
