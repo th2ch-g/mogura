@@ -6,9 +6,7 @@ WASM_TMP_DIR = "../mogura-wasm"
 skip_core_tasks = true
 
 [tasks.test]
-script = '''
-echo $PORT
-'''
+dependencies = ["build", "build-wasm", "build-docker"]
 
 [tasks.fmtlint]
 script = '''
@@ -26,8 +24,7 @@ args = ["run", "-r"]
 
 [tasks.build-wasm]
 command = "trunk"
-# args = ["build", "--release"]
-args = ["build"]
+args = ["build", "--release"]
 
 [tasks.run-wasm]
 dependencies = ["build-wasm"]
