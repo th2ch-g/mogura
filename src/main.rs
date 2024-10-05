@@ -1,3 +1,7 @@
+use bevy::prelude::*;
+
 fn main() {
-    pollster::block_on(mogura_core::run());
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .run();
 }
