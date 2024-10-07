@@ -13,3 +13,7 @@ strip = true
 
 [profile.dev]
 opt-level = 3
+
+[[bin]]
+name = "mogura"
+path = "src/main.rs"
