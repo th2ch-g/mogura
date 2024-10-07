@@ -54,6 +54,19 @@ fn setup_material(
         },
         SimpleSphere,
     ));
+
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Sphere::default()),
+            material: materials.add(StandardMaterial {
+                base_color: Color::srgba(1.0, 2.0, 3.0, 1.0),
+                ..default()
+            }),
+            transform: Transform::from_xyz(-1.0, 1.0, -1.0),
+            ..default()
+        },
+        SimpleSphere,
+    ));
 }
 
 #[derive(Component)]
