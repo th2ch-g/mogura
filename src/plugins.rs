@@ -1,3 +1,4 @@
+use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 
 pub struct MoguraPlugins;
@@ -6,7 +7,8 @@ impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_camera)
             .add_systems(Startup, setup_light)
-            .add_systems(Startup, setup_material);
+            .add_systems(Startup, setup_material)
+            .add_systems(Update, update_camera);
     }
 }
 
@@ -15,6 +17,20 @@ fn setup_camera(mut commands: Commands) {
         transform: Transform::from_xyz(15.0, 5.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
+}
+
+fn update_camera(
+    mut mouse_motion: EventReader<MouseMotion>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
+    mut camera: Query<&mut Transform, With<Camera>>,
+) {
+    if mouse_button.pressed(MouseButton::Left) {
+        let mut camera = camera.single_mut();
+        for motion in mouse_motion.read() {
+            dbg!(&motion.delta.x, &motion.delta.y);
+            dbg!(&camera);
+        }
+    }
 }
 
 fn setup_light(mut commands: Commands) {
