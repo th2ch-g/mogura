@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 mod camera;
+mod light;
 
 pub mod prelude {
     pub use crate::MoguraPlugins;
@@ -11,17 +12,10 @@ pub struct MoguraPlugins;
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, camera::setup_camera)
-            .add_systems(Startup, setup_light)
+            .add_systems(Startup, light::setup_light)
             .add_systems(Startup, setup_material)
             .add_systems(Update, camera::update_camera);
     }
-}
-
-fn setup_light(mut commands: Commands) {
-    commands.spawn(DirectionalLightBundle {
-        transform: Transform::from_translation(Vec3::ONE).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
 }
 
 fn setup_material(
