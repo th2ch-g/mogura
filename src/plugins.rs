@@ -15,11 +15,10 @@ impl Plugin for MoguraPlugins {
 fn setup_camera(mut commands: Commands) {
     let target = Vec3::ZERO;
     let up = Vec3::Y;
-    let init_pos = [0., 30., 0.];
+    let init_pos = Vec3::new(0., 30., 0.);
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz(init_pos[0], init_pos[1], init_pos[2])
-                .looking_at(target, up),
+            transform: Transform::from_translation(init_pos).looking_at(target, up),
             ..default()
         },
         CameraParams {
@@ -49,8 +48,8 @@ fn update_camera(
                     camera_params.target += delta_y;
                 }
                 CameraMode::Rotation => {
-                    let yaw = motion.delta.y * camera_params.sensitivity;
-                    let pitch = motion.delta.x * camera_params.sensitivity;
+                    let yaw = -motion.delta.y * camera_params.sensitivity;
+                    let pitch = -motion.delta.x * camera_params.sensitivity;
                     let roll = 0.;
                     let rotation_quat = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
                     transform.rotation = rotation_quat * transform.rotation;
