@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_mogura::prelude::*;
 
+mod arg;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {

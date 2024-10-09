@@ -9,6 +9,3 @@ bevy.workspace = true
 clap.workspace = true
 mogura-io.workspace = true
 
-[[bin]]
-name = "mogura"
-path = "src/main.rs"

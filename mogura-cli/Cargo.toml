@@ -1,0 +1,14 @@
+[package]
+name = "mogura-cli"
+version = "0.1.0"
+description = "mogura command-line-interface"
+edition.workspace = true
+
+[dependencies]
+bevy.workspace = true
+clap.workspace = true
+bevy-mogura.workspace = true
+
+[[bin]]
+name = "mogura"
+path = "src/main.rs"
