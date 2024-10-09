@@ -1,9 +1,5 @@
 use bevy::{
-    input::mouse::{
-        MouseMotion,
-        // MouseScrollUnit,
-        MouseWheel,
-    },
+    input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
 };
 
@@ -19,7 +15,7 @@ impl Default for CameraParams {
         Self {
             target: Vec3::ZERO,
             mode: CameraMode::Rotation,
-            sensitivity: 0.05,
+            sensitivity: 0.03,
         }
     }
 }
@@ -93,14 +89,6 @@ pub fn update_camera(
             radius = radius.max(0.1);
             transform.translation = camera_params.target + radius * dir;
             transform.look_at(camera_params.target, Vec3::Y);
-            // match scroll.unit {
-            //     MouseScrollUnit::Line => {
-            //         dbg!("a", &scroll.y, &scroll.x);
-            //     },
-            //     MouseScrollUnit::Pixel => {
-            //         dbg!("b", &scroll.y, &scroll.x);
-            //     }
-            // }
         }
     }
 
@@ -111,6 +99,7 @@ pub fn update_camera(
         camera_params.mode = CameraMode::Translation;
     }
 
+    #[inline]
     fn get_unit_vectors_from_quat(quat: Quat) -> (Vec3, Vec3, Vec3) {
         // let x = quat.x;
         // let y = quat.y;
