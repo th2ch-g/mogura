@@ -1,0 +1,8 @@
+[package]
+name = "mogura-io"
+version = "0.1.0"
+description = "data IO processor on mogura"
+edition.workspace = true
+
+[dependencies]
+pdbtbx.workspace = true

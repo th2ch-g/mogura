@@ -1,0 +1,13 @@
+[package]
+name = "bevy-mogura"
+version = "0.1.0"
+edition = "2021"
+description = "A plugin for molecular graphic visualization"
+
+[dependencies]
+bevy.workspace = true
+clap.workspace = true
+
+[[bin]]
+name = "mogura"
+path = "src/main.rs"

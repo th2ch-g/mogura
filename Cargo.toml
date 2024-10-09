@@ -1,10 +1,26 @@
-[package]
-name = "bevy-mogura"
+[workspace]
+resolver = "2"
+members = [
+    "mogura-io",
+    "bevy-mogura",
+]
+
+default-members = [
+    "mogura-io",
+    "bevy-mogura",
+]
+
+[workspace.package]
+name = "mogura"
 version = "0.1.0"
 edition = "2021"
+authors = ["th"]
+description = "A molecular visualizer in Rust"
 
-[dependencies]
+[workspace.dependencies]
 bevy = "0.14.2"
+clap = { version = "3.2.22", features = ["derive"]  }
+pdbtbx = "0.11.0"
 
 [profile.release]
 opt-level = 3
@@ -13,7 +29,3 @@ strip = true
 
 [profile.dev]
 opt-level = 3
-
-[[bin]]
-name = "mogura"
-path = "src/main.rs"
