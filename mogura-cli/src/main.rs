@@ -4,6 +4,7 @@ use bevy_mogura::prelude::*;
 mod arg;
 
 fn main() {
+    let cli = arg::arg();
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -12,6 +13,8 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(MoguraPlugins)
+        .add_plugins(MoguraPlugins {
+            input_structure: cli.structure_file,
+        })
         .run();
 }

@@ -1,3 +1,4 @@
+use crate::MoguraPlugins;
 use bevy::prelude::*;
 use mogura_io::prelude::*;
 
@@ -29,35 +30,36 @@ pub fn setup_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut mogura_plugin: Res<MoguraPlugins>,
 ) {
-    let test_file = "/Users/th/works/Project_mogura/Project_moveit/input/8GNG.pdb";
+    if let Some(structure_file) = &mogura_plugin.input_structure {
+        let structure_data = structure_loader(&structure_file);
+        let atoms = structure_data.atoms().clone();
+        let drawing_method = DrawingMethod::VDW;
 
-    let structure_data = structure_loader(test_file);
-    let atoms = structure_data.atoms().clone();
-    let drawing_method = DrawingMethod::VDW;
-
-    commands
-        .spawn((
-            StructureParams {
-                structure_data: Some(Box::new(structure_data)),
-                drawing_method: drawing_method.clone(),
-            },
-            GlobalTransform::default(),
-            Transform::default(),
-            Visibility::default(),
-            InheritedVisibility::default(),
-        ))
-        .with_children(|parent| match drawing_method {
-            DrawingMethod::VDW => {
-                for atom in atoms {
-                    parent.spawn(PbrBundle {
-                        mesh: meshes.add(Sphere::default()),
-                        transform: Transform::from_translation(atom.xyz().into()),
-                        material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-                        ..default()
-                    });
+        commands
+            .spawn((
+                StructureParams {
+                    structure_data: Some(Box::new(structure_data)),
+                    drawing_method: drawing_method.clone(),
+                },
+                GlobalTransform::default(),
+                Transform::default(),
+                Visibility::default(),
+                InheritedVisibility::default(),
+            ))
+            .with_children(|parent| match drawing_method {
+                DrawingMethod::VDW => {
+                    for atom in atoms {
+                        parent.spawn(PbrBundle {
+                            mesh: meshes.add(Sphere::default()),
+                            transform: Transform::from_translation(atom.xyz().into()),
+                            material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+                            ..default()
+                        });
+                    }
                 }
-            }
-            _ => {}
-        });
+                _ => {}
+            });
+    }
 }

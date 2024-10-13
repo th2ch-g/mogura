@@ -8,11 +8,23 @@ pub mod prelude {
     pub use crate::MoguraPlugins;
 }
 
-pub struct MoguraPlugins;
+#[derive(Clone, Resource)]
+pub struct MoguraPlugins {
+    pub input_structure: Option<String>,
+}
+
+impl Default for MoguraPlugins {
+    fn default() -> Self {
+        Self {
+            input_structure: None,
+        }
+    }
+}
 
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, camera::setup_camera)
+        app.insert_resource(self.clone())
+            .add_systems(Startup, camera::setup_camera)
             .add_systems(Startup, light::setup_light)
             .add_systems(Startup, structure::setup_structure)
             .add_systems(Startup, setup_material)
