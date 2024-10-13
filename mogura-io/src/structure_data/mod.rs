@@ -1,7 +1,7 @@
 pub mod pdb;
 use crate::structure_data::pdb::PDBData;
 
-pub fn load(structure_file: &str) -> impl StructureData {
+pub fn structure_loader(structure_file: &str) -> impl StructureData {
     let extension = std::path::Path::new(structure_file)
         .extension()
         .and_then(|ext| ext.to_str());

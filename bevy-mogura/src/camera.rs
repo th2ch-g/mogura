@@ -42,7 +42,7 @@ pub fn setup_camera(mut commands: Commands) {
         },
         CameraParams {
             target,
-            ..Default::default()
+            ..default()
         },
     ));
 }
