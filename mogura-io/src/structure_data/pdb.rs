@@ -1,14 +1,12 @@
 use crate::structure_data::*;
 
+#[derive(Clone)]
 pub struct PDBData {
     atoms: Vec<Atom>,
 }
 
 impl StructureData for PDBData {
-    fn load(structure_file: &str) -> Self
-    where
-        Self: Sized,
-    {
+    fn load(structure_file: &str) -> Self {
         let content = std::fs::read_to_string(structure_file).unwrap();
         let reader = std::io::BufReader::new(std::io::Cursor::new(content));
         let (input_pdb, _errors) = pdbtbx::open_pdb_raw(

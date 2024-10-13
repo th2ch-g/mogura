@@ -20,13 +20,19 @@ pub fn structure_loader(structure_file: &str) -> impl StructureData {
     }
 }
 
-pub trait StructureData {
+pub trait StructureData: Sync + Send {
     fn load(structure_file: &str) -> Self
     where
         Self: Sized;
     // fn export(output_path: &str);
     fn atoms(&self) -> &Vec<Atom>;
 }
+
+// impl Clone for Box<dyn StructureData> {
+//     fn clone(&self) -> Box<dyn StructureData> {
+//         self.clone_box()
+//     }
+// }
 
 #[derive(Debug, Clone)]
 pub struct Atom {
