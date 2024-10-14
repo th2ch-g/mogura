@@ -26,6 +26,18 @@ pub trait StructureData: Sync + Send {
         Self: Sized;
     // fn export(output_path: &str);
     fn atoms(&self) -> &Vec<Atom>;
+    fn center(&self) -> [f32; 3] {
+        let mut center = [0., 0., 0.];
+        for atom in self.atoms() {
+            center[0] += atom.x();
+            center[1] += atom.y();
+            center[2] += atom.z();
+        }
+        center[0] /= self.atoms().len() as f32;
+        center[1] /= self.atoms().len() as f32;
+        center[2] /= self.atoms().len() as f32;
+        center
+    }
 }
 
 // impl Clone for Box<dyn StructureData> {

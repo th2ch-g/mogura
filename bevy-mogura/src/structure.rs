@@ -30,9 +30,9 @@ pub fn setup_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut mogura_plugin: Res<MoguraPlugins>,
+    mut mogura_plugins: Res<MoguraPlugins>,
 ) {
-    if let Some(structure_file) = &mogura_plugin.input_structure {
+    if let Some(structure_file) = &mogura_plugins.input_structure {
         let structure_data = structure_loader(&structure_file);
         let atoms = structure_data.atoms().clone();
         let drawing_method = DrawingMethod::VDW;

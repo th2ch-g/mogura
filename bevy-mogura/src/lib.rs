@@ -24,9 +24,15 @@ impl Default for MoguraPlugins {
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.clone())
-            .add_systems(Startup, camera::setup_camera)
             .add_systems(Startup, light::setup_light)
-            .add_systems(Startup, structure::setup_structure)
+            .add_systems(
+                Startup,
+                (
+                    (camera::setup_camera, structure::setup_structure)
+                        .before(camera::set_look_at_center),
+                    camera::set_look_at_center,
+                ),
+            )
             .add_systems(Startup, setup_material)
             .add_systems(Update, camera::update_camera);
     }

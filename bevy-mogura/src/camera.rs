@@ -1,3 +1,4 @@
+use crate::structure::StructureParams;
 use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
@@ -24,6 +25,20 @@ impl Default for CameraParams {
 enum CameraMode {
     Rotation,
     Translation,
+}
+
+pub fn set_look_at_center(
+    mut camera: Query<(&mut Transform, &mut CameraParams), With<Camera>>,
+    mut structure_params: Query<&mut StructureParams>,
+) {
+    let structure_params = structure_params.single();
+    let (mut transform, mut camera_params) = camera.single_mut();
+    if let Some(structure_data) = &structure_params.structure_data {
+        let center = structure_data.center();
+        transform.translation = Vec3::new(center[0], center[1] * 2., center[2]);
+        camera_params.target = Vec3::new(center[0], center[1], center[2]);
+        transform.look_at(camera_params.target, Vec3::Y);
+    }
 }
 
 pub fn setup_camera(mut commands: Commands) {
