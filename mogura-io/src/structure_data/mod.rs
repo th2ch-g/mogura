@@ -40,12 +40,6 @@ pub trait StructureData: Sync + Send {
     }
 }
 
-// impl Clone for Box<dyn StructureData> {
-//     fn clone(&self) -> Box<dyn StructureData> {
-//         self.clone_box()
-//     }
-// }
-
 #[derive(Debug, Clone)]
 pub struct Atom {
     id: usize,

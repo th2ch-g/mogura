@@ -23,6 +23,7 @@ enum DrawingMethod {
     VDW,
     Licorise,
     CPK,
+    Cartoon,
     NewCartoon,
 }
 
@@ -33,6 +34,8 @@ pub fn setup_structure(
     mut mogura_plugins: Res<MoguraPlugins>,
 ) {
     if let Some(structure_file) = &mogura_plugins.input_structure {
+        // todo: use ..default
+        // system scheduling ?
         let structure_data = structure_loader(&structure_file);
         let atoms = structure_data.atoms().clone();
         let drawing_method = DrawingMethod::VDW;

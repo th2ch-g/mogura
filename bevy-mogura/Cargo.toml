@@ -6,6 +6,4 @@ description = "A plugin for molecular graphic visualization"
 
 [dependencies]
 bevy.workspace = true
-clap.workspace = true
 mogura-io.workspace = true
-
