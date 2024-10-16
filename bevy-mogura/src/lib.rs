@@ -34,7 +34,9 @@ impl Plugin for MoguraPlugins {
                 ),
             )
             .add_systems(Startup, setup_material)
-            .add_systems(Update, camera::update_camera);
+            .add_systems(Update, camera::update_camera_pos)
+            .add_systems(Update, camera::update_camera_scroll)
+            .add_systems(Update, camera::update_camera_mode);
     }
 }
 
