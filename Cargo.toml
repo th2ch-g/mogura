@@ -20,9 +20,10 @@ authors = ["th"]
 description = "A molecular visualizer in Rust"
 
 [workspace.dependencies]
-bevy = "0.14.2"
+bevy = "0.15.0"
 clap = { version = "3.2.22", features = ["derive"]  }
 pdbtbx = "0.11.0"
+bevy-mogura-trackball = { path = "./bevy-mogura-trackball/" }
 bevy-mogura = { path = "./bevy-mogura/" }
 mogura-io = { path = "./mogura-io/" }
 mogura-cli = { path = "./mogura-cli/" }

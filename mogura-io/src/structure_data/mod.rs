@@ -20,6 +20,7 @@ pub fn structure_loader(structure_file: &str) -> impl StructureData {
     }
 }
 
+
 pub trait StructureData: Sync + Send {
     fn load(structure_file: &str) -> Self
     where
@@ -37,6 +38,20 @@ pub trait StructureData: Sync + Send {
         center[1] /= self.atoms().len() as f32;
         center[2] /= self.atoms().len() as f32;
         center
+    }
+    fn bonds(&self) -> Vec<(usize, usize)> {
+        const GENERAL_BOND_CUTOFF: f32 = 1.6;
+        let n = self.atoms().len();
+        let mut bonds = Vec::with_capacity(n * n);
+        let atoms = self.atoms();
+        for i in 0..n {
+            for j in 0..i {
+                if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
+                    bonds.push((i, j));
+                }
+            }
+        }
+        bonds
     }
 }
 
@@ -68,6 +83,15 @@ impl Atom {
     }
     pub fn xyz(&self) -> [f32; 3] {
         [self.x, self.y, self.z]
+    }
+    pub fn distance2(&self, other: &Atom) -> f32 {
+        let dx = self.x - other.x;
+        let dy = self.y - other.y;
+        let dz = self.z - other.z;
+        dx.powi(2) + dy.powi(2) + dz.powi(2)
+    }
+    pub fn distance(&self, other: &Atom) -> f32 {
+        self.distance2(other).sqrt()
     }
 }
 
