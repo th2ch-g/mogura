@@ -40,6 +40,7 @@ impl Plugin for MoguraPlugins {
     }
 }
 
+// for tmp
 fn setup_material(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,

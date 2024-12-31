@@ -10,7 +10,7 @@ pub struct CameraParams {
     pub target: Vec3,
     pub mode: CameraMode,
     pub sensitivity: f32,
-    pub pre_mouse: Vec2,
+    pub pre_mouse: Option<Vec2>,
 }
 
 impl Default for CameraParams {
@@ -19,7 +19,7 @@ impl Default for CameraParams {
             target: Vec3::ZERO,
             mode: CameraMode::Rotation,
             sensitivity: 0.03,
-            pre_mouse: Vec2::new(0., 0.),
+            pre_mouse: None,
         }
     }
 }
@@ -140,12 +140,22 @@ pub fn update_camera_pos(
 
                     // rotater
                     // let mut radius = (transform.translation - camera_params.target).length();
-                    let pre_mouse = camera_params.pre_mouse;
+                    let pre_mouse = match camera_params.pre_mouse {
+                        Some(p) => p,
+                        None => Vec2::new(win_x, win_y),
+                    };
                     let p = mapped_shoemake(pre_mouse.x, pre_mouse.y, 1.).normalize();
                     let q = mapped_shoemake(win_x, win_y, 1.).normalize();
-                    let theta = p.dot(q).acos() / 2.;
+                    let theta = p.dot(q).clamp(-1., 1.).acos() / 2.;
                     let (theta_sin, theta_cos) = theta.sin_cos();
-                    let n = p.cross(q).normalize();
+                    let n = {
+                        let tmp = p.cross(q);
+                        if tmp.length() != 0. {
+                            tmp.normalize()
+                        } else {
+                            tmp
+                        }
+                    };
                     let theta_sin_n = theta_sin * n;
                     let rotater =
                         Quat::from_xyzw(theta_sin_n.x, theta_sin_n.y, theta_sin_n.z, theta_cos);
@@ -154,8 +164,7 @@ pub fn update_camera_pos(
                     let rotated_offset = rotater * offset;
                     transform.translation = camera_params.target + rotated_offset;
                     transform.look_at(camera_params.target, Vec3::Y);
-
-                    camera_params.pre_mouse = Vec2::new(win_x, win_y);
+                    camera_params.pre_mouse = Some(Vec2::new(win_x, win_y));
                 }
             }
             _ => {}
