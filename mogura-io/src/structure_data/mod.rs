@@ -53,6 +53,49 @@ pub trait StructureData: Sync + Send {
         }
         bonds
     }
+    fn secondary_structure(&self, mode: SecondaryStructureAlgothms) -> Vec<SecondaryStructureType> {
+        let atoms = self.atoms();
+        let n = atoms.len();
+        let mut sstype = Vec::with_capacity(n);
+        match mode {
+            SecondaryStructureAlgothms::DSSP => {
+            }
+            _ => {
+                unimplemented!("{:?} is not supported", mode);
+            }
+        }
+        sstype
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum SecondaryStructureAlgothms {
+    DSSP,
+    // STRIDE,
+    // SST,
+}
+
+#[derive(Debug, Clone)]
+pub enum SecondaryStructureType {
+    DSSPType,
+    // STRIDEType,
+    // SSTType,
+}
+
+// DSSP v4.
+// https://doi.org/10.1021/acs.jcim.3c01344
+#[derive(Debug, Clone)]
+pub enum DSSPType {
+    H, // 4-helix (alpha-helix)
+    B, // residue in isolated beta-bridge (beta-bridge)
+    E, // extended strand participates in beta-ladder (beta-strand)
+    G, // 3-helix (3_10-helix)
+    I, // 5-helix (pi-helix)
+    P, // kappa-helix (polyproline II helix)
+    S, // bend
+    T, // H-bonded turn
+    Break, // =, !, break
+    Loop,  // ~, <space> loop
 }
 
 #[derive(Debug, Clone)]
