@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_mogura_trackball::prelude::*;
-use structure::LineMaterial;
+// use structure::LineMaterial;
 
 mod camera;
 mod light;
@@ -27,7 +27,7 @@ impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(self.clone())
-            .add_plugins(MaterialPlugin::<LineMaterial>::default())
+            // .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
             .add_systems(Startup, light::setup_light)
             // .add_systems(

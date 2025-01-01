@@ -34,7 +34,7 @@ impl Default for StructureParams {
 
 #[derive(Debug, Clone)]
 enum DrawingMethod {
-    Line,
+    // Line,
     VDW,
     Licorise,
     CPK,
@@ -47,7 +47,7 @@ pub fn setup_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut line_materials: ResMut<Assets<LineMaterial>>,
+    // mut line_materials: ResMut<Assets<LineMaterial>>,
     mut mogura_plugins: Res<MoguraPlugins>,
 ) {
     if let Some(structure_file) = &mogura_plugins.input_structure {
@@ -57,8 +57,7 @@ pub fn setup_structure(
         let atoms = structure_data.atoms().clone();
         let bonds = structure_data.bonds().clone();
         // let drawing_method = DrawingMethod::VDW;
-        // let drawing_method = DrawingMethod::Licorise;
-        let drawing_method = DrawingMethod::Line;
+        let drawing_method = DrawingMethod::Licorise;
 
         commands
             .spawn((
@@ -173,24 +172,19 @@ pub fn setup_structure(
                         });
                     }
                 },
-                DrawingMethod::Line => {
-                    for bond in &bonds {
-                        let i = bond.0;
-                        let j = bond.1;
-                        let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
-                        let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        parent.spawn((
-                            Mesh3d(meshes.add(LineList {
-                                lines: vec![(start, end)],
-                            })),
-                            MeshMaterial3d(materials.add(Color::srgb(1., 1., 1.))),
-                            // shader file path problem
-                            // MeshMaterial3d(line_materials.add(LineMaterial {
-                            //     color: LinearRgba::GREEN,
-                            // })),
-                        ));
-                    }
-                },
+                // DrawingMethod::Line => {
+                //     for bond in &bonds {
+                //         let i = bond.0;
+                //         let j = bond.1;
+                //         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
+                //         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
+                //         // shader file path problem
+                //         MeshMaterial3d(line_materials.add(LineMaterial {
+                //             color: LinearRgba::GREEN,
+                //         })),
+                //         ));
+                //     }
+                // },
                 DrawingMethod::Cartoon => {
 
                 },
@@ -203,48 +197,48 @@ pub fn setup_structure(
 }
 
 
-// https://github.com/bevyengine/bevy/blob/main/examples/3d/lines.rs
-/// A list of lines with a start and end position
-#[derive(Debug, Clone)]
-pub struct LineList {
-    lines: Vec<(Vec3, Vec3)>,
-}
-
-impl From<LineList> for Mesh {
-    fn from(line: LineList) -> Self {
-        let vertices: Vec<_> = line.lines.into_iter().flat_map(|(a, b)| [a, b]).collect();
-
-        Mesh::new(
-            // This tells wgpu that the positions are list of lines
-            // where every pair is a start and end point
-            PrimitiveTopology::LineList,
-            RenderAssetUsages::RENDER_WORLD,
-        )
-        // Add the vertices positions as an attribute
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
-    }
-}
-
-#[derive(Asset, TypePath, Default, AsBindGroup, Debug, Clone)]
-pub struct LineMaterial {
-    #[uniform(0)]
-    color: LinearRgba,
-}
-
-impl Material for LineMaterial {
-    fn fragment_shader() -> ShaderRef {
-        const SHADER_ASSET_PATH: &str = "shader/line_material.wgsl";
-        SHADER_ASSET_PATH.into()
-    }
-
-    fn specialize(
-        _pipeline: &MaterialPipeline<Self>,
-        descriptor: &mut RenderPipelineDescriptor,
-        _layout: &MeshVertexBufferLayoutRef,
-        _key: MaterialPipelineKey<Self>,
-    ) -> Result<(), SpecializedMeshPipelineError> {
-        // This is the important part to tell bevy to render this material as a line between vertices
-        descriptor.primitive.polygon_mode = PolygonMode::Line;
-        Ok(())
-    }
-}
+// // https://github.com/bevyengine/bevy/blob/main/examples/3d/lines.rs
+// /// A list of lines with a start and end position
+// #[derive(Debug, Clone)]
+// pub struct LineList {
+//     lines: Vec<(Vec3, Vec3)>,
+// }
+//
+// impl From<LineList> for Mesh {
+//     fn from(line: LineList) -> Self {
+//         let vertices: Vec<_> = line.lines.into_iter().flat_map(|(a, b)| [a, b]).collect();
+//
+//         Mesh::new(
+//             // This tells wgpu that the positions are list of lines
+//             // where every pair is a start and end point
+//             PrimitiveTopology::LineList,
+//             RenderAssetUsages::RENDER_WORLD,
+//         )
+//         // Add the vertices positions as an attribute
+//         .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, vertices)
+//     }
+// }
+//
+// #[derive(Asset, TypePath, Default, AsBindGroup, Debug, Clone)]
+// pub struct LineMaterial {
+//     #[uniform(0)]
+//     color: LinearRgba,
+// }
+//
+// impl Material for LineMaterial {
+//     fn fragment_shader() -> ShaderRef {
+//         const SHADER_ASSET_PATH: &str = "line_material.wgsl";
+//         SHADER_ASSET_PATH.into()
+//     }
+//
+//     fn specialize(
+//         _pipeline: &MaterialPipeline<Self>,
+//         descriptor: &mut RenderPipelineDescriptor,
+//         _layout: &MeshVertexBufferLayoutRef,
+//         _key: MaterialPipelineKey<Self>,
+//     ) -> Result<(), SpecializedMeshPipelineError> {
+//         // This is the important part to tell bevy to render this material as a line between vertices
+//         descriptor.primitive.polygon_mode = PolygonMode::Line;
+//         Ok(())
+//     }
+// }
