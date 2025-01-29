@@ -2,7 +2,6 @@ use crate::MoguraPlugins;
 // use bevy::prelude::*;
 // use bevy::render::mesh::PrimitiveTopology;
 // use bevy::render::render_asset::RenderAssetUsages;
-use mogura_io::prelude::*;
 use bevy::{
     pbr::{MaterialPipeline, MaterialPipelineKey},
     prelude::*,
@@ -16,6 +15,7 @@ use bevy::{
         },
     },
 };
+use mogura_io::prelude::*;
 
 #[derive(Component)]
 pub struct StructureParams {
@@ -81,7 +81,7 @@ pub fn setup_structure(
                             ..default()
                         });
                     }
-                },
+                }
                 DrawingMethod::Licorise => {
                     for atom in &atoms {
                         parent.spawn(PbrBundle {
@@ -114,7 +114,7 @@ pub fn setup_structure(
                             ..default()
                         });
                     }
-                },
+                }
                 DrawingMethod::CPK => {
                     for atom in &atoms {
                         parent.spawn(PbrBundle {
@@ -147,7 +147,7 @@ pub fn setup_structure(
                             ..default()
                         });
                     }
-                },
+                }
                 DrawingMethod::Bonds => {
                     for bond in &bonds {
                         let i = bond.0;
@@ -172,7 +172,7 @@ pub fn setup_structure(
                             ..default()
                         });
                     }
-                },
+                }
                 // DrawingMethod::Line => {
                 //     for bond in &bonds {
                 //         let i = bond.0;
@@ -218,15 +218,12 @@ pub fn setup_structure(
                     //         ..default()
                     //     });
                     // }
-                },
-                DrawingMethod::NewCartoon => {
-
-                },
+                }
+                DrawingMethod::NewCartoon => {}
                 _ => {}
             });
     }
 }
-
 
 // // https://github.com/bevyengine/bevy/blob/main/examples/3d/lines.rs
 // /// A list of lines with a start and end position

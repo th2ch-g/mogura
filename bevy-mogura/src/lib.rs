@@ -25,8 +25,7 @@ impl Default for MoguraPlugins {
 
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(self.clone())
+        app.insert_resource(self.clone())
             // .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
             .add_systems(Startup, light::setup_light)

@@ -20,7 +20,6 @@ pub fn structure_loader(structure_file: &str) -> impl StructureData {
     }
 }
 
-
 pub trait StructureData: Sync + Send {
     fn load(structure_file: &str) -> Self
     where
@@ -53,7 +52,10 @@ pub trait StructureData: Sync + Send {
         }
         bonds
     }
-    fn secondary_structure(&self, mode: SecondaryStructureAlgorithms) -> Vec<SecondaryStructureType> {
+    fn secondary_structure(
+        &self,
+        mode: SecondaryStructureAlgorithms,
+    ) -> Vec<SecondaryStructureType> {
         let residues = self.residues();
         let n = residues.len();
         let mut sstype = vec![SecondaryStructureType::Loop; n];
@@ -67,27 +69,33 @@ pub trait StructureData: Sync + Send {
                         let prev_residue = &residues[i];
                         let residue = &residues[j];
 
-                        let (prev_residue_O, prev_residue_N, prev_residue_C, _) =
+                        let (prev_residue_o, _prev_residue_n, prev_residue_c, _prev_residue_ca) =
                             if let Some(prev_residue) = prev_residue.backbone() {
-                                (prev_residue.0, prev_residue.1, prev_residue.2, prev_residue.3)
+                                (
+                                    prev_residue.0,
+                                    prev_residue.1,
+                                    prev_residue.2,
+                                    prev_residue.3,
+                                )
                             } else {
-                                continue
+                                continue;
                             };
-                        let (residue_O, residue_N, residue_C, _) =
+                        let (residue_o, residue_n, residue_c, _residue_ca) =
                             if let Some(residue) = residue.backbone() {
                                 (residue.0, residue.1, residue.2, residue.3)
                             } else {
-                                continue
+                                continue;
                             };
 
-                        let r_H = residue_C.distance(&residue_O);
+                        let r_h = residue_c.distance(&residue_o);
 
-                        let r_ON = prev_residue_O.distance(&residue_N);
-                        let r_CH = prev_residue_C.distance(&residue_N) + r_H;
-                        let r_OH = prev_residue_O.distance(&residue_C) + r_H;
-                        let r_CN = prev_residue_C.distance(&residue_O);
+                        let r_on = prev_residue_o.distance(&residue_n);
+                        let r_ch = prev_residue_c.distance(&residue_n) + r_h;
+                        let r_oh = prev_residue_o.distance(&residue_c) + r_h;
+                        let r_cn = prev_residue_c.distance(&residue_o);
 
-                        let energy = 0.084 * 332.0 *  (1.0 / r_ON + 1.0 / r_CH - 1.0 / r_OH - 1.0 / r_CN);
+                        let energy =
+                            0.084 * 332.0 * (1.0 / r_on + 1.0 / r_cn - 1.0 / r_oh - 1.0 / r_cn);
 
                         if energy < -0.5 {
                             hydrogen_bonds[i].push(j);
@@ -97,22 +105,21 @@ pub trait StructureData: Sync + Send {
                 }
                 // determine sstype
                 // check DSSPType::H
-                for i in 0..n-4 {
-                    if hydrogen_bonds[i].contains(&(i+4)) {
+                for i in 0..n - 4 {
+                    if hydrogen_bonds[i].contains(&(i + 4)) {
                         sstype[i] = SecondaryStructureType::H;
-                        sstype[i+1] = SecondaryStructureType::H;
-                        sstype[i+2] = SecondaryStructureType::H;
-                        sstype[i+4] = SecondaryStructureType::H;
+                        sstype[i + 1] = SecondaryStructureType::H;
+                        sstype[i + 2] = SecondaryStructureType::H;
+                        sstype[i + 4] = SecondaryStructureType::H;
                     }
                 }
 
                 // check DSSPType::E
-                for i in 0..n {
-                    // if hydrogen_bonds[i].len() > 0 {
-                    //     sstype[i] = SecondaryStructureType::DSSPType(DSSPType::E);
-                    // }
-                }
-
+                // for i in 0..n {
+                //     // if hydrogen_bonds[i].len() > 0 {
+                //     //     sstype[i] = SecondaryStructureType::DSSPType(DSSPType::E);
+                //     // }
+                // }
             }
             _ => {
                 unimplemented!("{:?} is not supported", mode);
@@ -134,18 +141,17 @@ pub enum SecondaryStructureAlgorithms {
 pub enum SecondaryStructureType {
     // DSSP v4.
     // https://doi.org/10.1021/acs.jcim.3c01344
-    H, // 4-helix (alpha-helix)
-    B, // residue in isolated beta-bridge (beta-bridge)
-    E, // extended strand participates in beta-ladder (beta-strand)
-    G, // 3-helix (3_10-helix)
-    I, // 5-helix (pi-helix)
-    P, // kappa-helix (polyproline II helix)
-    S, // bend
-    T, // H-bonded turn
+    H,     // 4-helix (alpha-helix)
+    B,     // residue in isolated beta-bridge (beta-bridge)
+    E,     // extended strand participates in beta-ladder (beta-strand)
+    G,     // 3-helix (3_10-helix)
+    I,     // 5-helix (pi-helix)
+    P,     // kappa-helix (polyproline II helix)
+    S,     // bend
+    T,     // H-bonded turn
     Break, // =, !, break
     Loop,  // ~, <space> loop
 }
-
 
 #[derive(Debug, Clone)]
 pub struct Residue {
@@ -175,39 +181,17 @@ impl Residue {
         center
     }
     pub fn backbone(&self) -> Option<(Atom, Atom, Atom, Atom)> {
-        let atom_O = if let Some(atom_O) = self
-            .atoms
-            .iter()
-            .find(|atom| atom.atom_name == "O") {
-                atom_O
-            } else {
-                return None;
-            };
-        let atom_N = if let Some(atom_N) = self
-            .atoms
-            .iter()
-            .find(|atom| atom.atom_name == "N") {
-                atom_N
-            } else {
-                return None;
-            };
-        let atom_C = if let Some(atom_C) = self
-            .atoms
-            .iter()
-            .find(|atom| atom.atom_name == "C") {
-                atom_C
-            } else {
-                return None;
-            };
-        let atom_CA = if let Some(atom_CA) = self
-            .atoms
-            .iter()
-            .find(|atom| atom.atom_name == "CA") {
-                atom_CA
-            } else {
-                return None;
-            };
-        Some((atom_O.clone(), atom_N.clone(), atom_C.clone(), atom_CA.clone()))
+        let atom_o = self.atoms.iter().find(|atom| atom.atom_name == "O")?;
+        let atom_n = self.atoms.iter().find(|atom| atom.atom_name == "N")?;
+        let atom_c = self.atoms.iter().find(|atom| atom.atom_name == "C")?;
+        let atom_ca = self.atoms.iter().find(|atom| atom.atom_name == "CA")?;
+
+        Some((
+            atom_o.clone(),
+            atom_n.clone(),
+            atom_c.clone(),
+            atom_ca.clone(),
+        ))
     }
 }
 
