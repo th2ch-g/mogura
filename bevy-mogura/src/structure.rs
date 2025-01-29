@@ -54,9 +54,10 @@ pub fn setup_structure(
         // todo: use ..default
         // system scheduling ?
         let structure_data = structure_loader(&structure_file);
+        // let secondary_structure = structure_data.secondary_structure(SecondaryStructureAlgorithms::DSSP);
         let atoms = structure_data.atoms().clone();
+        // let residues = structure_data.residues().clone();
         let bonds = structure_data.bonds().clone();
-        // let drawing_method = DrawingMethod::VDW;
         let drawing_method = DrawingMethod::Licorise;
 
         commands
@@ -186,7 +187,37 @@ pub fn setup_structure(
                 //     }
                 // },
                 DrawingMethod::Cartoon => {
-
+                    // ummm...:
+                    // dbg!(&secondary_structure);
+                    //
+                    // for (idx, residue) in residues.iter().enumerate() {
+                    //     let center = residue.center();
+                    //     let direction = {
+                    //         let center = residue.center();
+                    //         let current = Vec3::new(center[0], center[1], center[2]);
+                    //         let next_center = if idx == 0 {
+                    //             residues[idx + 1].center()
+                    //         } else {
+                    //             residues[idx - 1].center()
+                    //         };
+                    //         let next = Vec3::new(next_center[0], next_center[1], next_center[2]);
+                    //         next - current
+                    //     };
+                    //     let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+                    //     parent.spawn(PbrBundle {
+                    //         mesh: Mesh3d(meshes.add(Cylinder {
+                    //             radius: 1.0,
+                    //             ..default()
+                    //         })),
+                    //         material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+                    //         transform: Transform {
+                    //             translation: center.into(),
+                    //             rotation,
+                    //             scale: Vec3::new(1., 1., 1.),
+                    //         },
+                    //         ..default()
+                    //     });
+                    // }
                 },
                 DrawingMethod::NewCartoon => {
 

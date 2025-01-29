@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_mogura_trackball::prelude::*;
+use bevy_trackball::prelude::*;
 // use structure::LineMaterial;
 
 mod camera;
