@@ -28,12 +28,22 @@ clap = { version = "3.2.22", features = ["derive"]  }
 pdbtbx = "0.11.0"
 bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = "main" }
 anyhow = "1.0"
-reqwest = { version = "0.12.4", features = ["blocking"]  }
+reqwest = { version = "0.12.4", features = ["blocking"] }
+# bevy-inspector-egui = "*"
+# bevy_utils = "*"
+# bevy_window = "*"
+# bevy_egui = "*"
+# egui = "*"
+# egui_dock = "*"
+# bevy_reflect = "*"
+# bevy_render = "*"
+# bevy_asset = "*"
 
 [profile.release]
 opt-level = 3
 lto = true
 strip = true
+codegen-units = 1
 
 [profile.dev]
 opt-level = 3

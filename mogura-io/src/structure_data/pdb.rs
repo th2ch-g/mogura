@@ -87,7 +87,7 @@ impl PDBData {
     }
 
     // TODO: use async
-    #[cfg(not(target = "wasm32"))]
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
         let response = reqwest::blocking::Client::new()
             .get(format!("https://files.rcsb.org/view/{}.pdb", pdbid))
@@ -102,7 +102,7 @@ impl PDBData {
         }
     }
 
-    // #[cfg(target = "wasm32")]
+    // #[cfg(target_arch = "wasm32")]
     // pub fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
     //
     // }
