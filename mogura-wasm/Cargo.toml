@@ -1,0 +1,8 @@
+[package]
+name.workspace = "mogura-wasm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = "mogura wasm deploy"
+
+[dependencies]
