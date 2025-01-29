@@ -87,7 +87,7 @@ pub fn setup_structure(
                         parent.spawn(PbrBundle {
                             mesh: Mesh3d(meshes.add(Sphere::default())),
                             transform: Transform::from_translation(atom.xyz().into()),
-                            material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+                            material: MeshMaterial3d(materials.add(atom.color())),
                             ..default()
                         });
                     }
@@ -105,7 +105,7 @@ pub fn setup_structure(
                                 radius: 0.3,
                                 ..default()
                             })),
-                            material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+                            material: MeshMaterial3d(materials.add(atoms[i].color())),
                             transform: Transform {
                                 translation: center,
                                 rotation,
@@ -163,7 +163,7 @@ pub fn setup_structure(
                                 radius: 0.1,
                                 ..default()
                             })),
-                            material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+                            material: MeshMaterial3d(materials.add(atoms[i].color())),
                             transform: Transform {
                                 translation: center,
                                 rotation,
@@ -224,6 +224,24 @@ pub fn setup_structure(
             });
     }
 }
+
+trait AtomColor {
+    fn color(&self) -> Color;
+}
+
+impl AtomColor for Atom {
+    fn color(&self) -> Color {
+        match self.element() {
+            Some(Element::H) => Color::srgb(0.4, 0.5, 0.3),
+            Some(Element::C) => Color::srgb(0.0, 0.4, 0.3),
+            Some(Element::N) => Color::srgb(0.0, 0.1, 0.9),
+            Some(Element::O) => Color::srgb(0.6, 0.1, 0.1),
+            _ => Color::srgb(0.5, 0.5, 0.0),
+        }
+    }
+}
+
+
 
 // // https://github.com/bevyengine/bevy/blob/main/examples/3d/lines.rs
 // /// A list of lines with a start and end position

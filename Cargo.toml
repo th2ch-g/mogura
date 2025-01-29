@@ -20,13 +20,15 @@ authors = ["th"]
 description = "A molecular visualizer in Rust"
 
 [workspace.dependencies]
+bevy-mogura = { path = "./bevy-mogura/" }
+mogura-io = { path = "./mogura-io/" }
+mogura-cli = { path = "./mogura-cli/" }
 bevy = "0.15.0"
 clap = { version = "3.2.22", features = ["derive"]  }
 pdbtbx = "0.11.0"
 bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = "main" }
-bevy-mogura = { path = "./bevy-mogura/" }
-mogura-io = { path = "./mogura-io/" }
-mogura-cli = { path = "./mogura-cli/" }
+anyhow = "1.0"
+reqwest = { version = "0.12.4", features = ["blocking"]  }
 
 [profile.release]
 opt-level = 3

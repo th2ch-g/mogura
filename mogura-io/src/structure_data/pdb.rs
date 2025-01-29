@@ -9,6 +9,20 @@ pub struct PDBData {
 impl StructureData for PDBData {
     fn load(structure_file: &str) -> Self {
         let content = std::fs::read_to_string(structure_file).unwrap();
+        Self::parse(&content)
+    }
+
+    fn atoms(&self) -> &Vec<Atom> {
+        &self.atoms
+    }
+
+    fn residues(&self) -> &Vec<Residue> {
+        &self.residues
+    }
+}
+
+impl PDBData {
+    fn parse(content: &str) -> Self {
         let reader = std::io::BufReader::new(std::io::Cursor::new(content));
         let (input_pdb, _errors) = pdbtbx::open_pdb_raw(
             reader,
@@ -40,7 +54,11 @@ impl StructureData for PDBData {
                             },
                             atom_id: atom.serial_number(),
                             atom_name: atom.name().to_string(),
-                            element: atom.element().copied(),
+                            element: if let Some(element) = atom.element() {
+                                Element::from_symbol(element.symbol())
+                            } else {
+                                None
+                            },
                             x: atom.x() as f32,
                             y: atom.y() as f32,
                             z: atom.z() as f32,
@@ -68,11 +86,24 @@ impl StructureData for PDBData {
         Self { atoms, residues }
     }
 
-    fn atoms(&self) -> &Vec<Atom> {
-        &self.atoms
+    // TODO: use async
+    #[cfg(not(target = "wasm32"))]
+    pub fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
+        let response = reqwest::blocking::Client::new()
+            .get(format!("https://files.rcsb.org/view/{}.pdb", pdbid))
+            .send()?;
+        let status_code = response.status().as_u16();
+        let content = response.text()?;
+
+        if status_code == 200 {
+            Ok(Self::parse(&content))
+        } else {
+            Err(anyhow::anyhow!("Failed to download PDB file for {}", pdbid))
+        }
     }
 
-    fn residues(&self) -> &Vec<Residue> {
-        &self.residues
-    }
+    // #[cfg(target = "wasm32")]
+    // pub fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
+    //
+    // }
 }

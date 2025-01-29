@@ -6,3 +6,5 @@ edition.workspace = true
 
 [dependencies]
 pdbtbx.workspace = true
+reqwest.workspace = true
+anyhow.workspace = true
