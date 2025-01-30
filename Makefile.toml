@@ -11,5 +11,3 @@ typst -V
 cd mogura-wasm
 trunk serve --open
 '''
-
-

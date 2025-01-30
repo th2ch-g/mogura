@@ -77,8 +77,13 @@ pub fn setup_camera(mut commands: Commands) {
             },
             ..default()
         },
+        MainCamera,
     ));
 }
+
+
+#[derive(Component)]
+pub struct MainCamera;
 
 // pub fn update_camera_mode(
 //     keys: Res<ButtonInput<KeyCode>>,

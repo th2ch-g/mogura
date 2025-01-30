@@ -5,6 +5,7 @@ use bevy_trackball::prelude::*;
 mod camera;
 mod light;
 mod structure;
+mod gui;
 
 pub mod prelude {
     pub use crate::MoguraPlugins;
@@ -26,30 +27,53 @@ impl Default for MoguraPlugins {
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.clone())
+            .insert_resource(gui::UiState::new())
             // .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
+            .add_plugins(bevy_egui::EguiPlugin)
+            .add_plugins(bevy_inspector_egui::DefaultInspectorConfigPlugin)
             .add_systems(Startup, light::setup_light)
             .add_systems(Startup, structure::setup_structure)
-            .add_systems(Startup, setup_test)
-            .add_systems(Startup, camera::setup_camera);
+            .add_systems(Startup, dbg::setup_test)
+            .add_systems(Startup, camera::setup_camera)
+            .add_systems(
+                PreUpdate,
+                gui::absorb_egui_inputs
+                .after(bevy_egui::systems::process_input_system)
+                .before(bevy_egui::EguiSet::BeginPass)
+            )
+            .add_systems(
+                PostUpdate,
+                gui::show_ui_system
+                .before(bevy_egui::EguiSet::ProcessOutput)
+                .before(bevy_egui::systems::end_pass_system)
+                .before(bevy::transform::TransformSystem::TransformPropagate),
+            )
+            .add_systems(PostUpdate, gui::set_camera_viewport.after(gui::show_ui_system))
+            .register_type::<Option<Handle<Image>>>()
+            .register_type::<AlphaMode>();
     }
 }
 
-fn setup_test(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    // circular base
-    commands.spawn((
-        Mesh3d(meshes.add(Circle::new(4.0))),
-        MeshMaterial3d(materials.add(Color::WHITE)),
-        Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
-    ));
-    // cube
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-        Transform::from_xyz(0.0, 0.5, 0.0),
-    ));
+
+mod dbg {
+    use bevy::prelude::*;
+    pub fn setup_test(
+        mut commands: Commands,
+        mut meshes: ResMut<Assets<Mesh>>,
+        mut materials: ResMut<Assets<StandardMaterial>>,
+    ) {
+        // circular base
+        commands.spawn((
+            Mesh3d(meshes.add(Circle::new(4.0))),
+            MeshMaterial3d(materials.add(Color::WHITE)),
+            Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+        ));
+        // cube
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+            MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
+            Transform::from_xyz(0.0, 0.5, 0.0),
+        ));
+    }
 }
