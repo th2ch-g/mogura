@@ -1,0 +1,37 @@
+name: github pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: setup trunk
+        uses: jetli/trunk-action@v0.4.0
+        with:
+            version: latest
+
+      - name: add wasm32
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: build
+        run: trunk build --release --public-url .
+        working-directory: ./mogura-wasm
+
+      - name: deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN  }}
+          publish_dir: ./mogura-wasm/dist
