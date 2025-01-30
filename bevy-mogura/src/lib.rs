@@ -29,18 +29,27 @@ impl Plugin for MoguraPlugins {
             // .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
             .add_systems(Startup, light::setup_light)
-            // .add_systems(
-            //     Startup,
-            //     (
-            //         (camera::setup_camera, structure::setup_structure)
-            //             .before(camera::set_look_at_center),
-            //         camera::set_look_at_center,
-            //     ),
-            // )
             .add_systems(Startup, structure::setup_structure)
+            .add_systems(Startup, setup_test)
             .add_systems(Startup, camera::setup_camera);
-        // .add_systems(Update, camera::update_camera_pos)
-        // .add_systems(Update, camera::update_camera_scroll)
-        // .add_systems(Update, camera::update_camera_mode);
     }
+}
+
+fn setup_test(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // circular base
+    commands.spawn((
+        Mesh3d(meshes.add(Circle::new(4.0))),
+        MeshMaterial3d(materials.add(Color::WHITE)),
+        Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+    ));
+    // cube
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+        MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
+        Transform::from_xyz(0.0, 0.5, 0.0),
+    ));
 }

@@ -241,8 +241,6 @@ impl AtomColor for Atom {
     }
 }
 
-
-
 // // https://github.com/bevyengine/bevy/blob/main/examples/3d/lines.rs
 // /// A list of lines with a start and end position
 // #[derive(Debug, Clone)]

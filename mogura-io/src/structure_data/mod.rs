@@ -238,7 +238,6 @@ impl Atom {
     }
 }
 
-
 // ref: https://github.com/douweschulte/pdbtbx/blob/master/src/structs/elements.rs
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Element {
@@ -620,4 +619,3 @@ const ELEMENT_SYMBOLS: [&str; 118] = [
     "CF", "ES", "FM", "MD", "NO", "LR", "RF", "DB", "SG", "BH", "HS", "MT", "DS", "RG", "CN", "NH",
     "FL", "MC", "LV", "TS", "OG",
 ];
-

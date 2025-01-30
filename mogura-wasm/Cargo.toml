@@ -1,8 +1,10 @@
 [package]
-name.workspace = "mogura-wasm"
+name = "mogura-wasm"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description.workspace = "mogura wasm deploy"
+description = "mogura wasm deploy"
 
 [dependencies]
+bevy-mogura.workspace = true
+bevy.workspace = true
