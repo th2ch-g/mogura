@@ -1,7 +1,6 @@
+use crate::camera;
 use bevy::prelude::*;
 use bevy_file_dialog::prelude::*;
-use crate::camera;
-
 
 #[derive(Default, Resource)]
 pub struct OccupiedScreenSpace {
@@ -13,7 +12,6 @@ pub struct OccupiedScreenSpace {
 
 pub struct TextFileContents;
 
-
 #[cfg(not(target_arch = "wasm32"))]
 #[derive(Component)]
 pub struct SelectedFile(bevy::tasks::Task<Option<std::path::PathBuf>>);
@@ -22,23 +20,24 @@ pub struct SelectedFile(bevy::tasks::Task<Option<std::path::PathBuf>>);
 #[derive(Component)]
 pub struct SelectedFile(bevy::tasks::Task<Option<Vec<u8>>>);
 
-
 pub fn poll_rfd(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SelectedFile)>,
-        mut meshes: ResMut<Assets<Mesh>>,
-        mut materials: ResMut<Assets<StandardMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, mut selected_file) in tasks.iter_mut() {
-        if let Some(result) = bevy::tasks::futures_lite::future::block_on(bevy::tasks::futures_lite::future::poll_once(&mut selected_file.0)) {
+        if let Some(result) = bevy::tasks::futures_lite::future::block_on(
+            bevy::tasks::futures_lite::future::poll_once(&mut selected_file.0),
+        ) {
             println!("{:?}", result);
             commands.entity(entity).remove::<SelectedFile>();
-        // for dbg
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-            MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-            Transform::from_xyz(10.0, 0.5, 0.0),
-        ));
+            // for dbg
+            commands.spawn((
+                Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+                MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
+                Transform::from_xyz(10.0, 0.5, 0.0),
+            ));
         }
     }
 }
@@ -61,7 +60,6 @@ pub fn poll_rfd(
 //     }
 // }
 
-
 pub fn update_gui(
     mut commands: Commands,
     mut contexts: bevy_egui::EguiContexts,
@@ -82,21 +80,16 @@ pub fn update_gui(
                 .hint_text("PDB ID here. e.g. 8GNG")
                 .show(ui);
 
-            if ui.button("Start to download").clicked() {
-
-            }
+            if ui.button("Start to download").clicked() {}
 
             ui.separator();
 
             if ui.button("Select local file").clicked() {
-
                 // commands.dialog().load_file::<TextFileContents>();
 
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    let task = task_pool.spawn(async move {
-                        rfd::FileDialog::new().pick_file()
-                    });
+                    let task = task_pool.spawn(async move { rfd::FileDialog::new().pick_file() });
                     commands.spawn(SelectedFile(task));
                 }
                 #[cfg(target_arch = "wasm32")]
@@ -199,7 +192,6 @@ pub fn update_gui(
 //         ));
 // }
 
-
 // ref: https://github.com/vladbat00/bevy_egui/issues/47
 pub fn absorb_egui_inputs(
     mut contexts: bevy_egui::EguiContexts,
@@ -233,4 +225,3 @@ pub fn absorb_egui_inputs(
         keyboard.pressed(key);
     }
 }
-

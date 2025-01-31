@@ -1,12 +1,12 @@
 use bevy::prelude::*;
-use bevy_trackball::prelude::*;
 use bevy_file_dialog::prelude::*;
+use bevy_trackball::prelude::*;
 // use structure::LineMaterial;
 
 mod camera;
+mod gui;
 mod light;
 mod structure;
-mod gui;
 
 pub mod prelude {
     pub use crate::MoguraPlugins;
@@ -34,8 +34,8 @@ impl Plugin for MoguraPlugins {
             .add_plugins(bevy_egui::EguiPlugin)
             .add_plugins(
                 FileDialogPlugin::new()
-                .with_load_file::<gui::TextFileContents>()
-                .with_save_file::<gui::TextFileContents>(),
+                    .with_load_file::<gui::TextFileContents>()
+                    .with_save_file::<gui::TextFileContents>(),
             )
             .add_systems(Startup, light::setup_light)
             .add_systems(Startup, structure::setup_structure)
@@ -44,8 +44,8 @@ impl Plugin for MoguraPlugins {
             .add_systems(
                 PreUpdate,
                 gui::absorb_egui_inputs
-                .after(bevy_egui::systems::process_input_system)
-                .before(bevy_egui::EguiSet::BeginPass)
+                    .after(bevy_egui::systems::process_input_system)
+                    .before(bevy_egui::EguiSet::BeginPass),
             )
             .add_systems(Update, gui::poll_rfd)
             // .add_systems(Update, (
@@ -54,7 +54,6 @@ impl Plugin for MoguraPlugins {
             .add_systems(Update, gui::update_gui);
     }
 }
-
 
 mod dbg {
     use bevy::prelude::*;
