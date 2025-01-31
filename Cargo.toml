@@ -25,6 +25,7 @@ description = "A molecular visualizer in Rust"
 bevy-mogura = { path = "./bevy-mogura/" }
 mogura-io = { path = "./mogura-io/" }
 mogura-cli = { path = "./mogura-cli/" }
+mogura-wasm = { path = "./mogura-wasm/" }
 bevy = "0.15.0"
 clap = { version = "3.2.22", features = ["derive"]  }
 pdbtbx = "0.11.0"
