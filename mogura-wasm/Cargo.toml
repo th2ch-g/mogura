@@ -8,3 +8,4 @@ description = "mogura wasm deploy"
 [dependencies]
 bevy-mogura.workspace = true
 bevy.workspace = true
+

@@ -27,11 +27,10 @@ impl Default for MoguraPlugins {
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.clone())
-            .insert_resource(gui::UiState::new())
+            .init_resource::<gui::OccupiedScreenSpace>()
             // .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
             .add_plugins(bevy_egui::EguiPlugin)
-            .add_plugins(bevy_inspector_egui::DefaultInspectorConfigPlugin)
             .add_systems(Startup, light::setup_light)
             .add_systems(Startup, structure::setup_structure)
             .add_systems(Startup, dbg::setup_test)
@@ -42,16 +41,7 @@ impl Plugin for MoguraPlugins {
                 .after(bevy_egui::systems::process_input_system)
                 .before(bevy_egui::EguiSet::BeginPass)
             )
-            .add_systems(
-                PostUpdate,
-                gui::show_ui_system
-                .before(bevy_egui::EguiSet::ProcessOutput)
-                .before(bevy_egui::systems::end_pass_system)
-                .before(bevy::transform::TransformSystem::TransformPropagate),
-            )
-            .add_systems(PostUpdate, gui::set_camera_viewport.after(gui::show_ui_system))
-            .register_type::<Option<Handle<Image>>>()
-            .register_type::<AlphaMode>();
+            .add_systems(Update, gui::update_gui);
     }
 }
 

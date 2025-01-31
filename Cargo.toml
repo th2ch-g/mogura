@@ -30,16 +30,8 @@ bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = 
 anyhow = "1.0"
 reqwest = { version = "0.12.4", features = ["blocking"] }
 bevy-inspector-egui = "0.28.1"
-bevy_utils = "*"
-bevy_window = "*"
 bevy_egui = "0.31.0"
 egui = "0.29"
-epaint = "0.29"
-egui_dock = "0.14"
-bevy_reflect = "*"
-bevy_render = "*"
-bevy_asset = "*"
-# profiling = { version = "1.0.16", features = ["type-check"], default-features = false }
 
 [profile.release]
 opt-level = 3
