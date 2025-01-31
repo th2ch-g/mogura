@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_trackball::prelude::*;
+use bevy_file_dialog::prelude::*;
 // use structure::LineMaterial;
 
 mod camera;
@@ -31,6 +32,11 @@ impl Plugin for MoguraPlugins {
             // .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
             .add_plugins(bevy_egui::EguiPlugin)
+            .add_plugins(
+                FileDialogPlugin::new()
+                .with_load_file::<gui::TextFileContents>()
+                .with_save_file::<gui::TextFileContents>(),
+            )
             .add_systems(Startup, light::setup_light)
             .add_systems(Startup, structure::setup_structure)
             .add_systems(Startup, dbg::setup_test)
@@ -41,6 +47,10 @@ impl Plugin for MoguraPlugins {
                 .after(bevy_egui::systems::process_input_system)
                 .before(bevy_egui::EguiSet::BeginPass)
             )
+            .add_systems(Update, gui::poll_rfd)
+            // .add_systems(Update, (
+            //     gui::file_load,
+            // ))
             .add_systems(Update, gui::update_gui);
     }
 }
