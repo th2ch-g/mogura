@@ -1,48 +1,85 @@
-[package]
-name = "mogura-core"
+[workspace]
+resolver = "2"
+members = [
+    "mogura-io",
+    "bevy-mogura",
+    "mogura-cli",
+    "mogura-wasm",
+]
+
+default-members = [
+    "mogura-io",
+    "bevy-mogura",
+    "mogura-cli",
+    "mogura-wasm",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 authors = ["th"]
-description = "A molecular Visualizer in Rust"
+description = "A molecular visualizer in Rust"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-anyhow = "1.0"
-bytemuck = { version = "1.12", features = [ "derive" ] }
-cfg-if = "1"
-cgmath = "0.18"
-env_logger = "0.10"
-pollster = "0.3"
-log = "0.4"
-winit = { version = "0.29.10", features = ["rwh_05"] }
+[workspace.dependencies]
+bevy-mogura = { path = "./bevy-mogura/" }
+mogura-io = { path = "./mogura-io/" }
+mogura-cli = { path = "./mogura-cli/" }
+mogura-wasm = { path = "./mogura-wasm/" }
+# bevy = "0.15.0"
+# remove unnecessary features
+bevy = { version = "0.15.0", default-features = false, features = [
+    "android-game-activity",
+    "android_shared_stdcxx",
+    "animation",
+    "bevy_asset",
+    "bevy_audio",
+    "bevy_color",
+    "bevy_core_pipeline",
+    "bevy_gilrs",
+    "bevy_gizmos",
+    "bevy_gltf",
+    "bevy_mesh_picking_backend",
+    "bevy_pbr",
+    "bevy_picking",
+    "bevy_render",
+    "bevy_scene",
+    "bevy_sprite",
+    "bevy_sprite_picking_backend",
+    "bevy_state",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_ui_picking_backend",
+    "bevy_window",
+    "bevy_winit",
+    "custom_cursor",
+    "default_font",
+    "hdr",
+    "multi_threaded",
+    "png",
+    "smaa_luts",
+    "sysinfo_plugin",
+    "tonemapping_luts",
+    "vorbis",
+    "webgpu",
+    "x11"] }
 clap = { version = "3.2.22", features = ["derive"] }
 pdbtbx = "0.11.0"
-egui = "0.25.0"
-egui-wgpu = "0.25.0"
-rfd = "0.13.0"
-itertools = "0.12.1"
+bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = "main" }
+anyhow = "1.0"
 reqwest = { version = "0.12.4", features = ["blocking"] }
+bevy_egui = "0.31.0"
+egui = "0.29"
+rfd = "0.13.0"
+log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-wgpu = "0.18"
-egui-winit = "0.25.0"
+[profile.release]
+opt-level = "s"
+lto = "fat"
+strip = true
+codegen-units = 1
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wgpu = { version = "0.18", features = ["webgl"] }
-egui-winit = { version = "0.25.0", default-features = false, features = ["links"] }
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.34"
-web-sys = { version = "0.3.55", features = ["Document", "Window", "Element", "Headers", "Request", "RequestInit", "RequestMode", "Response"] }
-console_error_panic_hook = "0.1.7"
-tracing-wasm = "0.2.1"
-console_log = "1.0"
-gloo = "0.5.0"
+[profile.dev]
+opt-level = 1
 
-# [profile.release]
-# lto = true
-# strip = true
-
-[[bin]]
-name = "mogura"
-path = "src/main.rs"
+[profile.dev.package."*"]
+opt-level = 3

@@ -1,0 +1,15 @@
+[package]
+name = "bevy-mogura"
+version = "0.1.0"
+edition = "2021"
+description = "A plugin for molecular graphic visualization"
+
+[dependencies]
+anyhow.workspace = true
+bevy.workspace = true
+bevy_trackball.workspace = true
+mogura-io.workspace = true
+bevy_egui.workspace = true
+egui.workspace = true
+rfd.workspace = true
+log.workspace = true

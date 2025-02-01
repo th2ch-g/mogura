@@ -1,6 +1,12 @@
 # mogura: A molecular graphic visualizer in Rust
 
 ## Quick Start
+### Install
+~~~bash
+
+~~~
+
+### Run mogura
 ~~~bash
 
 ~~~

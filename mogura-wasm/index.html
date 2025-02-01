@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <link data-trunk href="./mogumi.png" rel="icon" />
+    <link rel="icon" href="./mogumi.png" type="image/png">
+    <title>mogura-wasm</title>
+    <style>
+        html {
+            /* Remove touch delay: */
+            touch-action: manipulation;
+        }
+
+        html,
+        body,
+        canvas {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            overflow: hidden;
+            background: black;
+            z-index: 0;
+        }
+
+        /* Position canvas in center-top: */
+        canvas {
+            outline: none;
+            display: block;
+            position: absolute;
+            top: 0%;
+            left: 50%;
+            transform: translate(-50%, 0%);
+        }
+    </style>
+
+<body oncontextmenu="return false;">
+</body>
+
+</html>

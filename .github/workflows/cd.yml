@@ -1,32 +1,37 @@
-name: deploy
+name: github pages
 
 on:
   push:
-    branches: ["main"]
-
-permissions:
-    contents: write
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
 jobs:
-  deploy:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
-          toolchain: nightly
-          target: wasm32-unknown-unknown
-          override: true
-      - uses: Swatinem/rust-cache@v1
+          submodules: true
 
-      - run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
-      - run: ./trunk build --release --public-url .
+      - name: setup trunk
+        uses: jetli/trunk-action@v0.4.0
+        with:
+            version: latest
+
+      - name: add wasm32
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: build
+        run: trunk build --release --public-url .
+        working-directory: ./mogura-wasm
 
       - name: deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN  }}
-          publish_dir: ./dist
-
+          publish_dir: ./mogura-wasm/dist

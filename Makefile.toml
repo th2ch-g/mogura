@@ -1,40 +1,48 @@
 [env]
-PORT = 8000
-WASM_TMP_DIR = "../mogura-wasm"
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 
 [config]
 skip_core_tasks = true
 
-[tasks.test]
-dependencies = ["build", "build-wasm", "build-docker"]
-
-[tasks.fmtlint]
+[tasks.wasm]
+env = { RUSTFLAGS="--cfg web_sys_unstable_apis" }
+workspace = false
 script = '''
-cargo fmt
-cargo clippy
+trunk -V
+cd mogura-wasm
+trunk serve --open
 '''
 
-[tasks.build]
-command = "cargo"
-args = ["build", "-r"]
-
-[tasks.run]
-command = "cargo"
-args = ["run", "-r"]
-
-[tasks.build-wasm]
-command = "trunk"
-args = ["build", "--release"]
-
-[tasks.run-wasm]
-dependencies = ["build-wasm"]
+[tasks.wasm-release]
+env = { RUSTFLAGS="--cfg web_sys_unstable_apis" }
+workspace = false
 script = '''
-cd dist
-python -m http.server $PORT
+trunk -V
+cd mogura-wasm
+trunk build --release
+WASM_FILE_NAME=$(ls dist/*.wasm)
+ls -lh dist
+wasm-opt -Os -o ${WASM_FILE_NAME} ${WASM_FILE_NAME}
+ls -lh dist
 '''
 
-[tasks.prepare-wasm]
+[tasks.wasm-release-open]
+dependencies = ["wasm-release"]
+workspace = false
+env = { RUSTFLAGS="--cfg web_sys_unstable_apis" }
+script = """
+trunk -V
+cd mogura-wasm
+trunk serve --release --open
+"""
+
+[tasks.wasm-prepare]
+description = "for preparing wasm for github.io from local"
+workspace = false
+env = { WASM_TMP_DIR="../../mogura-wasm", RUSTFLAGS="--cfg web_sys_unstable_apis" }
 script = '''
+trunk -V
+cd mogura-wasm
 trunk build --release --public-url .
 rm -f $WASM_TMP_DIR/index.html
 rm -f $WASM_TMP_DIR/mogura-*.js
@@ -43,16 +51,3 @@ cp -r ./dist/* $WASM_TMP_DIR
 sed -i -e "s/\/.\/mogura-/.\/mogura-/g" $WASM_TMP_DIR/index.html
 rm -f $WASM_TMP_DIR/index.html-e
 '''
-
-[tasks.build-docker]
-script = '''
-docker build -t mogura .
-'''
-
-[tasks.run-docker]
-script = '''
-xhost +
-docker run --rm -e DISPLAY=host.docker.internal:0 -v ~/.Xauthority:/root/.Xauthority -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v $PWD:/mnt -w /mnt mogura mogura "${@}"
-xhost -
-'''
-
