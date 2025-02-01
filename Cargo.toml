@@ -35,8 +35,6 @@ reqwest = { version = "0.12.4", features = ["blocking"] }
 bevy_egui = "0.31.0"
 egui = "0.29"
 rfd = "0.13.0"
-# bevy_file_dialog = { git = "https://github.com/richardhozak/bevy_file_dialog.git", branch = "main" }
-
 
 
 [profile.release]
@@ -44,6 +42,7 @@ opt-level = 3
 lto = true
 strip = true
 codegen-units = 1
+
 
 [profile.dev]
 opt-level = 3

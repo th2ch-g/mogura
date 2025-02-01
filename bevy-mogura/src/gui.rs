@@ -2,7 +2,6 @@ use crate::camera;
 use crate::*;
 use bevy::prelude::*;
 use mogura_io::prelude::*;
-// use bevy_file_dialog::prelude::*;
 
 #[derive(Default, Resource)]
 pub struct OccupiedScreenSpace {
@@ -18,8 +17,6 @@ pub struct SelectedFile(bevy::tasks::Task<Option<(String, String)>>);
 pub fn poll_rfd(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SelectedFile)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut mogura_state: ResMut<MoguraState>,
     mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
 ) {
@@ -27,9 +24,13 @@ pub fn poll_rfd(
         if let Some(result) = bevy::tasks::futures_lite::future::block_on(
             bevy::tasks::futures_lite::future::poll_once(&mut selected_file.0),
         ) {
-            let (path, content) = result.unwrap();
-
             commands.entity(entity).despawn_recursive();
+
+            let (path, content) = if let Some(result) = result {
+                result
+            } else {
+                return;
+            };
 
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -58,39 +59,33 @@ pub fn poll_rfd(
     }
 }
 
-// bevy_file_dialog
-// pub struct TextFileContents;
-// pub fn file_load(
-//     mut commands: Commands,
-//         mut meshes: ResMut<Assets<Mesh>>,
-//         mut materials: ResMut<Assets<StandardMaterial>>,
-//     mut ev_loaded: EventReader<DialogFileLoaded<TextFileContents>>,
-//     mut mogura_state: ResMut<MoguraState>,
-//     mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>
-// ) {
-//     for ev in ev_loaded.read() {
-//         println!("FileName: {:?}\nContent: {:?}", ev.file_name, std::str::from_utf8(&ev.contents).unwrap());
-//
-//         let path = &ev.file_name;
-//
-//         #[cfg(not(target_arch = "wasm32"))] {
-//             mogura_state.structure_file = Some(ev.file_name);
-//             mogura_state.structure_data = Some(Box::new(structure_loader(&path)));
-//             mogura_state.redraw = true;
-//         }
-//
-//         for (entity, structure_params) in current_visualized_structure.iter_mut() {
-//             commands.entity(entity).despawn_recursive();
-//         }
-//
-//         // for dbg
-//         commands.spawn((
-//             Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-//             MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-//             Transform::from_xyz(10.0, 0.5, 0.0),
-//         ));
-//     }
-// }
+pub fn poll_downloadpdb(
+    mut commands: Commands,
+    mut tasks: Query<(Entity, &mut DownloadPDB)>,
+    mut mogura_state: ResMut<MoguraState>,
+    mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
+) {
+    for (entity, mut downloadded_pdb) in tasks.iter_mut() {
+        if let Some(result) = bevy::tasks::futures_lite::future::block_on(
+            bevy::tasks::futures_lite::future::poll_once(&mut downloadded_pdb.0),
+        ) {
+            commands.entity(entity).despawn_recursive();
+
+            if let Ok(structure_data) = result {
+                mogura_state.redraw = true;
+                mogura_state.structure_data = Some(Box::new(structure_data));
+                mogura_state.structure_file = None;
+
+                for (entity, structure_params) in current_visualized_structure.iter_mut() {
+                    commands.entity(entity).despawn_recursive();
+                }
+            }
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct DownloadPDB(bevy::tasks::Task<Result<PDBData, anyhow::Error>>);
 
 pub fn update_gui(
     mut commands: Commands,
@@ -112,14 +107,16 @@ pub fn update_gui(
                 .hint_text("PDB ID here. e.g. 8GNG")
                 .show(ui);
 
-            if ui.button("Start to download").clicked() {}
+            if ui.button("Start to download").clicked() {
+                let target_pdbid_clone = target_pdbid.clone();
+                let task =
+                    task_pool.spawn(async move { PDBData::download(&target_pdbid_clone).await });
+                commands.spawn(DownloadPDB(task));
+            }
 
             ui.separator();
 
             if ui.button("Select local file").clicked() {
-                // bevy_file_dialog
-                // commands.dialog().load_file::<TextFileContents>();
-
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     let task = task_pool.spawn(async move {

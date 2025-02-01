@@ -1,6 +1,9 @@
 use crate::structure_data::*;
 
-#[derive(Clone)]
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
+#[derive(Clone, Debug)]
 pub struct PDBData {
     atoms: Vec<Atom>,
     residues: Vec<Residue>,
@@ -87,7 +90,7 @@ impl PDBData {
 
     // TODO: use async
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
+    pub async fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
         let response = reqwest::blocking::Client::new()
             .get(format!("https://files.rcsb.org/view/{}.pdb", pdbid))
             .send()?;
@@ -101,8 +104,22 @@ impl PDBData {
         }
     }
 
-    // #[cfg(target_arch = "wasm32")]
-    // pub fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
-    //
-    // }
+    #[cfg(target_arch = "wasm32")]
+    pub async fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
+        let mut opts = web_sys::RequestInit::new();
+        opts.method("GET");
+        opts.mode(web_sys::RequestMode::Cors);
+        let url = format!("https://files.rcsb.org/view/{}.pdb", pdbid);
+        let request = web_sys::Request::new_with_str_and_init(&url, &opts).unwrap();
+        let window = gloo::utils::window();
+        let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request))
+            .await
+            .unwrap();
+        let resp: web_sys::Response = resp_value.dyn_into().unwrap();
+        let text = wasm_bindgen_futures::JsFuture::from(resp.text().unwrap())
+            .await
+            .unwrap();
+
+        Ok(Self::parse(&text.as_string().unwrap()))
+    }
 }
