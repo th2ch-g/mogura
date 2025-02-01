@@ -1,1 +1,52 @@
-<meta charset=UTF-8><meta content="IE=edge" http-equiv=X-UA-Compatible><meta content="width=device-width,initial-scale=1.0" name=viewport><script type=module>import a,*as b from"./mogura-d8b17c3486e81812.js";a(`./mogura-d8b17c3486e81812_bg.wasm`);window.wasmBindings=b</script><title>mogura-wasm sample view</title><link as=fetch crossorigin href=./mogura-d8b17c3486e81812_bg.wasm integrity=sha384-IDAMiAR3Sob-4-qq0hBddOzix-kqrqxhRrrNf_mi1VIO5dzBQxSzxHWPZUOvWowq rel=preload type=application/wasm><link crossorigin href=./mogura-d8b17c3486e81812.js integrity=sha384-j-l_dLFlvDrsa3Hs4TYmV-zfHFcDsQotj1hdjYmLh3VwN-ZXs8AuUAx_iDCvz-ct rel=modulepreload></head><body></body></html>
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <link rel="icon" href="./mogumi-97d358f87ac596a0.png" integrity="sha384&#x2D;URkasi1Ixo&#x2F;McglCRyQmQNJ0GWgBpwt2rjknj3u6pTyfSGS&#x2B;s&#x2B;WQUSIOTDRJ5vlp"/>
+    <link rel="icon" href="./mogumi.png" type="image/png">
+    <title>mogura-wasm</title>
+    <style>
+        html {
+            /* Remove touch delay: */
+            touch-action: manipulation;
+        }
+
+        html,
+        body,
+        canvas {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            overflow: hidden;
+            background: black;
+            z-index: 0;
+        }
+
+        /* Position canvas in center-top: */
+        canvas {
+            outline: none;
+            display: block;
+            position: absolute;
+            top: 0%;
+            left: 50%;
+            transform: translate(-50%, 0%);
+        }
+    </style>
+
+<body oncontextmenu="return false;">
+
+<script type="module">
+import init, * as bindings from './mogura-wasm-e3ce55bd2b6f25ef.js';
+const wasm = await init({ module_or_path: './mogura-wasm-e3ce55bd2b6f25ef_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+
+<link rel="modulepreload" href="./mogura-wasm-e3ce55bd2b6f25ef.js" crossorigin="anonymous" integrity="sha384-hvEv6agyQ8VhX7EmIZVO1n7D2PAjk4EoOOxepjxsjoNdj3o+8CFyLFoTHwxHVgVG"><link rel="preload" href="./mogura-wasm-e3ce55bd2b6f25ef_bg.wasm" crossorigin="anonymous" integrity="sha384-MTtOHR1++Hgdh3NTrmt/2ee/RtOxamihkGrXwYEQqI6eMLod7LWj2slimLm9ps66" as="fetch" type="application/wasm"></html>
