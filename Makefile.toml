@@ -28,7 +28,26 @@ ls -lh dist
 
 [tasks.wasm-release-open]
 dependencies = ["wasm-release"]
+workspace = false
 env = { RUSTFLAGS="--cfg web_sys_unstable_apis" }
 script = """
+trunk -V
+cd mogura-wasm
 trunk serve --release --open
 """
+
+[tasks.wasm-prepare]
+description = "for preparing wasm for github.io from local"
+workspace = false
+env = { WASM_TMP_DIR="../../mogura-wasm", RUSTFLAGS="--cfg web_sys_unstable_apis" }
+script = '''
+trunk -V
+cd mogura-wasm
+trunk build --release --public-url .
+rm -f $WASM_TMP_DIR/index.html
+rm -f $WASM_TMP_DIR/mogura-*.js
+rm -f $WASM_TMP_DIR/mogura-*.wasm
+cp -r ./dist/* $WASM_TMP_DIR
+sed -i -e "s/\/.\/mogura-/.\/mogura-/g" $WASM_TMP_DIR/index.html
+rm -f $WASM_TMP_DIR/index.html-e
+'''

@@ -25,7 +25,43 @@ bevy-mogura = { path = "./bevy-mogura/" }
 mogura-io = { path = "./mogura-io/" }
 mogura-cli = { path = "./mogura-cli/" }
 mogura-wasm = { path = "./mogura-wasm/" }
-bevy = "0.15.0"
+# bevy = "0.15.0"
+# remove unnecessary features
+bevy = { version = "0.15.0", default-features = false, features = [
+    "android-game-activity",
+    "android_shared_stdcxx",
+    "animation",
+    "bevy_asset",
+    "bevy_audio",
+    "bevy_color",
+    "bevy_core_pipeline",
+    "bevy_gilrs",
+    "bevy_gizmos",
+    "bevy_gltf",
+    "bevy_mesh_picking_backend",
+    "bevy_pbr",
+    "bevy_picking",
+    "bevy_render",
+    "bevy_scene",
+    "bevy_sprite",
+    "bevy_sprite_picking_backend",
+    "bevy_state",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_ui_picking_backend",
+    "bevy_window",
+    "bevy_winit",
+    "custom_cursor",
+    "default_font",
+    "hdr",
+    "multi_threaded",
+    "png",
+    "smaa_luts",
+    "sysinfo_plugin",
+    "tonemapping_luts",
+    "vorbis",
+    "webgpu",
+    "x11"] }
 clap = { version = "3.2.22", features = ["derive"] }
 pdbtbx = "0.11.0"
 bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = "main" }
@@ -38,7 +74,7 @@ log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] 
 
 [profile.release]
 opt-level = "s"
-lto = true
+lto = "fat"
 strip = true
 codegen-units = 1
 
