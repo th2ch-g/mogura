@@ -15,7 +15,6 @@ default-members = [
 ]
 
 [workspace.package]
-name = "mogura"
 version = "0.1.0"
 edition = "2021"
 authors = ["th"]
@@ -27,7 +26,7 @@ mogura-io = { path = "./mogura-io/" }
 mogura-cli = { path = "./mogura-cli/" }
 mogura-wasm = { path = "./mogura-wasm/" }
 bevy = "0.15.0"
-clap = { version = "3.2.22", features = ["derive"]  }
+clap = { version = "3.2.22", features = ["derive"] }
 pdbtbx = "0.11.0"
 bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = "main" }
 anyhow = "1.0"
@@ -35,14 +34,16 @@ reqwest = { version = "0.12.4", features = ["blocking"] }
 bevy_egui = "0.31.0"
 egui = "0.29"
 rfd = "0.13.0"
-
+log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
 
 [profile.release]
-opt-level = 3
+opt-level = "s"
 lto = true
 strip = true
 codegen-units = 1
 
-
 [profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
 opt-level = 3

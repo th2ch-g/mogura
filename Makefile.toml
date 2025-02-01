@@ -12,3 +12,23 @@ trunk -V
 cd mogura-wasm
 trunk serve --open
 '''
+
+[tasks.wasm-release]
+env = { RUSTFLAGS="--cfg web_sys_unstable_apis" }
+workspace = false
+script = '''
+trunk -V
+cd mogura-wasm
+trunk build --release
+WASM_FILE_NAME=$(ls dist/*.wasm)
+ls -lh dist
+wasm-opt -Os -o ${WASM_FILE_NAME} ${WASM_FILE_NAME}
+ls -lh dist
+'''
+
+[tasks.wasm-release-open]
+dependencies = ["wasm-release"]
+env = { RUSTFLAGS="--cfg web_sys_unstable_apis" }
+script = """
+trunk serve --release --open
+"""
