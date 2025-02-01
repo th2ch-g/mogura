@@ -27,7 +27,7 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: build
-        run: trunk build --release --public-url .
+        run: RUSTFLAGS="--cfg web_sys_unstable_apis" trunk build --release --public-url .
         working-directory: ./mogura-wasm
 
       - name: deploy
