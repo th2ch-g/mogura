@@ -1,39 +1,23 @@
 use crate::MoguraPlugins;
-// use bevy::prelude::*;
-// use bevy::render::mesh::PrimitiveTopology;
-// use bevy::render::render_asset::RenderAssetUsages;
-use bevy::{
-    pbr::{MaterialPipeline, MaterialPipelineKey},
-    prelude::*,
-    reflect::TypePath,
-    render::{
-        mesh::{MeshVertexBufferLayoutRef, PrimitiveTopology},
-        render_asset::RenderAssetUsages,
-        render_resource::{
-            AsBindGroup, PolygonMode, RenderPipelineDescriptor, ShaderRef,
-            SpecializedMeshPipelineError,
-        },
-    },
-};
+use crate::*;
+use bevy::prelude::*;
+// use bevy::{
+//     pbr::{MaterialPipeline, MaterialPipelineKey},
+//     prelude::*,
+//     reflect::TypePath,
+//     render::{
+//         mesh::{MeshVertexBufferLayoutRef, PrimitiveTopology},
+//         render_asset::RenderAssetUsages,
+//         render_resource::{
+//             AsBindGroup, PolygonMode, RenderPipelineDescriptor, ShaderRef,
+//             SpecializedMeshPipelineError,
+//         },
+//     },
+// };
 use mogura_io::prelude::*;
 
-#[derive(Component)]
-pub struct StructureParams {
-    pub drawing_method: DrawingMethod,
-    pub structure_data: Option<Box<dyn StructureData>>,
-}
-
-impl Default for StructureParams {
-    fn default() -> Self {
-        Self {
-            drawing_method: DrawingMethod::VDW,
-            structure_data: None,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
-enum DrawingMethod {
+pub enum DrawingMethod {
     // Line,
     VDW,
     Licorise,
@@ -43,37 +27,42 @@ enum DrawingMethod {
     Bonds,
 }
 
-pub fn setup_structure(
+#[derive(Component)]
+pub struct StructureParams {
+    pub drawing_method: DrawingMethod,
+}
+
+pub fn update_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    // mut line_materials: ResMut<Assets<LineMaterial>>,
-    mut mogura_plugins: Res<MoguraPlugins>,
+    mut mogura_state: ResMut<MoguraState>,
 ) {
-    if let Some(structure_file) = &mogura_plugins.input_structure {
-        // todo: use ..default
-        // system scheduling ?
-        let structure_data = structure_loader(&structure_file);
-        // let secondary_structure = structure_data.secondary_structure(SecondaryStructureAlgorithms::DSSP);
-        let atoms = structure_data.atoms().clone();
-        // let residues = structure_data.residues().clone();
-        let bonds = structure_data.bonds().clone();
-        let drawing_method = DrawingMethod::Licorise;
+    if mogura_state.redraw {
+        mogura_state.redraw = false;
+
+        let structure_data = match mogura_state.structure_data.as_ref() {
+            Some(data) => data,
+            None => {
+                return;
+            }
+        };
+        let atoms = structure_data.atoms();
+        let bonds = structure_data.bonds();
 
         commands
             .spawn((
                 StructureParams {
-                    structure_data: Some(Box::new(structure_data)),
-                    drawing_method: drawing_method.clone(),
+                    drawing_method: mogura_state.drawing_method.clone(),
                 },
                 GlobalTransform::default(),
                 Transform::default(),
                 Visibility::default(),
                 InheritedVisibility::default(),
             ))
-            .with_children(|parent| match drawing_method {
+            .with_children(|parent| match mogura_state.drawing_method {
                 DrawingMethod::VDW => {
-                    for atom in &atoms {
+                    for atom in atoms {
                         parent.spawn(PbrBundle {
                             mesh: Mesh3d(meshes.add(Sphere::default())),
                             transform: Transform::from_translation(atom.xyz().into()),
@@ -83,7 +72,7 @@ pub fn setup_structure(
                     }
                 }
                 DrawingMethod::Licorise => {
-                    for atom in &atoms {
+                    for atom in atoms {
                         parent.spawn(PbrBundle {
                             mesh: Mesh3d(meshes.add(Sphere::default())),
                             transform: Transform::from_translation(atom.xyz().into()),
@@ -91,7 +80,7 @@ pub fn setup_structure(
                             ..default()
                         });
                     }
-                    for bond in &bonds {
+                    for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
@@ -116,7 +105,7 @@ pub fn setup_structure(
                     }
                 }
                 DrawingMethod::CPK => {
-                    for atom in &atoms {
+                    for atom in atoms {
                         parent.spawn(PbrBundle {
                             mesh: Mesh3d(meshes.add(Sphere::default())),
                             transform: Transform::from_translation(atom.xyz().into()),
@@ -124,7 +113,7 @@ pub fn setup_structure(
                             ..default()
                         });
                     }
-                    for bond in &bonds {
+                    for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
@@ -149,7 +138,7 @@ pub fn setup_structure(
                     }
                 }
                 DrawingMethod::Bonds => {
-                    for bond in &bonds {
+                    for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
@@ -174,7 +163,7 @@ pub fn setup_structure(
                     }
                 }
                 // DrawingMethod::Line => {
-                //     for bond in &bonds {
+                //     for bond in bonds {
                 //         let i = bond.0;
                 //         let j = bond.1;
                 //         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
@@ -224,6 +213,188 @@ pub fn setup_structure(
             });
     }
 }
+
+// pub fn setup_structure(
+//     mut commands: Commands,
+//     mut meshes: ResMut<Assets<Mesh>>,
+//     mut materials: ResMut<Assets<StandardMaterial>>,
+//     // mut line_materials: ResMut<Assets<LineMaterial>>,
+//     mut mogura_plugins: Res<MoguraPlugins>,
+// ) {
+//     if let Some(structure_file) = &mogura_plugins.input_structure {
+//         // todo: use ..default
+//         // system scheduling ?
+//         let structure_data = structure_loader(&structure_file);
+//         // let secondary_structure = structure_data.secondary_structure(SecondaryStructureAlgorithms::DSSP);
+//         let atoms = structure_data.atoms().clone();
+//         // let residues = structure_data.residues().clone();
+//         let bonds = structure_data.bonds().clone();
+//         let drawing_method = DrawingMethod::Licorise;
+//
+//         commands
+//             .spawn((
+//                 StructureParams {
+//                     structure_data: Some(Box::new(structure_data)),
+//                     drawing_method: drawing_method.clone(),
+//                 },
+//                 GlobalTransform::default(),
+//                 Transform::default(),
+//                 Visibility::default(),
+//                 InheritedVisibility::default(),
+//             ))
+//             .with_children(|parent| match drawing_method {
+//                 DrawingMethod::VDW => {
+//                     for atom in &atoms {
+//                         parent.spawn(PbrBundle {
+//                             mesh: Mesh3d(meshes.add(Sphere::default())),
+//                             transform: Transform::from_translation(atom.xyz().into()),
+//                             material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+//                             ..default()
+//                         });
+//                     }
+//                 }
+//                 DrawingMethod::Licorise => {
+//                     for atom in &atoms {
+//                         parent.spawn(PbrBundle {
+//                             mesh: Mesh3d(meshes.add(Sphere::default())),
+//                             transform: Transform::from_translation(atom.xyz().into()),
+//                             material: MeshMaterial3d(materials.add(atom.color())),
+//                             ..default()
+//                         });
+//                     }
+//                     for bond in &bonds {
+//                         let i = bond.0;
+//                         let j = bond.1;
+//                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
+//                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
+//                         let center = (start + end) / 2.;
+//                         let direction = end - start;
+//                         let length = direction.length();
+//                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+//                         parent.spawn(PbrBundle {
+//                             mesh: Mesh3d(meshes.add(Cylinder {
+//                                 radius: 0.3,
+//                                 ..default()
+//                             })),
+//                             material: MeshMaterial3d(materials.add(atoms[i].color())),
+//                             transform: Transform {
+//                                 translation: center,
+//                                 rotation,
+//                                 scale: Vec3::new(1., 1., 1.),
+//                             },
+//                             ..default()
+//                         });
+//                     }
+//                 }
+//                 DrawingMethod::CPK => {
+//                     for atom in &atoms {
+//                         parent.spawn(PbrBundle {
+//                             mesh: Mesh3d(meshes.add(Sphere::default())),
+//                             transform: Transform::from_translation(atom.xyz().into()),
+//                             material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+//                             ..default()
+//                         });
+//                     }
+//                     for bond in &bonds {
+//                         let i = bond.0;
+//                         let j = bond.1;
+//                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
+//                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
+//                         let center = (start + end) / 2.;
+//                         let direction = end - start;
+//                         let length = direction.length();
+//                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+//                         parent.spawn(PbrBundle {
+//                             mesh: Mesh3d(meshes.add(Cylinder {
+//                                 radius: 0.1,
+//                                 ..default()
+//                             })),
+//                             material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+//                             transform: Transform {
+//                                 translation: center,
+//                                 rotation,
+//                                 scale: Vec3::new(1., 1., 1.),
+//                             },
+//                             ..default()
+//                         });
+//                     }
+//                 }
+//                 DrawingMethod::Bonds => {
+//                     for bond in &bonds {
+//                         let i = bond.0;
+//                         let j = bond.1;
+//                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
+//                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
+//                         let center = (start + end) / 2.;
+//                         let direction = end - start;
+//                         let length = direction.length();
+//                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+//                         parent.spawn(PbrBundle {
+//                             mesh: Mesh3d(meshes.add(Cylinder {
+//                                 radius: 0.1,
+//                                 ..default()
+//                             })),
+//                             material: MeshMaterial3d(materials.add(atoms[i].color())),
+//                             transform: Transform {
+//                                 translation: center,
+//                                 rotation,
+//                                 scale: Vec3::new(1., 1., 1.),
+//                             },
+//                             ..default()
+//                         });
+//                     }
+//                 }
+//                 // DrawingMethod::Line => {
+//                 //     for bond in &bonds {
+//                 //         let i = bond.0;
+//                 //         let j = bond.1;
+//                 //         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
+//                 //         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
+//                 //         // shader file path problem
+//                 //         MeshMaterial3d(line_materials.add(LineMaterial {
+//                 //             color: LinearRgba::GREEN,
+//                 //         })),
+//                 //         ));
+//                 //     }
+//                 // },
+//                 DrawingMethod::Cartoon => {
+//                     // ummm...:
+//                     // dbg!(&secondary_structure);
+//                     //
+//                     // for (idx, residue) in residues.iter().enumerate() {
+//                     //     let center = residue.center();
+//                     //     let direction = {
+//                     //         let center = residue.center();
+//                     //         let current = Vec3::new(center[0], center[1], center[2]);
+//                     //         let next_center = if idx == 0 {
+//                     //             residues[idx + 1].center()
+//                     //         } else {
+//                     //             residues[idx - 1].center()
+//                     //         };
+//                     //         let next = Vec3::new(next_center[0], next_center[1], next_center[2]);
+//                     //         next - current
+//                     //     };
+//                     //     let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+//                     //     parent.spawn(PbrBundle {
+//                     //         mesh: Mesh3d(meshes.add(Cylinder {
+//                     //             radius: 1.0,
+//                     //             ..default()
+//                     //         })),
+//                     //         material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
+//                     //         transform: Transform {
+//                     //             translation: center.into(),
+//                     //             rotation,
+//                     //             scale: Vec3::new(1., 1., 1.),
+//                     //         },
+//                     //         ..default()
+//                     //     });
+//                     // }
+//                 }
+//                 DrawingMethod::NewCartoon => {}
+//                 _ => {}
+//             });
+//     }
+// }
 
 trait AtomColor {
     fn color(&self) -> Color;

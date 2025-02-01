@@ -34,8 +34,9 @@ anyhow = "1.0"
 reqwest = { version = "0.12.4", features = ["blocking"] }
 bevy_egui = "0.31.0"
 egui = "0.29"
-rfd = "0.13.0" # need to use async etc.
-bevy_file_dialog = { git = "https://github.com/richardhozak/bevy_file_dialog.git", branch = "main" }
+rfd = "0.13.0"
+# bevy_file_dialog = { git = "https://github.com/richardhozak/bevy_file_dialog.git", branch = "main" }
+
 
 
 [profile.release]

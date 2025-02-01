@@ -14,7 +14,7 @@ fn main() {
             ..default()
         }))
         .add_plugins(MoguraPlugins {
-            input_structure: cli.structure_file,
+            input_structure_file: cli.structure_file,
         })
         .run();
 }

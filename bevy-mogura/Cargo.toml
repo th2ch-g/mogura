@@ -10,5 +10,5 @@ bevy_trackball.workspace = true
 mogura-io.workspace = true
 bevy_egui.workspace = true
 egui.workspace = true
-bevy_file_dialog.workspace = true
+# bevy_file_dialog.workspace = true
 rfd.workspace = true

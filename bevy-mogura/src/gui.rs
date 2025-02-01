@@ -1,6 +1,8 @@
 use crate::camera;
+use crate::*;
 use bevy::prelude::*;
-use bevy_file_dialog::prelude::*;
+use mogura_io::prelude::*;
+// use bevy_file_dialog::prelude::*;
 
 #[derive(Default, Resource)]
 pub struct OccupiedScreenSpace {
@@ -10,46 +12,76 @@ pub struct OccupiedScreenSpace {
     bottom: f32,
 }
 
-pub struct TextFileContents;
-
-#[cfg(not(target_arch = "wasm32"))]
 #[derive(Component)]
-pub struct SelectedFile(bevy::tasks::Task<Option<std::path::PathBuf>>);
-
-#[cfg(target_arch = "wasm32")]
-#[derive(Component)]
-pub struct SelectedFile(bevy::tasks::Task<Option<Vec<u8>>>);
+pub struct SelectedFile(bevy::tasks::Task<Option<(String, String)>>);
 
 pub fn poll_rfd(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SelectedFile)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut mogura_state: ResMut<MoguraState>,
+    mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
 ) {
     for (entity, mut selected_file) in tasks.iter_mut() {
         if let Some(result) = bevy::tasks::futures_lite::future::block_on(
             bevy::tasks::futures_lite::future::poll_once(&mut selected_file.0),
         ) {
-            println!("{:?}", result);
-            commands.entity(entity).remove::<SelectedFile>();
-            // for dbg
-            commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-                MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-                Transform::from_xyz(10.0, 0.5, 0.0),
-            ));
+            let (path, content) = result.unwrap();
+
+            commands.entity(entity).despawn_recursive();
+
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                mogura_state.structure_data = Some(Box::new(structure_loader(&path)));
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                let extension = std::path::Path::new(&path)
+                    .extension()
+                    .unwrap()
+                    .to_str()
+                    .unwrap();
+                mogura_state.structure_data = Some(Box::new(structure_loader_from_content(
+                    &content, &extension,
+                )));
+            }
+
+            mogura_state.structure_file = Some(path);
+            mogura_state.redraw = true;
+
+            for (entity, structure_params) in current_visualized_structure.iter_mut() {
+                commands.entity(entity).despawn_recursive();
+            }
         }
     }
 }
 
+// bevy_file_dialog
+// pub struct TextFileContents;
 // pub fn file_load(
 //     mut commands: Commands,
 //         mut meshes: ResMut<Assets<Mesh>>,
 //         mut materials: ResMut<Assets<StandardMaterial>>,
 //     mut ev_loaded: EventReader<DialogFileLoaded<TextFileContents>>,
+//     mut mogura_state: ResMut<MoguraState>,
+//     mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>
 // ) {
 //     for ev in ev_loaded.read() {
 //         println!("FileName: {:?}\nContent: {:?}", ev.file_name, std::str::from_utf8(&ev.contents).unwrap());
+//
+//         let path = &ev.file_name;
+//
+//         #[cfg(not(target_arch = "wasm32"))] {
+//             mogura_state.structure_file = Some(ev.file_name);
+//             mogura_state.structure_data = Some(Box::new(structure_loader(&path)));
+//             mogura_state.redraw = true;
+//         }
+//
+//         for (entity, structure_params) in current_visualized_structure.iter_mut() {
+//             commands.entity(entity).despawn_recursive();
+//         }
 //
 //         // for dbg
 //         commands.spawn((
@@ -85,11 +117,20 @@ pub fn update_gui(
             ui.separator();
 
             if ui.button("Select local file").clicked() {
+                // bevy_file_dialog
                 // commands.dialog().load_file::<TextFileContents>();
 
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    let task = task_pool.spawn(async move { rfd::FileDialog::new().pick_file() });
+                    let task = task_pool.spawn(async move {
+                        if let Some(path) = rfd::FileDialog::new().pick_file() {
+                            let content =
+                                std::fs::read_to_string(path.display().to_string()).unwrap();
+                            Some((path.display().to_string(), content))
+                        } else {
+                            None
+                        }
+                    });
                     commands.spawn(SelectedFile(task));
                 }
                 #[cfg(target_arch = "wasm32")]
@@ -98,30 +139,13 @@ pub fn update_gui(
                         let path = rfd::AsyncFileDialog::new().pick_file().await;
                         if let Some(path) = path {
                             let content = path.read().await;
-                            println!("{:?}", content);
-                            Some(content)
+                            let content_str = String::from_utf8(content).unwrap();
+                            Some((path.file_name(), content_str))
                         } else {
                             None
                         }
                     });
                     commands.spawn(SelectedFile(task));
-
-                    // let task = task_pool.spawn(async move {
-                    //     wasm_bindgen_futures::spawn_local(async move {
-                    //         let path = rfd::AsyncFileDialog::new().pick_file().await;
-                    //         if let Some(path) = path {
-                    //             let content = path.read().await;
-                    //             match String::from_utf8(content) {
-                    //                 Ok(s) => {
-                    //
-                    //                 },
-                    //                 Err(e) => {
-                    //
-                    //                 }
-                    //             }
-                    //     });
-                    // });
-                    // commands.spawn(SelectedFile(task));
                 }
             }
 

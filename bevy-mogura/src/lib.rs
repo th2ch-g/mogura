@@ -1,7 +1,8 @@
 use bevy::prelude::*;
-use bevy_file_dialog::prelude::*;
+// use bevy_file_dialog::prelude::*;
 use bevy_trackball::prelude::*;
 // use structure::LineMaterial;
+use mogura_io::prelude::*;
 
 mod camera;
 mod gui;
@@ -14,31 +15,32 @@ pub mod prelude {
 
 #[derive(Clone, Resource)]
 pub struct MoguraPlugins {
-    pub input_structure: Option<String>,
+    pub input_structure_file: Option<String>,
 }
 
 impl Default for MoguraPlugins {
     fn default() -> Self {
         Self {
-            input_structure: None,
+            input_structure_file: None,
         }
     }
 }
 
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
-        app.insert_resource(self.clone())
+        let mogura_state = MoguraState::new(self.input_structure_file.clone());
+
+        app.insert_resource(mogura_state)
             .init_resource::<gui::OccupiedScreenSpace>()
             // .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
             .add_plugins(bevy_egui::EguiPlugin)
-            .add_plugins(
-                FileDialogPlugin::new()
-                    .with_load_file::<gui::TextFileContents>()
-                    .with_save_file::<gui::TextFileContents>(),
-            )
+            // .add_plugins(
+            //     FileDialogPlugin::new()
+            //         .with_load_file::<gui::TextFileContents>()
+            //         .with_save_file::<gui::TextFileContents>(),
+            // )
             .add_systems(Startup, light::setup_light)
-            .add_systems(Startup, structure::setup_structure)
             .add_systems(Startup, dbg::setup_test)
             .add_systems(Startup, camera::setup_camera)
             .add_systems(
@@ -47,11 +49,35 @@ impl Plugin for MoguraPlugins {
                     .after(bevy_egui::systems::process_input_system)
                     .before(bevy_egui::EguiSet::BeginPass),
             )
+            .add_systems(Update, structure::update_structure)
             .add_systems(Update, gui::poll_rfd)
             // .add_systems(Update, (
             //     gui::file_load,
             // ))
             .add_systems(Update, gui::update_gui);
+    }
+}
+
+#[derive(Resource)]
+pub struct MoguraState {
+    pub structure_file: Option<String>,
+    pub structure_data: Option<Box<dyn StructureData>>,
+    pub drawing_method: structure::DrawingMethod,
+    pub redraw: bool,
+}
+
+impl MoguraState {
+    pub fn new(structure_file: Option<String>) -> Self {
+        Self {
+            structure_data: if let Some(ref file) = structure_file {
+                Some(Box::new(structure_loader(&file)))
+            } else {
+                None
+            },
+            structure_file,
+            drawing_method: structure::DrawingMethod::Licorise,
+            redraw: true,
+        }
     }
 }
 

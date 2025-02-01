@@ -20,8 +20,27 @@ pub fn structure_loader(structure_file: &str) -> impl StructureData {
     }
 }
 
+pub fn structure_loader_from_content(content: &str, extension: &str) -> impl StructureData {
+    match extension {
+        "pdb" => PDBData::load_from_content(content),
+        "gro" => {
+            todo!();
+        }
+        _ => {
+            unimplemented!("This extension is not supported.")
+        }
+    }
+}
+
 pub trait StructureData: Sync + Send {
     fn load(structure_file: &str) -> Self
+    where
+        Self: Sized,
+    {
+        let content = std::fs::read_to_string(structure_file).unwrap();
+        Self::load_from_content(&content)
+    }
+    fn load_from_content(content: &str) -> Self
     where
         Self: Sized;
     // fn export(output_path: &str);

@@ -7,9 +7,8 @@ pub struct PDBData {
 }
 
 impl StructureData for PDBData {
-    fn load(structure_file: &str) -> Self {
-        let content = std::fs::read_to_string(structure_file).unwrap();
-        Self::parse(&content)
+    fn load_from_content(content: &str) -> Self {
+        Self::parse(content)
     }
 
     fn atoms(&self) -> &Vec<Atom> {
