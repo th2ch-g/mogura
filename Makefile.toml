@@ -4,7 +4,7 @@ CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 [config]
 skip_core_tasks = true
 
-[tasks.run]
+[tasks.dev]
 workspace = false
 script = """
 cargo run --bin mogura
