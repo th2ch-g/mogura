@@ -1,16 +1,16 @@
+pub mod gro;
 pub mod pdb;
+use crate::structure_data::gro::GroData;
 use crate::structure_data::pdb::PDBData;
 
-pub fn structure_loader(structure_file: &str) -> impl StructureData {
+pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
     let extension = std::path::Path::new(structure_file)
         .extension()
         .and_then(|ext| ext.to_str());
     if let Some(extension) = extension {
         match extension {
-            "pdb" => PDBData::load(structure_file),
-            "gro" => {
-                todo!();
-            }
+            "pdb" => Box::new(PDBData::load(structure_file)),
+            "gro" => Box::new(GroData::load(structure_file)),
             _ => {
                 unimplemented!("This extension is not supported.")
             }
@@ -20,11 +20,11 @@ pub fn structure_loader(structure_file: &str) -> impl StructureData {
     }
 }
 
-pub fn structure_loader_from_content(content: &str, extension: &str) -> impl StructureData {
+pub fn structure_loader_from_content(content: &str, extension: &str) -> Box<dyn StructureData> {
     match extension {
-        "pdb" => PDBData::load_from_content(content),
+        "pdb" => Box::new(PDBData::load_from_content(content)),
         "gro" => {
-            todo!();
+            unimplemented!("gro is not supported for loading from content")
         }
         _ => {
             unimplemented!("This extension is not supported.")
@@ -34,13 +34,6 @@ pub fn structure_loader_from_content(content: &str, extension: &str) -> impl Str
 
 pub trait StructureData: Sync + Send {
     fn load(structure_file: &str) -> Self
-    where
-        Self: Sized,
-    {
-        let content = std::fs::read_to_string(structure_file).unwrap();
-        Self::load_from_content(&content)
-    }
-    fn load_from_content(content: &str) -> Self
     where
         Self: Sized;
     // fn export(output_path: &str);
@@ -499,6 +492,20 @@ pub enum Element {
 }
 
 impl Element {
+    pub fn from_atom_name(atom_name: &str) -> Option<Element> {
+        match atom_name.chars().next() {
+            Some(c) => match c {
+                'H' => Some(Element::H),
+                'C' => Some(Element::C),
+                'N' => Some(Element::N),
+                'O' => Some(Element::O),
+                'S' => Some(Element::S),
+                _ => None,
+            },
+            None => None,
+        }
+    }
+
     pub fn from_symbol(symbol: &str) -> Option<Element> {
         match symbol {
             s if s.eq_ignore_ascii_case("H") => Some(Element::H),

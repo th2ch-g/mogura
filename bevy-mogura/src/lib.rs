@@ -62,7 +62,7 @@ impl MoguraState {
     pub fn new(structure_file: Option<String>) -> Self {
         Self {
             structure_data: if let Some(ref file) = structure_file {
-                Some(Box::new(structure_loader(&file)))
+                Some(structure_loader(&file))
             } else {
                 None
             },

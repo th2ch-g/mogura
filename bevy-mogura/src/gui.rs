@@ -34,7 +34,8 @@ pub fn poll_rfd(
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                mogura_state.structure_data = Some(Box::new(structure_loader(&path)));
+                mogura_state.structure_data = Some(structure_loader(&path));
+                dbg!("ok");
             }
 
             #[cfg(target_arch = "wasm32")]
@@ -44,9 +45,8 @@ pub fn poll_rfd(
                     .unwrap()
                     .to_str()
                     .unwrap();
-                mogura_state.structure_data = Some(Box::new(structure_loader_from_content(
-                    &content, &extension,
-                )));
+                mogura_state.structure_data =
+                    Some(structure_loader_from_content(&content, &extension));
             }
 
             mogura_state.structure_file = Some(path);

@@ -10,8 +10,9 @@ pub struct PDBData {
 }
 
 impl StructureData for PDBData {
-    fn load_from_content(content: &str) -> Self {
-        Self::parse(content)
+    fn load(structure_file: &str) -> Self {
+        let content = std::fs::read_to_string(structure_file).unwrap();
+        Self::load_from_content(&content)
     }
 
     fn atoms(&self) -> &Vec<Atom> {
@@ -24,7 +25,7 @@ impl StructureData for PDBData {
 }
 
 impl PDBData {
-    fn parse(content: &str) -> Self {
+    pub fn load_from_content(content: &str) -> Self {
         let reader = std::io::BufReader::new(std::io::Cursor::new(content));
         let (input_pdb, _errors) = pdbtbx::open_pdb_raw(
             reader,
@@ -88,7 +89,6 @@ impl PDBData {
         Self { atoms, residues }
     }
 
-    // TODO: use async
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn download(pdbid: &str) -> anyhow::Result<Self, anyhow::Error> {
         let response = reqwest::blocking::Client::new()
@@ -98,7 +98,7 @@ impl PDBData {
         let content = response.text()?;
 
         if status_code == 200 {
-            Ok(Self::parse(&content))
+            Ok(Self::load_from_content(&content))
         } else {
             Err(anyhow::anyhow!("Failed to download PDB file for {}", pdbid))
         }
