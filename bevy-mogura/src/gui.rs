@@ -1,5 +1,6 @@
 use crate::camera;
 use crate::*;
+use crate::structure::*;
 use bevy::prelude::*;
 use mogura_io::prelude::*;
 
@@ -11,6 +12,11 @@ pub struct OccupiedScreenSpace {
     bottom: f32,
 }
 
+pub fn change_drawing_method() {
+
+}
+
+
 #[derive(Component)]
 pub struct SelectedFile(bevy::tasks::Task<Option<(String, String)>>);
 
@@ -18,7 +24,6 @@ pub fn poll_rfd(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SelectedFile)>,
     mut mogura_state: ResMut<MoguraState>,
-    mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
 ) {
     for (entity, mut selected_file) in tasks.iter_mut() {
         if let Some(result) = bevy::tasks::futures_lite::future::block_on(
@@ -51,10 +56,6 @@ pub fn poll_rfd(
 
             mogura_state.structure_file = Some(path);
             mogura_state.redraw = true;
-
-            for (entity, structure_params) in current_visualized_structure.iter_mut() {
-                commands.entity(entity).despawn_recursive();
-            }
         }
     }
 }
@@ -63,7 +64,6 @@ pub fn poll_downloadpdb(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut DownloadPDB)>,
     mut mogura_state: ResMut<MoguraState>,
-    mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
 ) {
     for (entity, mut downloadded_pdb) in tasks.iter_mut() {
         if let Some(result) = bevy::tasks::futures_lite::future::block_on(
@@ -75,10 +75,6 @@ pub fn poll_downloadpdb(
                 mogura_state.redraw = true;
                 mogura_state.structure_data = Some(Box::new(structure_data));
                 mogura_state.structure_file = None;
-
-                for (entity, structure_params) in current_visualized_structure.iter_mut() {
-                    commands.entity(entity).despawn_recursive();
-                }
             }
         }
     }
@@ -91,6 +87,7 @@ pub fn update_gui(
     mut commands: Commands,
     mut contexts: bevy_egui::EguiContexts,
     mut occupied_screen_space: ResMut<OccupiedScreenSpace>,
+    mut mogura_state: ResMut<MoguraState>,
     mut target_pdbid: Local<String>,
 ) {
     let ctx = contexts.ctx_mut();
@@ -145,6 +142,21 @@ pub fn update_gui(
                     commands.spawn(SelectedFile(task));
                 }
             }
+
+            ui.separator();
+
+            ui.label("Select Drawing Method");
+            let pre_drawing_method = mogura_state.drawing_method;
+            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::VDW, "VDW");
+            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Licorise, "Licorise");
+            // ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Cartoon, "Cartoon");
+            // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
+            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Bonds, "Bonds");
+            if pre_drawing_method != mogura_state.drawing_method {
+                mogura_state.redraw = true;
+            }
+
+            ui.separator();
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
