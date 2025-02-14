@@ -144,6 +144,7 @@ pub fn update_gui(
 
             ui.label("Select Drawing Method");
             let pre_drawing_method = mogura_state.drawing_method;
+            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Line, "Line");
             ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::VDW, "VDW");
             ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Licorise, "Licorise");
             // ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Cartoon, "Cartoon");
