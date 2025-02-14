@@ -86,7 +86,6 @@ pub fn update_gui(
     mut mogura_state: ResMut<MoguraState>,
     mut target_pdbid: Local<String>,
     mut trackball_camera: Query<&mut TrackballCamera, With<Camera>>,
-    mut camera: Query<&mut Transform, With<Camera>>,
 ) {
     let ctx = contexts.ctx_mut();
     let task_pool = bevy::tasks::AsyncComputeTaskPool::get();
@@ -162,9 +161,6 @@ pub fn update_gui(
                     Some(structure_data) => {
                         let center = structure_data.center();
                         let center_vec = Vec3::new(center[0], center[1], center[2]);
-                        let mut camera_transform = camera.single_mut();
-                        camera_transform.look_at(center_vec, Vec3::Y);
-
                         let mut trackball_camera = trackball_camera.single_mut();
                         trackball_camera.frame.set_target(center_vec.into());
                     },
