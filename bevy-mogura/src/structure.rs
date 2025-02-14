@@ -37,6 +37,7 @@ pub fn update_structure(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut mogura_state: ResMut<MoguraState>,
     mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
+    mut trackball_camera: Query<&mut TrackballCamera, With<Camera>>,
 ) {
     if mogura_state.redraw {
         mogura_state.redraw = false;
@@ -50,9 +51,18 @@ pub fn update_structure(
         let atoms = structure_data.atoms();
         let bonds = structure_data.bonds();
 
-
         for (entity, structure_params) in current_visualized_structure.iter_mut() {
             commands.entity(entity).despawn_recursive();
+        }
+
+        match &mogura_state.structure_data {
+            Some(structure_data) => {
+                let center = structure_data.center();
+                let center_vec = Vec3::new(center[0], center[1], center[2]);
+                let mut trackball_camera = trackball_camera.single_mut();
+                trackball_camera.frame.set_target(center_vec.into());
+            },
+            None => ()
         }
 
         commands
