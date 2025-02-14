@@ -3,6 +3,7 @@ use crate::*;
 use crate::structure::*;
 use bevy::prelude::*;
 use mogura_io::prelude::*;
+use bevy_trackball::prelude::*;
 
 #[derive(Default, Resource)]
 pub struct OccupiedScreenSpace {
@@ -11,11 +12,6 @@ pub struct OccupiedScreenSpace {
     right: f32,
     bottom: f32,
 }
-
-pub fn change_drawing_method() {
-
-}
-
 
 #[derive(Component)]
 pub struct SelectedFile(bevy::tasks::Task<Option<(String, String)>>);
@@ -89,6 +85,8 @@ pub fn update_gui(
     mut occupied_screen_space: ResMut<OccupiedScreenSpace>,
     mut mogura_state: ResMut<MoguraState>,
     mut target_pdbid: Local<String>,
+    mut trackball_camera: Query<&mut TrackballCamera, With<Camera>>,
+    mut camera: Query<&mut Transform, With<Camera>>,
 ) {
     let ctx = contexts.ctx_mut();
     let task_pool = bevy::tasks::AsyncComputeTaskPool::get();
@@ -154,6 +152,24 @@ pub fn update_gui(
             ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Bonds, "Bonds");
             if pre_drawing_method != mogura_state.drawing_method {
                 mogura_state.redraw = true;
+            }
+
+            ui.separator();
+
+            ui.label("Looking at Structure");
+            if ui.button("Look").clicked() {
+                match &mogura_state.structure_data {
+                    Some(structure_data) => {
+                        let center = structure_data.center();
+                        let center_vec = Vec3::new(center[0], center[1], center[2]);
+                        let mut camera_transform = camera.single_mut();
+                        camera_transform.look_at(center_vec, Vec3::Y);
+
+                        let mut trackball_camera = trackball_camera.single_mut();
+                        trackball_camera.frame.set_target(center_vec.into());
+                    },
+                    None => ()
+                }
             }
 
             ui.separator();

@@ -80,6 +80,7 @@ pub fn setup_camera(mut commands: Commands) {
     ));
 }
 
+
 // pub fn update_camera_mode(
 //     keys: Res<ButtonInput<KeyCode>>,
 //     mut camera: Query<&mut CameraParams, With<Camera>>,
