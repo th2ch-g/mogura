@@ -15,7 +15,6 @@ use bevy::{
     },
 };
 use mogura_io::prelude::*;
-use std::io::Write;
 
 #[derive(Copy, Eq, Hash,Debug, Clone, PartialEq)]
 pub enum DrawingMethod {
