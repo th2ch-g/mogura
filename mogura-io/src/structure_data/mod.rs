@@ -248,6 +248,12 @@ impl Atom {
     pub fn distance(&self, other: &Atom) -> f32 {
         self.distance2(other).sqrt()
     }
+    pub fn element_symbol(&self) -> &str {
+        self.element
+            .as_ref()
+            .map(|element| element.to_symbol())
+            .unwrap_or("")
+    }
 }
 
 // ref: https://github.com/douweschulte/pdbtbx/blob/master/src/structs/elements.rs

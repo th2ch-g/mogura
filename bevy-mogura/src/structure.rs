@@ -78,24 +78,43 @@ pub fn update_structure(
             ))
             .with_children(|parent| match mogura_state.drawing_method {
                 DrawingMethod::VDW => {
+                    let sphere = meshes.add(Sphere::default());
+                    let mut mesh_materials = std::collections::HashMap::new();
+
                     for atom in atoms {
+                        if !mesh_materials.contains_key(&atom.element()) {
+                            let material = materials.add(atom.color());
+                            mesh_materials.insert(atom.element(), material);
+                        }
                         parent.spawn(PbrBundle {
-                            mesh: Mesh3d(meshes.add(Sphere::default())),
+                            mesh: Mesh3d(sphere.clone()),
                             transform: Transform::from_translation(atom.xyz().into()),
-                            material: MeshMaterial3d(materials.add(atom.color())),
+                            material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
                             ..default()
                         });
                     }
                 }
                 DrawingMethod::Licorise => {
+                    let sphere = meshes.add(Sphere::default());
+                    let mut mesh_materials = std::collections::HashMap::new();
+
                     for atom in atoms {
+                        if !mesh_materials.contains_key(&atom.element()) {
+                            let material = materials.add(atom.color());
+                            mesh_materials.insert(atom.element(), material);
+                        }
                         parent.spawn(PbrBundle {
-                            mesh: Mesh3d(meshes.add(Sphere::default())),
+                            mesh: Mesh3d(sphere.clone()),
                             transform: Transform::from_translation(atom.xyz().into()),
-                            material: MeshMaterial3d(materials.add(atom.color())),
+                            material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
                             ..default()
                         });
                     }
+
+                    let cylinder = meshes.add(Cylinder {
+                        radius: 0.3,
+                        ..default()
+                    });
                     for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
@@ -106,11 +125,8 @@ pub fn update_structure(
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         parent.spawn(PbrBundle {
-                            mesh: Mesh3d(meshes.add(Cylinder {
-                                radius: 0.3,
-                                ..default()
-                            })),
-                            material: MeshMaterial3d(materials.add(atoms[i].color())),
+                            mesh: Mesh3d(cylinder.clone()),
+                            material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
                             transform: Transform {
                                 translation: center,
                                 rotation,
@@ -121,6 +137,12 @@ pub fn update_structure(
                     }
                 }
                 DrawingMethod::Bonds => {
+                    let cylinder = meshes.add(Cylinder {
+                        radius: 0.3,
+                        ..default()
+                    });
+                    let mut mesh_materials = std::collections::HashMap::new();
+
                     for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
@@ -130,12 +152,13 @@ pub fn update_structure(
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+                        if !mesh_materials.contains_key(&atoms[i].element()) {
+                            let material = materials.add(atoms[i].color());
+                            mesh_materials.insert(atoms[i].element(), material);
+                        }
                         parent.spawn(PbrBundle {
-                            mesh: Mesh3d(meshes.add(Cylinder {
-                                radius: 0.1,
-                                ..default()
-                            })),
-                            material: MeshMaterial3d(materials.add(atoms[i].color())),
+                            mesh: Mesh3d(cylinder.clone()),
+                            material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
                             transform: Transform {
                                 translation: center,
                                 rotation,
@@ -146,19 +169,23 @@ pub fn update_structure(
                     }
                 }
                 DrawingMethod::Line => {
+                    let mut mesh_materials = std::collections::HashMap::new();
                     for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        // shader file path problem
+                        if !mesh_materials.contains_key(&atoms[i].element()) {
+                            let material = line_materials.add(LineMaterial {
+                                color: LinearRgba::from(atoms[i].color()),
+                            });
+                            mesh_materials.insert(atoms[i].element(), material);
+                        }
                         parent.spawn((
                             Mesh3d(meshes.add(LineList {
                                 lines: vec![(start, end)],
                             })),
-                            MeshMaterial3d(line_materials.add(LineMaterial {
-                                color: LinearRgba::from(atoms[i].color()),
-                            })),
+                            MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
                         ));
                     }
                 },

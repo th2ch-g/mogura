@@ -35,7 +35,7 @@ impl Plugin for MoguraPlugins {
             .add_plugins(TrackballPlugin)
             .add_plugins(bevy_egui::EguiPlugin)
             .add_systems(Startup, light::setup_light)
-            .add_systems(Startup, dbg::setup_test)
+            // .add_systems(Startup, dbg::setup_test)
             .add_systems(Startup, camera::setup_camera)
             .add_systems(
                 PreUpdate,
