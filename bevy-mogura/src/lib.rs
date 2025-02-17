@@ -7,6 +7,7 @@ mod camera;
 mod gui;
 mod light;
 mod structure;
+mod trajectory;
 
 pub mod prelude {
     pub use crate::MoguraPlugins;
@@ -39,8 +40,8 @@ impl Plugin for MoguraPlugins {
             .add_plugins(MaterialPlugin::<LineMaterial>::default())
             .add_plugins(TrackballPlugin)
             .add_plugins(bevy_egui::EguiPlugin)
-            .add_systems(Startup, light::setup_light)
             // .add_systems(Startup, dbg::setup_test)
+            .add_systems(Startup, light::setup_light)
             .add_systems(Startup, camera::setup_camera)
             .add_systems(
                 PreUpdate,
@@ -49,6 +50,7 @@ impl Plugin for MoguraPlugins {
                     .before(bevy_egui::EguiSet::BeginPass),
             )
             .add_systems(Update, structure::update_structure)
+            .add_systems(Update, trajectory::update_trajectory)
             .add_systems(Update, (gui::poll_rfd_structure, gui::poll_rfd_trajectory))
             .add_systems(Update, gui::poll_downloadpdb)
             .add_systems(Update, gui::update_gui);
@@ -63,6 +65,8 @@ pub struct MoguraState {
     pub trajectory_data: Option<Box<dyn TrajectoryData>>,
     pub drawing_method: structure::DrawingMethod,
     pub redraw: bool,
+    pub dotrajectory: bool,
+    pub current_frame_id: usize,
 }
 
 impl MoguraState {
@@ -88,6 +92,18 @@ impl MoguraState {
             trajectory_file,
             drawing_method: structure::DrawingMethod::Licorise,
             redraw: true,
+            dotrajectory: false,
+            current_frame_id: 0,
+        }
+    }
+
+    pub fn next_frame_id(&mut self, n_frame: usize) {
+        self.current_frame_id += 1;
+        if self.current_frame_id >= n_frame {
+            self.current_frame_id = 0;
+            self.dotrajectory = false;
+        } else {
+            self.dotrajectory = true;
         }
     }
 }

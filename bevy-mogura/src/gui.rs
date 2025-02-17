@@ -283,9 +283,13 @@ pub fn update_gui(
 
             ui.label("Trajectory Control");
             ui.horizontal(|ui| {
-                if ui.button("Start").clicked() {}
+                if ui.button("Start").clicked() {
+                    mogura_state.dotrajectory = true;
+                }
 
-                if ui.button("Stop").clicked() {}
+                if ui.button("Stop").clicked() {
+                    mogura_state.dotrajectory = false;
+                }
             });
 
             ui.separator();

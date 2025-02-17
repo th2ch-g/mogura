@@ -27,6 +27,10 @@ pub trait TrajectoryData: Sync + Send {
     fn load(topology_file: &str, trajectory_file: &str) -> Self
     where
         Self: Sized;
+
+    fn n_frame(&self) -> usize {
+        self.frames().len()
+    }
 }
 
 #[derive(Clone, Debug)]
