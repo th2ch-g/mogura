@@ -224,6 +224,9 @@ pub struct Atom {
 }
 
 impl Atom {
+    pub fn id(&self) -> usize {
+        self.id
+    }
     pub fn x(&self) -> f32 {
         self.x
     }

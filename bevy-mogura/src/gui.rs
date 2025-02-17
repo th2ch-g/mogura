@@ -13,12 +13,56 @@ pub struct OccupiedScreenSpace {
     bottom: f32,
 }
 
+// path: String, content: String
 #[derive(Component)]
-pub struct SelectedFile(bevy::tasks::Task<Option<(String, String)>>);
+pub struct SelectedStructureFile(bevy::tasks::Task<Option<(String, String)>>);
 
-pub fn poll_rfd(
+// path: String
+#[derive(Component)]
+pub struct SelectedTrajectoryFile(bevy::tasks::Task<Option<String>>);
+
+pub fn poll_rfd_trajectory(
     mut commands: Commands,
-    mut tasks: Query<(Entity, &mut SelectedFile)>,
+    mut tasks: Query<(Entity, &mut SelectedTrajectoryFile)>,
+    mut mogura_state: ResMut<MoguraState>,
+) {
+    for (entity, mut selected_file) in tasks.iter_mut() {
+        if let Some(result) = bevy::tasks::futures_lite::future::block_on(
+            bevy::tasks::futures_lite::future::poll_once(&mut selected_file.0),
+        ) {
+            commands.entity(entity).despawn_recursive();
+
+            let path = if let Some(result) = result {
+                result
+            } else {
+                return;
+            };
+
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                if let Some(ref top_file) = mogura_state.structure_file {
+                    mogura_state.trajectory_data = Some(trajectory_loader(&top_file, &path));
+                }
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                let extension = std::path::Path::new(&path)
+                    .extension()
+                    .unwrap()
+                    .to_str()
+                    .unwrap();
+            }
+
+            mogura_state.trajectory_file = Some(path);
+        }
+    }
+}
+
+
+pub fn poll_rfd_structure(
+    mut commands: Commands,
+    mut tasks: Query<(Entity, &mut SelectedStructureFile)>,
     mut mogura_state: ResMut<MoguraState>,
 ) {
     for (entity, mut selected_file) in tasks.iter_mut() {
@@ -36,7 +80,6 @@ pub fn poll_rfd(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 mogura_state.structure_data = Some(structure_loader(&path));
-                dbg!("ok");
             }
 
             #[cfg(target_arch = "wasm32")]
@@ -110,36 +153,93 @@ pub fn update_gui(
 
             ui.separator();
 
-            if ui.button("Select local file").clicked() {
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    let task = task_pool.spawn(async move {
-                        if let Some(path) = rfd::FileDialog::new().pick_file() {
-                            let content =
-                                std::fs::read_to_string(path.display().to_string()).unwrap();
-                            Some((path.display().to_string(), content))
-                        } else {
-                            None
-                        }
-                    });
-                    commands.spawn(SelectedFile(task));
-                }
-                #[cfg(target_arch = "wasm32")]
-                {
-                    let task = task_pool.spawn(async move {
-                        let path = rfd::AsyncFileDialog::new().pick_file().await;
-                        if let Some(path) = path {
-                            let content = path.read().await;
-                            let content_str = String::from_utf8(content).unwrap();
-                            Some((path.file_name(), content_str))
-                        } else {
-                            None
-                        }
-                    });
-                    commands.spawn(SelectedFile(task));
-                }
+            if let Some(top_file) = &mogura_state.structure_file {
+                ui.label(format!("File: {}", top_file));
+            } else {
+                ui.label("File: None");
             }
 
+            ui.horizontal(|ui| {
+                if ui.button("Select Structure File").clicked() {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        let task = task_pool.spawn(async move {
+                            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                let content =
+                                    std::fs::read_to_string(path.display().to_string()).unwrap();
+                                Some((path.display().to_string(), content))
+                            } else {
+                                None
+                            }
+                        });
+                        commands.spawn(SelectedStructureFile(task));
+                    }
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        let task = task_pool.spawn(async move {
+                            let path = rfd::AsyncFileDialog::new().pick_file().await;
+                            if let Some(path) = path {
+                                let content = path.read().await;
+                                let content_str = String::from_utf8(content).unwrap();
+                                Some((path.file_name(), content_str))
+                            } else {
+                                None
+                            }
+                        });
+                        commands.spawn(SelectedStructureFile(task));
+                    }
+                }
+
+                if ui.button("Clear").clicked() {
+                    mogura_state.structure_file = None;
+                    mogura_state.structure_data = None;
+                    mogura_state.redraw = true;
+                }
+            });
+
+            ui.separator();
+
+            if let Some(traj_file) = &mogura_state.trajectory_file {
+                ui.label(format!("File: {}", traj_file));
+            } else {
+                ui.label("File: None");
+            }
+
+            ui.horizontal(|ui| {
+                if ui.button("Select Trajectory File").clicked() {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        let task = task_pool.spawn(async move {
+                            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                Some(path.display().to_string())
+                            } else {
+                                None
+                            }
+                        });
+                        commands.spawn(SelectedTrajectoryFile(task));
+                    }
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        // let task = task_pool.spawn(async move {
+                        //     let path = rfd::AsyncFileDialog::new().pick_file().await;
+                        //     if let Some(path) = path {
+                        //         let content = path.read().await;
+                        //         let content_str = String::from_utf8(content).unwrap();
+                        //         Some((path.file_name(), content_str))
+                        //     } else {
+                        //         None
+                        //     }
+                        // });
+                        // commands.spawn(SelectedTrajectoryFile(task));
+                    }
+                }
+
+                if ui.button("Clear").clicked() {
+                    mogura_state.trajectory_file = None;
+                    mogura_state.trajectory_data = None;
+                }
+
+            });
             ui.separator();
 
             ui.label("Select Drawing Method");
@@ -168,6 +268,19 @@ pub fn update_gui(
                     None => ()
                 }
             }
+
+            ui.separator();
+
+            ui.label("Trajectory Control");
+            ui.horizontal(|ui| {
+                if ui.button("Start").clicked() {
+
+                }
+
+                if ui.button("Stop").clicked() {
+
+                }
+            });
 
             ui.separator();
 

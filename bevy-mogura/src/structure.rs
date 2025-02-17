@@ -31,6 +31,37 @@ pub struct StructureParams {
     pub drawing_method: DrawingMethod,
 }
 
+
+#[derive(Component)]
+pub struct AtomID {
+    id: usize,
+}
+
+impl AtomID {
+    pub fn new(id: usize) -> Self {
+        Self { id }
+    }
+
+    pub fn id(&self) -> usize {
+        self.id
+    }
+}
+
+#[derive(Component)]
+pub struct BondID {
+    pub atomid1: AtomID,
+    pub atomid2: AtomID,
+}
+
+impl BondID {
+    pub fn new(id1: usize, id2: usize) -> Self {
+        Self {
+            atomid1: AtomID::new(id1),
+            atomid2: AtomID::new(id2),
+        }
+    }
+}
+
 pub fn update_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -43,6 +74,10 @@ pub fn update_structure(
     if mogura_state.redraw {
         mogura_state.redraw = false;
 
+        for (entity, structure_params) in current_visualized_structure.iter_mut() {
+            commands.entity(entity).despawn_recursive();
+        }
+
         let structure_data = match mogura_state.structure_data.as_ref() {
             Some(data) => data,
             None => {
@@ -51,10 +86,6 @@ pub fn update_structure(
         };
         let atoms = structure_data.atoms();
         let bonds = structure_data.bonds();
-
-        for (entity, structure_params) in current_visualized_structure.iter_mut() {
-            commands.entity(entity).despawn_recursive();
-        }
 
         match &mogura_state.structure_data {
             Some(structure_data) => {
@@ -86,12 +117,15 @@ pub fn update_structure(
                             let material = materials.add(atom.color());
                             mesh_materials.insert(atom.element(), material);
                         }
-                        parent.spawn(PbrBundle {
-                            mesh: Mesh3d(sphere.clone()),
-                            transform: Transform::from_translation(atom.xyz().into()),
-                            material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
-                            ..default()
-                        });
+                        parent.spawn((
+                            PbrBundle {
+                                mesh: Mesh3d(sphere.clone()),
+                                transform: Transform::from_translation(atom.xyz().into()),
+                                material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
+                                ..default()
+                            },
+                            AtomID::new(atom.id()),
+                        ));
                     }
                 }
                 DrawingMethod::Licorise => {
@@ -103,12 +137,15 @@ pub fn update_structure(
                             let material = materials.add(atom.color());
                             mesh_materials.insert(atom.element(), material);
                         }
-                        parent.spawn(PbrBundle {
-                            mesh: Mesh3d(sphere.clone()),
-                            transform: Transform::from_translation(atom.xyz().into()),
-                            material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
-                            ..default()
-                        });
+                        parent.spawn((
+                                PbrBundle {
+                                    mesh: Mesh3d(sphere.clone()),
+                                    transform: Transform::from_translation(atom.xyz().into()),
+                                    material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
+                                ..default()
+                            },
+                            AtomID::new(atom.id()),
+                        ));
                     }
 
                     let cylinder = meshes.add(Cylinder {
@@ -124,16 +161,19 @@ pub fn update_structure(
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                        parent.spawn(PbrBundle {
-                            mesh: Mesh3d(cylinder.clone()),
-                            material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
-                            transform: Transform {
-                                translation: center,
-                                rotation,
-                                scale: Vec3::new(1., 1., 1.),
+                        parent.spawn((
+                            PbrBundle {
+                                mesh: Mesh3d(cylinder.clone()),
+                                material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
+                                transform: Transform {
+                                    translation: center,
+                                    rotation,
+                                    scale: Vec3::new(1., 1., 1.),
+                                },
+                                ..default()
                             },
-                            ..default()
-                        });
+                            BondID::new(atoms[i].id(), atoms[j].id()),
+                        ));
                     }
                 }
                 DrawingMethod::Bonds => {
@@ -156,16 +196,18 @@ pub fn update_structure(
                             let material = materials.add(atoms[i].color());
                             mesh_materials.insert(atoms[i].element(), material);
                         }
-                        parent.spawn(PbrBundle {
-                            mesh: Mesh3d(cylinder.clone()),
-                            material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
-                            transform: Transform {
-                                translation: center,
-                                rotation,
-                                scale: Vec3::new(1., 1., 1.),
+                        parent.spawn((PbrBundle {
+                                mesh: Mesh3d(cylinder.clone()),
+                                material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
+                                transform: Transform {
+                                    translation: center,
+                                    rotation,
+                                    scale: Vec3::new(1., 1., 1.),
+                                },
+                                ..default()
                             },
-                            ..default()
-                        });
+                            BondID::new(atoms[i].id(), atoms[j].id()),
+                        ));
                     }
                 }
                 DrawingMethod::Line => {
@@ -186,42 +228,11 @@ pub fn update_structure(
                                 lines: vec![(start, end)],
                             })),
                             MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
+                            BondID::new(atoms[i].id(), atoms[j].id()),
                         ));
                     }
                 },
-                DrawingMethod::Cartoon => {
-                    // ummm...:
-                    // dbg!(&secondary_structure);
-                    //
-                    // for (idx, residue) in residues.iter().enumerate() {
-                    //     let center = residue.center();
-                    //     let direction = {
-                    //         let center = residue.center();
-                    //         let current = Vec3::new(center[0], center[1], center[2]);
-                    //         let next_center = if idx == 0 {
-                    //             residues[idx + 1].center()
-                    //         } else {
-                    //             residues[idx - 1].center()
-                    //         };
-                    //         let next = Vec3::new(next_center[0], next_center[1], next_center[2]);
-                    //         next - current
-                    //     };
-                    //     let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                    //     parent.spawn(PbrBundle {
-                    //         mesh: Mesh3d(meshes.add(Cylinder {
-                    //             radius: 1.0,
-                    //             ..default()
-                    //         })),
-                    //         material: MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
-                    //         transform: Transform {
-                    //             translation: center.into(),
-                    //             rotation,
-                    //             scale: Vec3::new(1., 1., 1.),
-                    //         },
-                    //         ..default()
-                    //     });
-                    // }
-                }
+                DrawingMethod::Cartoon => {}
                 DrawingMethod::NewCartoon => {}
                 _ => {}
             });

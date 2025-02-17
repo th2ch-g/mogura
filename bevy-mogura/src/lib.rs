@@ -15,19 +15,21 @@ pub mod prelude {
 #[derive(Clone, Resource)]
 pub struct MoguraPlugins {
     pub input_structure_file: Option<String>,
+    pub input_trajectory_file: Option<String>,
 }
 
 impl Default for MoguraPlugins {
     fn default() -> Self {
         Self {
             input_structure_file: None,
+            input_trajectory_file: None,
         }
     }
 }
 
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
-        let mogura_state = MoguraState::new(self.input_structure_file.clone());
+        let mogura_state = MoguraState::new(self.input_structure_file.clone(), self.input_trajectory_file.clone());
 
         app.insert_resource(mogura_state)
             .init_resource::<gui::OccupiedScreenSpace>()
@@ -44,7 +46,10 @@ impl Plugin for MoguraPlugins {
                     .before(bevy_egui::EguiSet::BeginPass),
             )
             .add_systems(Update, structure::update_structure)
-            .add_systems(Update, gui::poll_rfd)
+            .add_systems(Update, (
+                gui::poll_rfd_structure,
+                gui::poll_rfd_trajectory,
+            ))
             .add_systems(Update, gui::poll_downloadpdb)
             .add_systems(Update, gui::update_gui);
     }
@@ -54,19 +59,33 @@ impl Plugin for MoguraPlugins {
 pub struct MoguraState {
     pub structure_file: Option<String>,
     pub structure_data: Option<Box<dyn StructureData>>,
+    pub trajectory_file: Option<String>,
+    pub trajectory_data: Option<Box<dyn TrajectoryData>>,
     pub drawing_method: structure::DrawingMethod,
     pub redraw: bool,
 }
 
 impl MoguraState {
-    pub fn new(structure_file: Option<String>) -> Self {
-        Self {
-            structure_data: if let Some(ref file) = structure_file {
-                Some(structure_loader(&file))
+    pub fn new(structure_file: Option<String>, trajectory_file: Option<String>) -> Self {
+        let structure_data = if let Some(ref file) = structure_file {
+            Some(structure_loader(&file))
+        } else {
+            None
+        };
+        let trajectory_data = if let Some(ref str_file) = structure_file {
+            if let Some(ref traj_file) = trajectory_file {
+                Some(trajectory_loader(&str_file, &traj_file))
             } else {
                 None
-            },
+            }
+        } else {
+            None
+        };
+        Self {
+            structure_data,
             structure_file,
+            trajectory_data,
+            trajectory_file,
             drawing_method: structure::DrawingMethod::Licorise,
             redraw: true,
         }

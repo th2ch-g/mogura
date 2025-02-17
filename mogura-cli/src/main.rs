@@ -4,7 +4,7 @@ use bevy_mogura::prelude::*;
 mod arg;
 
 fn main() {
-    let cli = arg::arg();
+    let cli = arg::MainArg::new();
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -15,6 +15,8 @@ fn main() {
         }))
         .add_plugins(MoguraPlugins {
             input_structure_file: cli.structure_file,
+            input_trajectory_file: cli.trajectory_file,
+            ..default()
         })
         .run();
 }
