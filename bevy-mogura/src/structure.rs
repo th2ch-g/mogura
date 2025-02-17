@@ -16,7 +16,7 @@ use bevy::{
 };
 use mogura_io::prelude::*;
 
-#[derive(Copy, Eq, Hash,Debug, Clone, PartialEq)]
+#[derive(Copy, Eq, Hash, Debug, Clone, PartialEq)]
 pub enum DrawingMethod {
     Line,
     VDW,
@@ -30,7 +30,6 @@ pub enum DrawingMethod {
 pub struct StructureParams {
     pub drawing_method: DrawingMethod,
 }
-
 
 #[derive(Component)]
 pub struct AtomID {
@@ -93,8 +92,8 @@ pub fn update_structure(
                 let center_vec = Vec3::new(center[0], center[1], center[2]);
                 let mut trackball_camera = trackball_camera.single_mut();
                 trackball_camera.frame.set_target(center_vec.into());
-            },
-            None => ()
+            }
+            None => (),
         }
 
         commands
@@ -121,7 +120,9 @@ pub fn update_structure(
                             PbrBundle {
                                 mesh: Mesh3d(sphere.clone()),
                                 transform: Transform::from_translation(atom.xyz().into()),
-                                material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
+                                material: MeshMaterial3d(
+                                    mesh_materials.get(&atom.element()).unwrap().clone(),
+                                ),
                                 ..default()
                             },
                             AtomID::new(atom.id()),
@@ -138,10 +139,12 @@ pub fn update_structure(
                             mesh_materials.insert(atom.element(), material);
                         }
                         parent.spawn((
-                                PbrBundle {
-                                    mesh: Mesh3d(sphere.clone()),
-                                    transform: Transform::from_translation(atom.xyz().into()),
-                                    material: MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
+                            PbrBundle {
+                                mesh: Mesh3d(sphere.clone()),
+                                transform: Transform::from_translation(atom.xyz().into()),
+                                material: MeshMaterial3d(
+                                    mesh_materials.get(&atom.element()).unwrap().clone(),
+                                ),
                                 ..default()
                             },
                             AtomID::new(atom.id()),
@@ -164,7 +167,9 @@ pub fn update_structure(
                         parent.spawn((
                             PbrBundle {
                                 mesh: Mesh3d(cylinder.clone()),
-                                material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
+                                material: MeshMaterial3d(
+                                    mesh_materials.get(&atoms[i].element()).unwrap().clone(),
+                                ),
                                 transform: Transform {
                                     translation: center,
                                     rotation,
@@ -196,9 +201,12 @@ pub fn update_structure(
                             let material = materials.add(atoms[i].color());
                             mesh_materials.insert(atoms[i].element(), material);
                         }
-                        parent.spawn((PbrBundle {
+                        parent.spawn((
+                            PbrBundle {
                                 mesh: Mesh3d(cylinder.clone()),
-                                material: MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
+                                material: MeshMaterial3d(
+                                    mesh_materials.get(&atoms[i].element()).unwrap().clone(),
+                                ),
                                 transform: Transform {
                                     translation: center,
                                     rotation,
@@ -227,11 +235,13 @@ pub fn update_structure(
                             Mesh3d(meshes.add(LineList {
                                 lines: vec![(start, end)],
                             })),
-                            MeshMaterial3d(mesh_materials.get(&atoms[i].element()).unwrap().clone()),
+                            MeshMaterial3d(
+                                mesh_materials.get(&atoms[i].element()).unwrap().clone(),
+                            ),
                             BondID::new(atoms[i].id(), atoms[j].id()),
                         ));
                     }
-                },
+                }
                 DrawingMethod::Cartoon => {}
                 DrawingMethod::NewCartoon => {}
                 _ => {}

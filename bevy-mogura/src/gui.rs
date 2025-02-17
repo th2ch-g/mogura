@@ -1,9 +1,9 @@
 use crate::camera;
-use crate::*;
 use crate::structure::*;
+use crate::*;
 use bevy::prelude::*;
-use mogura_io::prelude::*;
 use bevy_trackball::prelude::*;
+use mogura_io::prelude::*;
 
 #[derive(Default, Resource)]
 pub struct OccupiedScreenSpace {
@@ -58,7 +58,6 @@ pub fn poll_rfd_trajectory(
         }
     }
 }
-
 
 pub fn poll_rfd_structure(
     mut commands: Commands,
@@ -238,18 +237,29 @@ pub fn update_gui(
                     mogura_state.trajectory_file = None;
                     mogura_state.trajectory_data = None;
                 }
-
             });
             ui.separator();
 
             ui.label("Select Drawing Method");
             let pre_drawing_method = mogura_state.drawing_method;
-            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Line, "Line");
+            ui.radio_value(
+                &mut mogura_state.drawing_method,
+                DrawingMethod::Line,
+                "Line",
+            );
             ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::VDW, "VDW");
-            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Licorise, "Licorise");
+            ui.radio_value(
+                &mut mogura_state.drawing_method,
+                DrawingMethod::Licorise,
+                "Licorise",
+            );
             // ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Cartoon, "Cartoon");
             // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
-            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Bonds, "Bonds");
+            ui.radio_value(
+                &mut mogura_state.drawing_method,
+                DrawingMethod::Bonds,
+                "Bonds",
+            );
             if pre_drawing_method != mogura_state.drawing_method {
                 mogura_state.redraw = true;
             }
@@ -264,8 +274,8 @@ pub fn update_gui(
                         let center_vec = Vec3::new(center[0], center[1], center[2]);
                         let mut trackball_camera = trackball_camera.single_mut();
                         trackball_camera.frame.set_target(center_vec.into());
-                    },
-                    None => ()
+                    }
+                    None => (),
                 }
             }
 
@@ -273,13 +283,9 @@ pub fn update_gui(
 
             ui.label("Trajectory Control");
             ui.horizontal(|ui| {
-                if ui.button("Start").clicked() {
+                if ui.button("Start").clicked() {}
 
-                }
-
-                if ui.button("Stop").clicked() {
-
-                }
+                if ui.button("Stop").clicked() {}
             });
 
             ui.separator();

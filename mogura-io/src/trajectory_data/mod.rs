@@ -53,4 +53,3 @@ impl Frame {
         &self.positions
     }
 }
-

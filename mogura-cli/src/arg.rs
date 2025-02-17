@@ -15,4 +15,3 @@ impl MainArg {
         Self::parse()
     }
 }
-

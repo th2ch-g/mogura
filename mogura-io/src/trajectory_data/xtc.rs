@@ -12,7 +12,6 @@ impl TrajectoryData for XtcData {
     }
 
     fn load(topology_file: &str, trajectory_file: &str) -> Self {
-
         let mut topology = System::from_file(topology_file).unwrap();
 
         let mut trajectory = topology.xtc_iter(trajectory_file).unwrap();
@@ -33,8 +32,10 @@ impl TrajectoryData for XtcData {
                         ]);
                     }
                     frames.push(Frame::new(frame_id, positions));
-                },
-                Err(e) => { panic!("{:?}", e); }
+                }
+                Err(e) => {
+                    panic!("{:?}", e);
+                }
             }
             frame_id += 1;
         }

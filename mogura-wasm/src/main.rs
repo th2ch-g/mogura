@@ -10,8 +10,6 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(MoguraPlugins {
-            ..default()
-        })
+        .add_plugins(MoguraPlugins { ..default() })
         .run();
 }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_trackball::prelude::*;
-use structure::LineMaterial;
 use mogura_io::prelude::*;
+use structure::LineMaterial;
 
 mod camera;
 mod gui;
@@ -29,7 +29,10 @@ impl Default for MoguraPlugins {
 
 impl Plugin for MoguraPlugins {
     fn build(&self, app: &mut App) {
-        let mogura_state = MoguraState::new(self.input_structure_file.clone(), self.input_trajectory_file.clone());
+        let mogura_state = MoguraState::new(
+            self.input_structure_file.clone(),
+            self.input_trajectory_file.clone(),
+        );
 
         app.insert_resource(mogura_state)
             .init_resource::<gui::OccupiedScreenSpace>()
@@ -46,10 +49,7 @@ impl Plugin for MoguraPlugins {
                     .before(bevy_egui::EguiSet::BeginPass),
             )
             .add_systems(Update, structure::update_structure)
-            .add_systems(Update, (
-                gui::poll_rfd_structure,
-                gui::poll_rfd_trajectory,
-            ))
+            .add_systems(Update, (gui::poll_rfd_structure, gui::poll_rfd_trajectory))
             .add_systems(Update, gui::poll_downloadpdb)
             .add_systems(Update, gui::update_gui);
     }
