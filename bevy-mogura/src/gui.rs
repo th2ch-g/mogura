@@ -135,7 +135,7 @@ pub fn update_gui(
     occupied_screen_space.left = egui::SidePanel::left("left")
         .resizable(true)
         .show(ctx, |ui| {
-            ui.label("left panel");
+            ui.label("Controlpanel");
 
             ui.separator();
 
@@ -292,7 +292,10 @@ pub fn update_gui(
                 }
 
                 if let Some(n_frame) = mogura_state.n_frame() {
-                    ui.add(egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame-1).text("frame"));
+                    ui.add(
+                        egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame - 1)
+                            .text("frame"),
+                    );
                     mogura_state.update_tmp_trajectory = true;
                 } else {
                     ui.add(egui::Slider::new(&mut 0, 0..=0).text("frame"));
@@ -310,7 +313,7 @@ pub fn update_gui(
     occupied_screen_space.right = egui::SidePanel::right("right")
         .resizable(true)
         .show(ctx, |ui| {
-            ui.label("right panel");
+            ui.label("Data panel");
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
@@ -320,7 +323,7 @@ pub fn update_gui(
     occupied_screen_space.top = egui::TopBottomPanel::top("top")
         .resizable(true)
         .show(ctx, |ui| {
-            ui.label("top panel");
+            ui.label("Visualization panel");
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
@@ -330,7 +333,7 @@ pub fn update_gui(
     occupied_screen_space.bottom = egui::TopBottomPanel::bottom("bottom")
         .resizable(true)
         .show(ctx, |ui| {
-            ui.label("bottom panel");
+            ui.label("Log panel");
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response

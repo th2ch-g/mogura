@@ -100,7 +100,9 @@ impl MoguraState {
     }
 
     pub fn n_frame(&self) -> Option<usize> {
-        self.trajectory_data.as_ref().and_then(|td| Some(td.n_frame()))
+        self.trajectory_data
+            .as_ref()
+            .and_then(|td| Some(td.n_frame()))
     }
 
     pub fn next_frame_id(&mut self) {
