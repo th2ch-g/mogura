@@ -67,6 +67,7 @@ pub struct MoguraState {
     pub redraw: bool,
     pub update_trajectory: bool,
     pub update_tmp_trajectory: bool,
+    pub loop_trajectory: bool,
     pub current_frame_id: usize,
 }
 
@@ -95,6 +96,7 @@ impl MoguraState {
             redraw: true,
             update_trajectory: false,
             update_tmp_trajectory: false,
+            loop_trajectory: false,
             current_frame_id: 0,
         }
     }
@@ -117,6 +119,18 @@ impl MoguraState {
             self.update_trajectory = false;
         } else {
             self.update_trajectory = true;
+        }
+    }
+
+    pub fn loop_frame_id(&mut self) {
+        let n_frame = if let Some(n_frame) = self.n_frame() {
+            n_frame
+        } else {
+            return;
+        };
+        self.current_frame_id += 1;
+        if self.current_frame_id >= n_frame {
+            self.current_frame_id = 0;
         }
     }
 }

@@ -289,18 +289,23 @@ pub fn update_gui(
 
                 if ui.button("Stop").clicked() {
                     mogura_state.update_trajectory = false;
+                    mogura_state.update_tmp_trajectory = false;
+                    mogura_state.loop_trajectory = false;
                 }
 
-                if let Some(n_frame) = mogura_state.n_frame() {
-                    ui.add(
-                        egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame - 1)
-                            .text(format!(" / {} frame", n_frame - 1)),
-                    );
-                    mogura_state.update_tmp_trajectory = true;
-                } else {
-                    ui.add(egui::Slider::new(&mut 0, 0..=0).text(format!(" / {} frame", 0)));
+                if ui.button("Loop").clicked() {
+                    mogura_state.loop_trajectory = !mogura_state.loop_trajectory;
                 }
             });
+            if let Some(n_frame) = mogura_state.n_frame() {
+                ui.add(
+                    egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame - 1)
+                        .text(format!(" / {} frame", n_frame - 1)),
+                );
+                mogura_state.update_tmp_trajectory = true;
+            } else {
+                ui.add(egui::Slider::new(&mut 0, 0..=0).text(format!(" / {} frame", 0)));
+            }
 
             ui.separator();
 
