@@ -294,11 +294,11 @@ pub fn update_gui(
                 if let Some(n_frame) = mogura_state.n_frame() {
                     ui.add(
                         egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame - 1)
-                            .text("frame"),
+                            .text(format!(" / {} frame", n_frame - 1)),
                     );
                     mogura_state.update_tmp_trajectory = true;
                 } else {
-                    ui.add(egui::Slider::new(&mut 0, 0..=0).text("frame"));
+                    ui.add(egui::Slider::new(&mut 0, 0..=0).text(format!(" / {} frame", 0)));
                 }
             });
 

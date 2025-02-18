@@ -18,7 +18,10 @@ pub fn update_trajectory(
                 .frame(current_frame_id);
 
             match mogura_state.drawing_method {
-                DrawingMethod::Line | DrawingMethod::VDW | DrawingMethod::Licorise | DrawingMethod::Bonds => {
+                DrawingMethod::Line
+                | DrawingMethod::VDW
+                | DrawingMethod::Licorise
+                | DrawingMethod::Bonds => {
                     for (mut transform, atom_id) in current_visualized_atoms.iter_mut() {
                         let position = frame.positions()[atom_id.id()];
                         transform.translation = Vec3::new(position[0], position[1], position[2]);
@@ -36,7 +39,7 @@ pub fn update_trajectory(
                         transform.translation = center;
                         transform.rotation = rotation;
                     }
-                },
+                }
                 _ => (),
             }
 
