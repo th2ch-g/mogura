@@ -226,11 +226,18 @@ pub fn update_structure(
                 }
                 DrawingMethod::Line => {
                     let mut mesh_materials = std::collections::HashMap::new();
+                    let line = meshes.add(LineList {
+                        lines: vec![(Vec3::ZERO, Vec3::Z)],
+                    });
                     for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
+                        let center = (start + end) / 2.;
+                        let direction = end - start;
+                        let length = direction.length();
+                        let rotation = Quat::from_rotation_arc(Vec3::Z, direction.normalize());
                         if !mesh_materials.contains_key(&atoms[i].element()) {
                             let material = line_materials.add(LineMaterial {
                                 color: LinearRgba::from(atoms[i].color()),
@@ -238,12 +245,15 @@ pub fn update_structure(
                             mesh_materials.insert(atoms[i].element(), material);
                         }
                         parent.spawn((
-                            Mesh3d(meshes.add(LineList {
-                                lines: vec![(start, end)],
-                            })),
+                            Mesh3d(line.clone()),
                             MeshMaterial3d(
                                 mesh_materials.get(&atoms[i].element()).unwrap().clone(),
                             ),
+                            Transform {
+                                translation: start,
+                                rotation,
+                                scale: Vec3::ONE * length,
+                            },
                             BondID::new(atoms[i].id(), atoms[j].id()),
                         ));
                     }
