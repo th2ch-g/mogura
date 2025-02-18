@@ -65,7 +65,8 @@ pub struct MoguraState {
     pub trajectory_data: Option<Box<dyn TrajectoryData>>,
     pub drawing_method: structure::DrawingMethod,
     pub redraw: bool,
-    pub dotrajectory: bool,
+    pub update_trajectory: bool,
+    pub update_tmp_trajectory: bool,
     pub current_frame_id: usize,
 }
 
@@ -92,18 +93,28 @@ impl MoguraState {
             trajectory_file,
             drawing_method: structure::DrawingMethod::Licorise,
             redraw: true,
-            dotrajectory: false,
+            update_trajectory: false,
+            update_tmp_trajectory: false,
             current_frame_id: 0,
         }
     }
 
-    pub fn next_frame_id(&mut self, n_frame: usize) {
+    pub fn n_frame(&self) -> Option<usize> {
+        self.trajectory_data.as_ref().and_then(|td| Some(td.n_frame()))
+    }
+
+    pub fn next_frame_id(&mut self) {
+        let n_frame = if let Some(n_frame) = self.n_frame() {
+            n_frame
+        } else {
+            return;
+        };
         self.current_frame_id += 1;
         if self.current_frame_id >= n_frame {
             self.current_frame_id = 0;
-            self.dotrajectory = false;
+            self.update_trajectory = false;
         } else {
-            self.dotrajectory = true;
+            self.update_trajectory = true;
         }
     }
 }

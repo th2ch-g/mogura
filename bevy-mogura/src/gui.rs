@@ -284,11 +284,18 @@ pub fn update_gui(
             ui.label("Trajectory Control");
             ui.horizontal(|ui| {
                 if ui.button("Start").clicked() {
-                    mogura_state.dotrajectory = true;
+                    mogura_state.update_trajectory = true;
                 }
 
                 if ui.button("Stop").clicked() {
-                    mogura_state.dotrajectory = false;
+                    mogura_state.update_trajectory = false;
+                }
+
+                if let Some(n_frame) = mogura_state.n_frame() {
+                    ui.add(egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame-1).text("frame"));
+                    mogura_state.update_tmp_trajectory = true;
+                } else {
+                    ui.add(egui::Slider::new(&mut 0, 0..=0).text("frame"));
                 }
             });
 

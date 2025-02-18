@@ -8,7 +8,7 @@ pub fn update_trajectory(
     mut current_visualized_atoms: Query<(&mut Transform, &AtomID), Without<BondID>>,
     mut current_visualized_bonds: Query<(&mut Transform, &BondID), Without<AtomID>>,
 ) {
-    if mogura_state.dotrajectory {
+    if mogura_state.update_trajectory || mogura_state.update_tmp_trajectory {
         if mogura_state.trajectory_data.is_some() {
             let current_frame_id = mogura_state.current_frame_id;
             let frame = mogura_state
@@ -35,8 +35,11 @@ pub fn update_trajectory(
                 transform.rotation = rotation;
             }
 
-            let n_frame = mogura_state.trajectory_data.as_ref().unwrap().n_frame();
-            mogura_state.next_frame_id(n_frame);
+            if mogura_state.update_trajectory {
+                mogura_state.next_frame_id();
+            }
+
+            mogura_state.update_tmp_trajectory = false;
         }
     }
 }
