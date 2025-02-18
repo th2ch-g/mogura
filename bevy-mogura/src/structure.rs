@@ -59,6 +59,12 @@ impl BondID {
             atomid2: AtomID::new(id2),
         }
     }
+    pub fn atomid1(&self) -> usize {
+        self.atomid1.id()
+    }
+    pub fn atomid2(&self) -> usize {
+        self.atomid2.id()
+    }
 }
 
 pub fn update_structure(
