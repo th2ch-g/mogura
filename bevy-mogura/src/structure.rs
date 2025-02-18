@@ -227,7 +227,7 @@ pub fn update_structure(
                 DrawingMethod::Line => {
                     let mut mesh_materials = std::collections::HashMap::new();
                     let line = meshes.add(LineList {
-                        lines: vec![(Vec3::ZERO, Vec3::Z)],
+                        lines: vec![(Vec3::ZERO, Vec3::Y)],
                     });
                     for bond in bonds {
                         let i = bond.0;
@@ -237,7 +237,7 @@ pub fn update_structure(
                         let center = (start + end) / 2.;
                         let direction = end - start;
                         let length = direction.length();
-                        let rotation = Quat::from_rotation_arc(Vec3::Z, direction.normalize());
+                        let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         if !mesh_materials.contains_key(&atoms[i].element()) {
                             let material = line_materials.add(LineMaterial {
                                 color: LinearRgba::from(atoms[i].color()),
