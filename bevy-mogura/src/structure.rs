@@ -227,7 +227,7 @@ pub fn update_structure(
                 DrawingMethod::Line => {
                     let mut mesh_materials = std::collections::HashMap::new();
                     let line = meshes.add(LineList {
-                        lines: vec![(Vec3::ZERO, Vec3::Y)],
+                        lines: vec![(Vec3::new(0., -0.5, 0.), Vec3::new(0., 0.5, 0.))],
                     });
                     for bond in bonds {
                         let i = bond.0;
@@ -250,7 +250,7 @@ pub fn update_structure(
                                 mesh_materials.get(&atoms[i].element()).unwrap().clone(),
                             ),
                             Transform {
-                                translation: start,
+                                translation: center,
                                 rotation,
                                 scale: Vec3::ONE * length,
                             },
