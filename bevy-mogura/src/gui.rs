@@ -128,6 +128,7 @@ pub fn update_gui(
     mut mogura_state: ResMut<MoguraState>,
     mut target_pdbid: Local<String>,
     mut trackball_camera: Query<&mut TrackballCamera, With<Camera>>,
+    mut open_help_window: Local<bool>,
 ) {
     let ctx = contexts.ctx_mut();
     let task_pool = bevy::tasks::AsyncComputeTaskPool::get();
@@ -315,6 +316,33 @@ pub fn update_gui(
             }
 
             ui.separator();
+
+
+            ui.label("Help");
+            if ui.button("Help").clicked() {
+                // if open_help_window {
+                //     open_help_window = false;
+                // } else {
+                //     open_help_window = true;
+                // }
+                // cannnot apply "!" operator
+                *open_help_window = !*open_help_window;
+            }
+
+            egui::Window::new("Help Window")
+                .open(&mut open_help_window)
+                .vscroll(true)
+                .hscroll(true)
+                .resizable(true)
+                .title_bar(true)
+                .collapsible(true)
+                .show(ctx, |ui| {
+
+                    use egui::special_emojis::GITHUB;
+                    ui.hyperlink_to(
+                        format!("{GITHUB} Github"), "https://github.com/mogura-rs"
+                    );
+                });
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
