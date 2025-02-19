@@ -320,12 +320,6 @@ pub fn update_gui(
 
             ui.label("Help");
             if ui.button("Help").clicked() {
-                // if open_help_window {
-                //     open_help_window = false;
-                // } else {
-                //     open_help_window = true;
-                // }
-                // cannnot apply "!" operator
                 *open_help_window = !*open_help_window;
             }
 
