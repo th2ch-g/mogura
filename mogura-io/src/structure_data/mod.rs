@@ -20,7 +20,7 @@ pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
                 {
                     unimplemented!("This extension is not supported.");
                 }
-            },
+            }
             _ => {
                 unimplemented!("This extension is not supported.")
             }

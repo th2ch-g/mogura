@@ -35,6 +35,13 @@ impl Plugin for MoguraPlugins {
             self.input_trajectory_file.clone(),
         );
 
+        bevy::asset::load_internal_asset!(
+            app,
+            structure::SHADER_HANDLE,
+            "line_material.wgsl",
+            Shader::from_wgsl
+        );
+
         app.insert_resource(mogura_state)
             .init_resource::<gui::OccupiedScreenSpace>()
             .add_plugins(MaterialPlugin::<LineMaterial>::default())

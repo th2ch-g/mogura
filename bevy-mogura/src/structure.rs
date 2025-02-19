@@ -309,10 +309,11 @@ pub struct LineMaterial {
     color: LinearRgba,
 }
 
+pub const SHADER_HANDLE: Handle<Shader> = Handle::weak_from_u128(12345678912345678912);
+
 impl Material for LineMaterial {
     fn fragment_shader() -> ShaderRef {
-        const SHADER_ASSET_PATH: &str = "shaders/line_material.wgsl";
-        SHADER_ASSET_PATH.into()
+        ShaderRef::Handle(SHADER_HANDLE.clone())
     }
 
     fn specialize(

@@ -242,11 +242,18 @@ pub fn update_gui(
 
             ui.label("Select Drawing Method");
             let pre_drawing_method = mogura_state.drawing_method;
-            ui.radio_value(
-                &mut mogura_state.drawing_method,
-                DrawingMethod::Line,
-                "Line",
-            );
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                // NOTE
+                // webgpu cannot draw line as PolygonMode::Line
+                // if "webgpu" in bevy's features
+                // but webgl2 can draw
+                ui.radio_value(
+                    &mut mogura_state.drawing_method,
+                    DrawingMethod::Line,
+                    "Line",
+                );
+            }
             ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::VDW, "VDW");
             ui.radio_value(
                 &mut mogura_state.drawing_method,

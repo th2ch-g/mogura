@@ -17,7 +17,7 @@ pub fn trajectory_loader(topology_file: &str, trajectory_file: &str) -> Box<dyn 
                 {
                     unimplemented!("This extension is not supported.");
                 }
-            },
+            }
             _ => {
                 unimplemented!("This extension is not supported.");
             }
