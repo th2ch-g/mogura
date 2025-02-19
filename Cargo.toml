@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "mogura-io",
+    "mogura-select",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
@@ -9,6 +10,7 @@ members = [
 
 default-members = [
     "mogura-io",
+    "mogura-select",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
@@ -21,10 +23,6 @@ authors = ["th"]
 description = "A molecular visualizer in Rust"
 
 [workspace.dependencies]
-bevy-mogura = { path = "./bevy-mogura/" }
-mogura-io = { path = "./mogura-io/" }
-mogura-cli = { path = "./mogura-cli/" }
-mogura-wasm = { path = "./mogura-wasm/" }
 # bevy = "0.15.0"
 # remove unnecessary features
 bevy = { version = "0.15.0", default-features = false, features = [

@@ -10,7 +10,17 @@ pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
     if let Some(extension) = extension {
         match extension {
             "pdb" => Box::new(PDBData::load(structure_file)),
-            "gro" => Box::new(GroData::load(structure_file)),
+            "gro" => {
+                #[cfg(feature = "groan_rs")]
+                {
+                    Box::new(GroData::load(structure_file))
+                }
+
+                #[cfg(not(feature = "groan_rs"))]
+                {
+                    unimplemented!("This extension is not supported.");
+                }
+            },
             _ => {
                 unimplemented!("This extension is not supported.")
             }

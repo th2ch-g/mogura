@@ -120,6 +120,6 @@ impl PDBData {
             .await
             .unwrap();
 
-        Ok(Self::parse(&text.as_string().unwrap()))
+        Ok(Self::load_from_content(&text.as_string().unwrap()))
     }
 }

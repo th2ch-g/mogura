@@ -7,7 +7,17 @@ pub fn trajectory_loader(topology_file: &str, trajectory_file: &str) -> Box<dyn 
         .and_then(|ext| ext.to_str());
     if let Some(extension) = extension {
         match extension {
-            "xtc" => Box::new(XtcData::load(topology_file, trajectory_file)),
+            "xtc" => {
+                #[cfg(feature = "groan_rs")]
+                {
+                    Box::new(XtcData::load(topology_file, trajectory_file))
+                }
+
+                #[cfg(not(feature = "groan_rs"))]
+                {
+                    unimplemented!("This extension is not supported.");
+                }
+            },
             _ => {
                 unimplemented!("This extension is not supported.");
             }

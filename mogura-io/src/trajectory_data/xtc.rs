@@ -1,4 +1,6 @@
 use crate::trajectory_data::*;
+
+#[cfg(feature = "groan_rs")]
 use groan_rs::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -6,6 +8,7 @@ pub struct XtcData {
     frames: Vec<Frame>,
 }
 
+#[cfg(feature = "groan_rs")]
 impl TrajectoryData for XtcData {
     fn frames(&self) -> &Vec<Frame> {
         &self.frames

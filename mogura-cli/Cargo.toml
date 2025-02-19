@@ -1,13 +1,14 @@
 [package]
 name = "mogura-cli"
-version = "0.1.0"
 description = "mogura command-line-interface"
+authors.workspace = true
+version.workspace = true
 edition.workspace = true
 
 [dependencies]
 bevy.workspace = true
 clap.workspace = true
-bevy-mogura.workspace = true
+bevy-mogura = { path = "../bevy-mogura", features = ["groan_rs"] }
 
 [[bin]]
 name = "mogura"

@@ -1,4 +1,6 @@
 use crate::structure_data::*;
+
+#[cfg(feature = "groan_rs")]
 use groan_rs::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -7,6 +9,7 @@ pub struct GroData {
     residues: Vec<Residue>,
 }
 
+#[cfg(feature = "groan_rs")]
 impl StructureData for GroData {
     fn load(structure_file: &str) -> Self {
         let mut id = 0;
