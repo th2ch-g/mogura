@@ -16,6 +16,8 @@ use bevy::{
 };
 use mogura_io::prelude::*;
 
+// pub(crate) const BOND_LENGTH_PADDING: f32 = 0.3;
+
 #[derive(Copy, Eq, Hash, Debug, Clone, PartialEq)]
 pub enum DrawingMethod {
     Line,
@@ -90,7 +92,7 @@ pub fn update_structure(
             }
         };
         let atoms = structure_data.atoms();
-        let bonds = structure_data.bonds();
+        let bonds = structure_data.bonds_indirected();
 
         match &mogura_state.structure_data {
             Some(structure_data) => {
@@ -114,7 +116,10 @@ pub fn update_structure(
             ))
             .with_children(|parent| match mogura_state.drawing_method {
                 DrawingMethod::VDW => {
-                    let sphere = meshes.add(Sphere::default());
+                    let sphere = meshes.add(Sphere {
+                        radius: 0.3,
+                        ..default()
+                    });
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
@@ -136,7 +141,10 @@ pub fn update_structure(
                     }
                 }
                 DrawingMethod::Licorise => {
-                    let sphere = meshes.add(Sphere::default());
+                    let sphere = meshes.add(Sphere {
+                        radius: 0.3,
+                        ..default()
+                    });
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
@@ -158,7 +166,7 @@ pub fn update_structure(
                     }
 
                     let cylinder = meshes.add(Cylinder {
-                        radius: 0.3,
+                        radius: 0.2,
                         ..default()
                     });
                     for bond in bonds {
@@ -166,7 +174,10 @@ pub fn update_structure(
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        let center = (start + end) / 2.;
+                        let pos_1_4 = start + (end - start) * 0.25;
+                        // let pos_1_4 = start + (end - start) * 0.25 * (1. + BOND_LENGTH_PADDING);
+                        let pos_3_4 = start + (end - start) * 0.75;
+                        // let pos_3_4 = end + (start - end) * 0.25 * (1. + BOND_LENGTH_PADDING);
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
@@ -177,19 +188,36 @@ pub fn update_structure(
                                     mesh_materials.get(&atoms[i].element()).unwrap().clone(),
                                 ),
                                 transform: Transform {
-                                    translation: center,
+                                    translation: pos_1_4,
                                     rotation,
-                                    scale: Vec3::new(1., 1., 1.),
+                                    // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
+                                    scale: Vec3::ONE * length / 2.,
                                 },
                                 ..default()
                             },
                             BondID::new(atoms[i].id(), atoms[j].id()),
                         ));
+                        parent.spawn((
+                            PbrBundle {
+                                mesh: Mesh3d(cylinder.clone()),
+                                material: MeshMaterial3d(
+                                    mesh_materials.get(&atoms[j].element()).unwrap().clone(),
+                                ),
+                                transform: Transform {
+                                    translation: pos_3_4,
+                                    rotation,
+                                    // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
+                                    scale: Vec3::ONE * length / 2.,
+                                },
+                                ..default()
+                            },
+                            BondID::new(atoms[j].id(), atoms[i].id()),
+                        ));
                     }
                 }
                 DrawingMethod::Bonds => {
                     let cylinder = meshes.add(Cylinder {
-                        radius: 0.3,
+                        radius: 0.2,
                         ..default()
                     });
                     let mut mesh_materials = std::collections::HashMap::new();
@@ -199,13 +227,20 @@ pub fn update_structure(
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        let center = (start + end) / 2.;
+                        let pos_1_4 = start + (end - start) * 0.25;
+                        // let pos_1_4 = start + (end - start) * 0.25 * (1. + BOND_LENGTH_PADDING);
+                        let pos_3_4 = start + (end - start) * 0.75;
+                        // let pos_3_4 = end + (start - end) * 0.25 * (1. + BOND_LENGTH_PADDING);
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         if !mesh_materials.contains_key(&atoms[i].element()) {
                             let material = materials.add(atoms[i].color());
                             mesh_materials.insert(atoms[i].element(), material);
+                        }
+                        if !mesh_materials.contains_key(&atoms[j].element()) {
+                            let material = materials.add(atoms[j].color());
+                            mesh_materials.insert(atoms[j].element(), material);
                         }
                         parent.spawn((
                             PbrBundle {
@@ -214,13 +249,29 @@ pub fn update_structure(
                                     mesh_materials.get(&atoms[i].element()).unwrap().clone(),
                                 ),
                                 transform: Transform {
-                                    translation: center,
+                                    translation: pos_1_4,
                                     rotation,
-                                    scale: Vec3::new(1., 1., 1.),
+                                    // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
+                                    scale: Vec3::ONE * length / 2.,
                                 },
                                 ..default()
                             },
                             BondID::new(atoms[i].id(), atoms[j].id()),
+                        ));
+                        parent.spawn((
+                            PbrBundle {
+                                mesh: Mesh3d(cylinder.clone()),
+                                material: MeshMaterial3d(
+                                    mesh_materials.get(&atoms[j].element()).unwrap().clone(),
+                                ),
+                                transform: Transform {
+                                    translation: pos_3_4,
+                                    rotation,
+                                    scale: Vec3::ONE * length / 2.,
+                                },
+                                ..default()
+                            },
+                            BondID::new(atoms[j].id(), atoms[i].id()),
                         ));
                     }
                 }
@@ -228,13 +279,15 @@ pub fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
                     let line = meshes.add(LineList {
                         lines: vec![(Vec3::new(0., -0.5, 0.), Vec3::new(0., 0.5, 0.))],
+                        // lines: vec![(Vec3::new(0., 0., 0.), Vec3::new(0., 1., 0.))],
                     });
                     for bond in bonds {
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        let center = (start + end) / 2.;
+                        let pos_1_4 = start + (end - start) * 0.25;
+                        let pos_3_4 = start + (end - start) * 0.75;
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
@@ -244,17 +297,35 @@ pub fn update_structure(
                             });
                             mesh_materials.insert(atoms[i].element(), material);
                         }
+                        if !mesh_materials.contains_key(&atoms[j].element()) {
+                            let material = line_materials.add(LineMaterial {
+                                color: LinearRgba::from(atoms[j].color()),
+                            });
+                            mesh_materials.insert(atoms[j].element(), material);
+                        }
                         parent.spawn((
                             Mesh3d(line.clone()),
                             MeshMaterial3d(
                                 mesh_materials.get(&atoms[i].element()).unwrap().clone(),
                             ),
                             Transform {
-                                translation: center,
+                                translation: pos_1_4,
                                 rotation,
-                                scale: Vec3::ONE * length,
+                                scale: Vec3::ONE * length / 2.,
                             },
                             BondID::new(atoms[i].id(), atoms[j].id()),
+                        ));
+                        parent.spawn((
+                            Mesh3d(line.clone()),
+                            MeshMaterial3d(
+                                mesh_materials.get(&atoms[j].element()).unwrap().clone(),
+                            ),
+                            Transform {
+                                translation: pos_3_4,
+                                rotation,
+                                scale: Vec3::ONE * length / 2.,
+                            },
+                            BondID::new(atoms[j].id(), atoms[i].id()),
                         ));
                     }
                 }

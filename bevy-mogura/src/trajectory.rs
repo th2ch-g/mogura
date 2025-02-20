@@ -35,11 +35,12 @@ pub fn update_trajectory(
                         let position2 = frame.positions()[bond_id.atomid2()];
                         let start = Vec3::new(position1[0], position1[1], position1[2]);
                         let end = Vec3::new(position2[0], position2[1], position2[2]);
-                        let center = (start + end) / 2.;
+                        let pos_1_4 = start + (end - start) * 0.25;
+                        // let pos_3_4 = start + (end - start) * 0.75;
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                        transform.translation = center;
+                        transform.translation = pos_1_4;
                         transform.rotation = rotation;
                     }
                 }

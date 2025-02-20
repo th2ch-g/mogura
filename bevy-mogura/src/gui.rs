@@ -317,7 +317,6 @@ pub fn update_gui(
 
             ui.separator();
 
-
             ui.label("Help");
             if ui.button("Help").clicked() {
                 *open_help_window = !*open_help_window;
@@ -331,11 +330,8 @@ pub fn update_gui(
                 .title_bar(true)
                 .collapsible(true)
                 .show(ctx, |ui| {
-
                     use egui::special_emojis::GITHUB;
-                    ui.hyperlink_to(
-                        format!("{GITHUB} Github"), "https://github.com/mogura-rs"
-                    );
+                    ui.hyperlink_to(format!("{GITHUB} Github"), "https://github.com/mogura-rs");
                 });
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());

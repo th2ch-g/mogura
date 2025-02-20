@@ -3,6 +3,8 @@ pub mod pdb;
 use crate::structure_data::gro::GroData;
 use crate::structure_data::pdb::PDBData;
 
+pub(crate) const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
+
 pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
     let extension = std::path::Path::new(structure_file)
         .extension()
@@ -60,15 +62,34 @@ pub trait StructureData: Sync + Send {
         center[2] /= self.atoms().len() as f32;
         center
     }
-    fn bonds(&self) -> Vec<(usize, usize)> {
-        const GENERAL_BOND_CUTOFF: f32 = 1.6;
+    fn bonds_indirected(&self) -> Vec<(usize, usize)> {
         let n = self.atoms().len();
         let mut bonds = Vec::with_capacity(n * n);
         let atoms = self.atoms();
         for i in 0..n {
             for j in 0..i {
+                if i == j {
+                    continue;
+                }
                 if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
                     bonds.push((i, j));
+                }
+            }
+        }
+        bonds
+    }
+    fn bonds_directed(&self) -> Vec<(usize, usize)> {
+        let n = self.atoms().len();
+        let mut bonds = Vec::with_capacity(n * n);
+        let atoms = self.atoms();
+        for i in 0..n {
+            for j in 0..i {
+                if i == j {
+                    continue;
+                }
+                if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
+                    bonds.push((i, j));
+                    bonds.push((j, i));
                 }
             }
         }
