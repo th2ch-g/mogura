@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "mogura-io",
-    "mogura-select",
+    "mogura-asl",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
@@ -10,7 +10,7 @@ members = [
 
 default-members = [
     "mogura-io",
-    "mogura-select",
+    "mogura-asl",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
