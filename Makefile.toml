@@ -4,6 +4,12 @@ CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 [config]
 skip_core_tasks = true
 
+[tasks.dev]
+workspace = false
+script = """
+cargo run --bin mogura
+"""
+
 [tasks.wasm]
 env = { RUSTFLAGS="--cfg web_sys_unstable_apis" }
 workspace = false
@@ -39,7 +45,7 @@ trunk serve --release --open
 [tasks.wasm-prepare]
 description = "for preparing wasm for github.io from local"
 workspace = false
-env = { WASM_TMP_DIR="../../mogura-wasm", RUSTFLAGS="--cfg web_sys_unstable_apis" }
+env = { WASM_TMP_DIR="../../mogura-wasm-gh/", RUSTFLAGS="--cfg web_sys_unstable_apis" }
 script = '''
 trunk -V
 cd mogura-wasm

@@ -10,8 +10,6 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(MoguraPlugins {
-            input_structure_file: None,
-        })
+        .add_plugins(MoguraPlugins { ..default() })
         .run();
 }

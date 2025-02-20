@@ -1,15 +1,27 @@
+pub mod gro;
 pub mod pdb;
+use crate::structure_data::gro::GroData;
 use crate::structure_data::pdb::PDBData;
 
-pub fn structure_loader(structure_file: &str) -> impl StructureData {
+pub(crate) const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
+
+pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
     let extension = std::path::Path::new(structure_file)
         .extension()
         .and_then(|ext| ext.to_str());
     if let Some(extension) = extension {
         match extension {
-            "pdb" => PDBData::load(structure_file),
+            "pdb" => Box::new(PDBData::load(structure_file)),
             "gro" => {
-                todo!();
+                #[cfg(feature = "groan_rs")]
+                {
+                    Box::new(GroData::load(structure_file))
+                }
+
+                #[cfg(not(feature = "groan_rs"))]
+                {
+                    unimplemented!("This extension is not supported.");
+                }
             }
             _ => {
                 unimplemented!("This extension is not supported.")
@@ -20,11 +32,11 @@ pub fn structure_loader(structure_file: &str) -> impl StructureData {
     }
 }
 
-pub fn structure_loader_from_content(content: &str, extension: &str) -> impl StructureData {
+pub fn structure_loader_from_content(content: &str, extension: &str) -> Box<dyn StructureData> {
     match extension {
-        "pdb" => PDBData::load_from_content(content),
+        "pdb" => Box::new(PDBData::load_from_content(content)),
         "gro" => {
-            todo!();
+            unimplemented!("gro is not supported for loading from content")
         }
         _ => {
             unimplemented!("This extension is not supported.")
@@ -34,13 +46,6 @@ pub fn structure_loader_from_content(content: &str, extension: &str) -> impl Str
 
 pub trait StructureData: Sync + Send {
     fn load(structure_file: &str) -> Self
-    where
-        Self: Sized,
-    {
-        let content = std::fs::read_to_string(structure_file).unwrap();
-        Self::load_from_content(&content)
-    }
-    fn load_from_content(content: &str) -> Self
     where
         Self: Sized;
     // fn export(output_path: &str);
@@ -57,15 +62,34 @@ pub trait StructureData: Sync + Send {
         center[2] /= self.atoms().len() as f32;
         center
     }
-    fn bonds(&self) -> Vec<(usize, usize)> {
-        const GENERAL_BOND_CUTOFF: f32 = 1.6;
+    fn bonds_indirected(&self) -> Vec<(usize, usize)> {
         let n = self.atoms().len();
         let mut bonds = Vec::with_capacity(n * n);
         let atoms = self.atoms();
         for i in 0..n {
             for j in 0..i {
+                if i == j {
+                    continue;
+                }
                 if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
                     bonds.push((i, j));
+                }
+            }
+        }
+        bonds
+    }
+    fn bonds_directed(&self) -> Vec<(usize, usize)> {
+        let n = self.atoms().len();
+        let mut bonds = Vec::with_capacity(n * n);
+        let atoms = self.atoms();
+        for i in 0..n {
+            for j in 0..i {
+                if i == j {
+                    continue;
+                }
+                if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
+                    bonds.push((i, j));
+                    bonds.push((j, i));
                 }
             }
         }
@@ -231,6 +255,9 @@ pub struct Atom {
 }
 
 impl Atom {
+    pub fn id(&self) -> usize {
+        self.id
+    }
     pub fn x(&self) -> f32 {
         self.x
     }
@@ -254,6 +281,12 @@ impl Atom {
     }
     pub fn distance(&self, other: &Atom) -> f32 {
         self.distance2(other).sqrt()
+    }
+    pub fn element_symbol(&self) -> &str {
+        self.element
+            .as_ref()
+            .map(|element| element.to_symbol())
+            .unwrap_or("")
     }
 }
 
@@ -499,6 +532,20 @@ pub enum Element {
 }
 
 impl Element {
+    pub fn from_atom_name(atom_name: &str) -> Option<Element> {
+        match atom_name.chars().next() {
+            Some(c) => match c {
+                'H' => Some(Element::H),
+                'C' => Some(Element::C),
+                'N' => Some(Element::N),
+                'O' => Some(Element::O),
+                'S' => Some(Element::S),
+                _ => None,
+            },
+            None => None,
+        }
+    }
+
     pub fn from_symbol(symbol: &str) -> Option<Element> {
         match symbol {
             s if s.eq_ignore_ascii_case("H") => Some(Element::H),

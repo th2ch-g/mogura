@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "mogura-io",
+    "mogura-select",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
@@ -9,6 +10,7 @@ members = [
 
 default-members = [
     "mogura-io",
+    "mogura-select",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
@@ -21,10 +23,6 @@ authors = ["th"]
 description = "A molecular visualizer in Rust"
 
 [workspace.dependencies]
-bevy-mogura = { path = "./bevy-mogura/" }
-mogura-io = { path = "./mogura-io/" }
-mogura-cli = { path = "./mogura-cli/" }
-mogura-wasm = { path = "./mogura-wasm/" }
 # bevy = "0.15.0"
 # remove unnecessary features
 bevy = { version = "0.15.0", default-features = false, features = [
@@ -63,7 +61,8 @@ bevy = { version = "0.15.0", default-features = false, features = [
     "webgpu",
     "x11"] }
 clap = { version = "3.2.22", features = ["derive"] }
-pdbtbx = "0.11.0"
+pdbtbx = "0.12.0"
+groan_rs = "0.9.0"
 bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = "main" }
 anyhow = "1.0"
 reqwest = { version = "0.12.4", features = ["blocking"] }

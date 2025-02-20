@@ -1,0 +1,8 @@
+[package]
+name = "mogura-select"
+description = "molecular selection language parser"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
