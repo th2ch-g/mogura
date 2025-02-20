@@ -18,6 +18,16 @@ use mogura_io::prelude::*;
 
 // pub(crate) const BOND_LENGTH_PADDING: f32 = 0.3;
 
+#[derive(Clone)]
+pub struct MoguraStructurePlugins;
+
+impl Plugin for MoguraStructurePlugins {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(MaterialPlugin::<LineMaterial>::default())
+            .add_systems(Update, update_structure);
+    }
+}
+
 #[derive(Copy, Eq, Hash, Debug, Clone, PartialEq)]
 pub enum DrawingMethod {
     Line,
@@ -69,7 +79,7 @@ impl BondID {
     }
 }
 
-pub fn update_structure(
+fn update_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,

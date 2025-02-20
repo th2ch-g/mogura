@@ -3,7 +3,16 @@ use crate::*;
 use bevy::prelude::*;
 use mogura_io::prelude::*;
 
-pub fn update_trajectory(
+#[derive(Clone)]
+pub struct MoguraTrajectoryPlugins;
+
+impl Plugin for MoguraTrajectoryPlugins {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, update_trajectory);
+    }
+}
+
+fn update_trajectory(
     mut mogura_state: ResMut<MoguraState>,
     mut current_visualized_atoms: Query<(&mut Transform, &AtomID), Without<BondID>>,
     mut current_visualized_bonds: Query<(&mut Transform, &BondID), Without<AtomID>>,

@@ -43,25 +43,11 @@ impl Plugin for MoguraPlugins {
         );
 
         app.insert_resource(mogura_state)
-            .init_resource::<gui::OccupiedScreenSpace>()
-            .add_plugins(MaterialPlugin::<LineMaterial>::default())
-            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
-            .add_plugins(TrackballPlugin)
-            .add_plugins(bevy_egui::EguiPlugin)
-            // .add_systems(Startup, dbg::setup_test)
-            .add_systems(Startup, light::setup_light)
-            .add_systems(Startup, camera::setup_camera)
-            .add_systems(
-                PreUpdate,
-                gui::absorb_egui_inputs
-                    .after(bevy_egui::systems::process_input_system)
-                    .before(bevy_egui::EguiSet::BeginPass),
-            )
-            .add_systems(Update, structure::update_structure)
-            .add_systems(Update, trajectory::update_trajectory)
-            .add_systems(Update, (gui::poll_rfd_structure, gui::poll_rfd_trajectory))
-            .add_systems(Update, gui::poll_downloadpdb)
-            .add_systems(Update, gui::update_gui);
+            .add_plugins(camera::MoguraCameraPlugins)
+            .add_plugins(gui::MoguraGuiPlugins)
+            .add_plugins(light::MoguraLightPlugins)
+            .add_plugins(structure::MoguraStructurePlugins)
+            .add_plugins(trajectory::MoguraTrajectoryPlugins);
     }
 }
 
