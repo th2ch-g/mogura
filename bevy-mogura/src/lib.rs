@@ -45,6 +45,7 @@ impl Plugin for MoguraPlugins {
         app.insert_resource(mogura_state)
             .init_resource::<gui::OccupiedScreenSpace>()
             .add_plugins(MaterialPlugin::<LineMaterial>::default())
+            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
             .add_plugins(TrackballPlugin)
             .add_plugins(bevy_egui::EguiPlugin)
             // .add_systems(Startup, dbg::setup_test)

@@ -129,6 +129,7 @@ pub fn update_gui(
     mut target_pdbid: Local<String>,
     mut trackball_camera: Query<&mut TrackballCamera, With<Camera>>,
     mut open_help_window: Local<bool>,
+    diagnostics: Res<bevy::diagnostic::DiagnosticsStore>,
 ) {
     let ctx = contexts.ctx_mut();
     let task_pool = bevy::tasks::AsyncComputeTaskPool::get();
@@ -313,6 +314,17 @@ pub fn update_gui(
                 mogura_state.update_tmp_trajectory = true;
             } else {
                 ui.add(egui::Slider::new(&mut 0, 0..=0).text(format!(" / {} frame", 0)));
+            }
+
+            ui.separator();
+
+            if let Some(value) = diagnostics
+                .get(&bevy::diagnostic::FrameTimeDiagnosticsPlugin::FPS)
+                .and_then(|fps| fps.smoothed())
+            {
+                ui.label(format!("FPS: {:.2}", value));
+            } else {
+                ui.label("FPS: None");
             }
 
             ui.separator();
