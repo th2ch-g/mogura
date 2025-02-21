@@ -6,4 +6,4 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
-nom = "8.0.0"
+nom.workspace = true
