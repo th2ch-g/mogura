@@ -33,7 +33,101 @@ fn parse_expr(inputs: &str) -> nom::IResult<&str, Selection> {
         parse_backbone,
         parse_water,
         parse_ion,
+        parse_resname,
+        parse_resid,
+        parse_index,
+        parse_name,
     ))
+    .parse(inputs)
+}
+
+fn parse_name(inputs: &str) -> nom::IResult<&str, Selection> {
+    nom::combinator::map(
+        nom::sequence::preceded(
+            nom::bytes::complete::tag("name"),
+            nom::sequence::preceded(
+                nom::character::complete::space1,
+                nom::multi::separated_list1(
+                    nom::character::complete::space1,
+                    nom::character::complete::alphanumeric1,
+                ),
+            ),
+        ),
+        |vec: Vec<&str>| Selection::Name(vec.into_iter().map(|s| s.to_string()).collect()),
+    )
+    .parse(inputs)
+}
+
+fn parse_resname(inputs: &str) -> nom::IResult<&str, Selection> {
+    nom::combinator::map(
+        nom::sequence::preceded(
+            nom::bytes::complete::tag("resname"),
+            nom::sequence::preceded(
+                nom::character::complete::space1,
+                nom::multi::separated_list1(
+                    nom::character::complete::space1,
+                    nom::character::complete::alphanumeric1,
+                ),
+            ),
+        ),
+        |vec: Vec<&str>| Selection::ResName(vec.into_iter().map(|s| s.to_string()).collect()),
+    )
+    .parse(inputs)
+}
+
+fn parse_resid(inputs: &str) -> nom::IResult<&str, Selection> {
+    nom::combinator::map(
+        nom::sequence::preceded(
+            nom::bytes::complete::tag("resid"),
+            nom::sequence::preceded(nom::character::complete::space1, parse_numbers),
+        ),
+        |nums| Selection::ResId(nums),
+    )
+    .parse(inputs)
+}
+
+fn parse_index(inputs: &str) -> nom::IResult<&str, Selection> {
+    nom::combinator::map(
+        nom::sequence::preceded(
+            nom::bytes::complete::tag("index"),
+            nom::sequence::preceded(nom::character::complete::space1, parse_numbers),
+        ),
+        |nums| Selection::Index(nums),
+    )
+    .parse(inputs)
+}
+
+fn parse_numbers(inputs: &str) -> nom::IResult<&str, Vec<usize>> {
+    let (inputs, first) = parse_usize(inputs)?;
+
+    if let Ok((inputs, last)) = nom::sequence::preceded(
+        nom::sequence::delimited(
+            nom::character::complete::space1,
+            nom::bytes::complete::tag("to"),
+            nom::character::complete::space1,
+        ),
+        parse_usize,
+    )
+    .parse(inputs)
+    {
+        let range: Vec<usize> = (first..=last).collect();
+        Ok((inputs, range))
+    } else {
+        let (inputs, rest) = nom::multi::many0(nom::sequence::preceded(
+            nom::character::complete::space1,
+            parse_usize,
+        ))
+        .parse(inputs)?;
+        let mut nums = vec![first];
+        nums.extend(rest);
+        Ok((inputs, nums))
+    }
+}
+
+fn parse_usize(inputs: &str) -> nom::IResult<&str, usize> {
+    nom::combinator::map(nom::character::complete::digit1, |s: &str| {
+        s.parse::<usize>().unwrap()
+    })
     .parse(inputs)
 }
 
@@ -73,82 +167,82 @@ mod tests {
         assert_eq!(parsed, Selection::All);
     }
 
-    // #[test]
-    // fn resname() {
-    //     let selection = "resname ALA";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::ResName(vec!["ALA".to_string()]));
-    // }
-    //
-    // #[test]
-    // fn resname_multiple() {
-    //     let selection = "resname ALA GLU";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(
-    //         parsed,
-    //         Selection::ResName(vec!["ALA".to_string(), "GLU".to_string()])
-    //     );
-    // }
-    //
-    // #[test]
-    // fn name() {
-    //     let selection = "name CA";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::Name(vec!["CA".to_string()]));
-    // }
-    //
-    // #[test]
-    // fn name_multiple() {
-    //     let selection = "name CA CB";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(
-    //         parsed,
-    //         Selection::Name(vec!["CA".to_string(), "CB".to_string()])
-    //     );
-    // }
-    //
-    // #[test]
-    // fn index() {
-    //     let selection = "index 10";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::Index(vec![10]));
-    // }
-    //
-    // #[test]
-    // fn index_multiple() {
-    //     let selection = "index 10 20";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::Index(vec![10, 20]));
-    // }
-    //
-    // #[test]
-    // fn index_to() {
-    //     let selection = "index 10 to 20";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::Index((10..=20).collect()));
-    // }
-    //
-    // #[test]
-    // fn resid() {
-    //     let selection = "resid 10";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::ResId(vec![10]));
-    // }
-    //
-    // #[test]
-    // fn resid_multiple() {
-    //     let selection = "resid 10 20";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::ResId(vec![10, 20]));
-    // }
-    //
-    // #[test]
-    // fn resid_to() {
-    //     let selection = "resid 10 to 20";
-    //     let parsed = parse_selection(selection).unwrap();
-    //     assert_eq!(parsed, Selection::ResId((10..=20).collect()));
-    // }
-    //
+    #[test]
+    fn resname() {
+        let selection = "resname ALA";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::ResName(vec!["ALA".to_string()]));
+    }
+
+    #[test]
+    fn resname_multiple() {
+        let selection = "resname ALA GLU";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(
+            parsed,
+            Selection::ResName(vec!["ALA".to_string(), "GLU".to_string()])
+        );
+    }
+
+    #[test]
+    fn name() {
+        let selection = "name CA";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::Name(vec!["CA".to_string()]));
+    }
+
+    #[test]
+    fn name_multiple() {
+        let selection = "name CA CB";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(
+            parsed,
+            Selection::Name(vec!["CA".to_string(), "CB".to_string()])
+        );
+    }
+
+    #[test]
+    fn index() {
+        let selection = "index 10";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::Index(vec![10]));
+    }
+
+    #[test]
+    fn index_multiple() {
+        let selection = "index 10 20";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::Index(vec![10, 20]));
+    }
+
+    #[test]
+    fn index_to() {
+        let selection = "index 10 to 20";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::Index((10..=20).collect()));
+    }
+
+    #[test]
+    fn resid() {
+        let selection = "resid 10";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::ResId(vec![10]));
+    }
+
+    #[test]
+    fn resid_multiple() {
+        let selection = "resid 10 20";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::ResId(vec![10, 20]));
+    }
+
+    #[test]
+    fn resid_to() {
+        let selection = "resid 10 to 20";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::ResId((10..=20).collect()));
+    }
+
     // #[test]
     // fn and() {
     //     let selection = "resname ALA and resname GLU";
