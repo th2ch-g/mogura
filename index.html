@@ -38,8 +38,8 @@
 <body oncontextmenu="return false;">
 
 <script type="module">
-import init, * as bindings from './mogura-wasm-a8f42a602b529d7f.js';
-const wasm = await init({ module_or_path: './mogura-wasm-a8f42a602b529d7f_bg.wasm' });
+import init, * as bindings from './mogura-wasm-b43b417c62ac418d.js';
+const wasm = await init({ module_or_path: './mogura-wasm-b43b417c62ac418d_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -49,4 +49,4 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script></body>
 
-<link rel="modulepreload" href="./mogura-wasm-a8f42a602b529d7f.js" crossorigin="anonymous" integrity="sha384-AH7+dVlEwopzLtIE9oHWgWHGfMB0rdWA0VCZJlYUVCBJKO/YR+/HY2iO11D/YdOu"><link rel="preload" href="./mogura-wasm-a8f42a602b529d7f_bg.wasm" crossorigin="anonymous" integrity="sha384-/OQPjx2yvjGV/pUqJjk5Y7dlT8K75nhjsBX+LQpNJvx3fQ/suIeaa8c4Xjc44O0A" as="fetch" type="application/wasm"></html>
+<link rel="modulepreload" href="./mogura-wasm-b43b417c62ac418d.js" crossorigin="anonymous" integrity="sha384-ZXIkd4wsxfjpLyj5uQuqd3uHPuVjQ4Y3N0Q6ZYOgLdnNfQQA+lSDMPnEIeNTwqbI"><link rel="preload" href="./mogura-wasm-b43b417c62ac418d_bg.wasm" crossorigin="anonymous" integrity="sha384-ErD/ew8Yo1Yi2/bJ5na3XWtxDV/e8R6Q4NAVXcGo81r0wR2KCFRGTTmxi3BMjb1h" as="fetch" type="application/wasm"></html>
