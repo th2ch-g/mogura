@@ -151,24 +151,24 @@ fn update_structure(
             commands.entity(entity).despawn_recursive();
         }
 
-        let structure_data = match mogura_state.structure_data.as_ref() {
-            Some(data) => data,
+        mogura_state.apply_selection().unwrap();
+
+        let (atoms, bonds) = match &mogura_state.structure_data {
             None => {
                 return;
             }
-        };
-        let atoms = structure_data.atoms();
-        let bonds = structure_data.bonds_indirected();
-
-        match &mogura_state.structure_data {
             Some(structure_data) => {
+                let atoms = structure_data.atoms();
+                let bonds = structure_data.bonds_indirected();
+
                 let center = structure_data.center();
                 let center_vec = Vec3::new(center[0], center[1], center[2]);
                 let mut trackball_camera = trackball_camera.single_mut();
                 trackball_camera.frame.set_target(center_vec.into());
+
+                (atoms, bonds)
             }
-            None => (),
-        }
+        };
 
         commands
             .spawn((
@@ -189,6 +189,9 @@ fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
+                        if !mogura_state.selected_atoms.contains(&atom.id()) {
+                            continue;
+                        }
                         if !mesh_materials.contains_key(&atom.element()) {
                             let material = materials.add(atom.color());
                             mesh_materials.insert(atom.element(), material);
@@ -213,13 +216,8 @@ fn update_structure(
                     });
                     let mut mesh_materials = std::collections::HashMap::new();
 
-                    let selection =
-                        mogura_asl::parse_selection(&mogura_state.atom_selection).unwrap();
-                    let (selected_atoms, selected_bonds) =
-                        selection.select_atoms_bonds(atoms, &bonds);
-
                     for atom in atoms {
-                        if !selected_atoms.contains(&atom.id()) {
+                        if !mogura_state.selected_atoms.contains(&atom.id()) {
                             continue;
                         }
 
@@ -245,7 +243,7 @@ fn update_structure(
                         ..default()
                     });
                     for bond in bonds {
-                        if !selected_bonds.contains(&bond) {
+                        if !mogura_state.selected_bonds.contains(&bond) {
                             continue;
                         }
 
@@ -302,6 +300,9 @@ fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for bond in bonds {
+                        if !mogura_state.selected_bonds.contains(&bond) {
+                            continue;
+                        }
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
@@ -361,6 +362,9 @@ fn update_structure(
                         // lines: vec![(Vec3::new(0., 0., 0.), Vec3::new(0., 1., 0.))],
                     });
                     for bond in bonds {
+                        if !mogura_state.selected_bonds.contains(&bond) {
+                            continue;
+                        }
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());

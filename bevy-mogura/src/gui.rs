@@ -385,7 +385,15 @@ fn update_gui(
                     .hint_text("protein")
                     .show(ui);
                 if ui.button("Apply").clicked() {
-                    mogura_state.redraw = true;
+                    let selection_result = mogura_state.apply_selection();
+                    match selection_result {
+                        Ok(_) => {
+                            mogura_state.redraw = true;
+                        }
+                        Err(e) => {
+                            ui.label(format!("Error: {}", e));
+                        }
+                    }
                 }
             }
 
