@@ -10,6 +10,7 @@ anyhow.workspace = true
 bevy.workspace = true
 bevy_trackball.workspace = true
 mogura-io = { path = "../mogura-io", optional = true }
+mogura-asl = { path = "../mogura-asl" }
 bevy_egui.workspace = true
 egui.workspace = true
 rfd.workspace = true

@@ -325,6 +325,10 @@ mod tests {
         let selection = "resid 10 to 20";
         let parsed = parse_selection(selection).unwrap();
         assert_eq!(parsed, Selection::ResId((10..=20).collect()));
+
+        let selection = "resid to 20";
+        let parsed = parse_selection(selection);
+        assert!(parsed.is_err());
     }
 
     #[test]
@@ -439,5 +443,57 @@ mod tests {
         let selection = "sidechain";
         let parsed = parse_selection(selection).unwrap();
         assert_eq!(parsed, Selection::Sidechain);
+    }
+
+    #[test]
+    fn sample_eval() {
+        impl Selection {
+            fn eval(&self, state: &State) -> bool {
+                match self {
+                    Selection::All => true,
+                    Selection::ResName(names) => names.iter().any(|name| name == &state.resname),
+                    Selection::ResId(ids) => ids.iter().any(|id| id == &state.resid),
+                    Selection::Name(names) => names.iter().any(|name| name == &state.name),
+                    Selection::Index(indices) => indices.iter().any(|index| index == &state.index),
+                    Selection::Not(selection) => !selection.eval(state),
+                    Selection::And(selections) => selections.iter().all(|s| s.eval(state)),
+                    Selection::Or(selections) => selections.iter().any(|s| s.eval(state)),
+                    Selection::Braket(selection) => selection.eval(state),
+                    _ => false,
+                    // Selection::Protein => state.is_protein(),
+                    // Selection::Water => state.is_water(),
+                    // Selection::Ion => state.is_ion(),
+                    // Selection::Backbone => state.is_backbone(),
+                    // Selection::Sidechain => state.is_sidechain(),
+                }
+            }
+        }
+
+        struct State {
+            index: usize,
+            resname: String,
+            resid: usize,
+            name: String,
+        }
+
+        let expr = "(index 10 to 20) or resname ALA";
+        let selection = parse_selection(expr).unwrap();
+
+        let state1 = State {
+            index: 15,
+            resname: "ALA".to_string(),
+            resid: 10,
+            name: "CA".to_string(),
+        };
+
+        let state2 = State {
+            index: 25,
+            resname: "GLU".to_string(),
+            resid: 20,
+            name: "CA".to_string(),
+        };
+
+        assert!(selection.eval(&state1));
+        assert!(!selection.eval(&state2));
     }
 }

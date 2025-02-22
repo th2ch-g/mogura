@@ -1,5 +1,5 @@
 [package]
-name = "mogura-select"
+name = "mogura-asl"
 description = "atom selection language parser"
 version.workspace = true
 edition.workspace = true
