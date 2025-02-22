@@ -404,7 +404,7 @@ fn update_gui(
         .width();
 
     occupied_screen_space.top = egui::TopBottomPanel::top("top")
-        .resizable(true)
+        // .resizable(true)
         .show(ctx, |ui| {
             ui.label("Visualization panel");
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
