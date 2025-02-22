@@ -4,6 +4,10 @@ use crate::structure_data::gro::GroData;
 use crate::structure_data::pdb::PDBData;
 
 pub(crate) const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
+pub(crate) const PROTEIN_RESNAME: [&str; 20] = [
+    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
+    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+];
 
 pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
     let extension = std::path::Path::new(structure_file)
@@ -236,9 +240,22 @@ impl Residue {
             atom_ca.clone(),
         ))
     }
+    pub fn is_water(&self) -> bool {
+        self.residue_name == "HOH"
+            || self.residue_name == "WAT"
+            || self.residue_name.contains("TIP")
+    }
+    pub fn is_protein(&self) -> bool {
+        PROTEIN_RESNAME
+            .iter()
+            .any(|resname| self.residue_name == *resname)
+    }
+    pub fn is_ion(&self) -> bool {
+        self.residue_name.contains("+") || self.residue_name.contains("-")
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Atom {
     id: usize,
     model_id: usize,
@@ -270,6 +287,18 @@ impl Atom {
     pub fn xyz(&self) -> [f32; 3] {
         [self.x, self.y, self.z]
     }
+    pub fn residue_name(&self) -> &str {
+        &self.residue_name
+    }
+    pub fn atom_name(&self) -> &str {
+        &self.atom_name
+    }
+    pub fn atom_id(&self) -> usize {
+        self.atom_id
+    }
+    pub fn residue_id(&self) -> isize {
+        self.residue_id
+    }
     pub fn element(&self) -> &Option<Element> {
         &self.element
     }
@@ -287,6 +316,42 @@ impl Atom {
             .as_ref()
             .map(|element| element.to_symbol())
             .unwrap_or("")
+    }
+    pub fn is_water(&self) -> bool {
+        self.residue_name == "HOH"
+            || self.residue_name == "WAT"
+            || self.residue_name.contains("TIP")
+    }
+    pub fn is_protein(&self) -> bool {
+        PROTEIN_RESNAME
+            .iter()
+            .any(|resname| self.residue_name == *resname)
+    }
+    pub fn is_ion(&self) -> bool {
+        self.residue_name.contains("+") || self.residue_name.contains("-")
+    }
+    pub fn is_backbone(&self) -> bool {
+        if self.is_protein() {
+            if self.atom_name == "N"
+                || self.atom_name == "CA"
+                || self.atom_name == "C"
+                || self.atom_name == "O"
+                || self.atom_name == "HA"
+            {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+    pub fn is_sidechain(&self) -> bool {
+        if self.is_protein() && !self.is_backbone() {
+            true
+        } else {
+            false
+        }
     }
 }
 

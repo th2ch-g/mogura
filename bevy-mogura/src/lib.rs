@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use bevy_trackball::prelude::*;
 use mogura_io::prelude::*;
-use structure::LineMaterial;
 
 mod camera;
 mod gui;
@@ -13,7 +11,7 @@ pub mod prelude {
     pub use crate::MoguraPlugins;
 }
 
-#[derive(Clone, Resource)]
+#[derive(Clone)]
 pub struct MoguraPlugins {
     pub input_structure_file: Option<String>,
     pub input_trajectory_file: Option<String>,
@@ -63,6 +61,7 @@ pub struct MoguraState {
     pub update_tmp_trajectory: bool,
     pub loop_trajectory: bool,
     pub current_frame_id: usize,
+    pub atom_selection: String,
 }
 
 impl MoguraState {
@@ -92,6 +91,7 @@ impl MoguraState {
             update_tmp_trajectory: false,
             loop_trajectory: false,
             current_frame_id: 0,
+            atom_selection: "all".to_string(),
         }
     }
 

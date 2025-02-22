@@ -376,7 +376,19 @@ fn update_gui(
     occupied_screen_space.right = egui::SidePanel::right("right")
         .resizable(true)
         .show(ctx, |ui| {
-            ui.label("Data panel");
+            ui.label("Selection panel");
+
+            ui.separator();
+
+            if let Some(structure_data) = &mogura_state.structure_data {
+                let _response = egui::TextEdit::singleline(&mut mogura_state.atom_selection)
+                    .hint_text("protein")
+                    .show(ui);
+                if ui.button("Apply").clicked() {
+                    mogura_state.redraw = true;
+                }
+            }
+
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
