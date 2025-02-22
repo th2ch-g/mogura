@@ -43,7 +43,7 @@ pub struct StructureParams {
     pub drawing_method: DrawingMethod,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct AtomID {
     id: usize,
 }
@@ -58,7 +58,7 @@ impl AtomID {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct BondID {
     pub atomid1: AtomID,
     pub atomid2: AtomID,
