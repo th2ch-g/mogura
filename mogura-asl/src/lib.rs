@@ -311,6 +311,10 @@ mod tests {
         let selection = "resid 10";
         let parsed = parse_selection(selection).unwrap();
         assert_eq!(parsed, Selection::ResId(vec![10]));
+
+        let selection = "resid resname";
+        let parsed = parse_selection(selection);
+        assert!(parsed.is_err());
     }
 
     #[test]
