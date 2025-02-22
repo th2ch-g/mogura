@@ -151,7 +151,9 @@ fn update_structure(
             commands.entity(entity).despawn_recursive();
         }
 
-        mogura_state.apply_selection().unwrap();
+        if mogura_state.structure_data.is_some() {
+            mogura_state.apply_selection().unwrap();
+        }
 
         let (atoms, bonds) = match &mogura_state.structure_data {
             None => {
