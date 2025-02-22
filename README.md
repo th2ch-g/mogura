@@ -15,4 +15,4 @@ Try demo [here](https://mogura-rs.github.io/mogura/)
 ## TODO
 - [ ] implement dssp
 - [ ] implement path tracing
-- [ ] implement atom selection language
+- [x] implement atom selection language
