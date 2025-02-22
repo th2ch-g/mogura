@@ -3,7 +3,16 @@ use crate::*;
 use bevy::prelude::*;
 use mogura_io::prelude::*;
 
-pub fn update_trajectory(
+#[derive(Clone)]
+pub struct MoguraTrajectoryPlugins;
+
+impl Plugin for MoguraTrajectoryPlugins {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, update_trajectory);
+    }
+}
+
+fn update_trajectory(
     mut mogura_state: ResMut<MoguraState>,
     mut current_visualized_atoms: Query<(&mut Transform, &AtomID), Without<BondID>>,
     mut current_visualized_bonds: Query<(&mut Transform, &BondID), Without<AtomID>>,
@@ -26,11 +35,23 @@ pub fn update_trajectory(
                 | DrawingMethod::Licorise
                 | DrawingMethod::Bonds => {
                     for (mut transform, atom_id) in current_visualized_atoms.iter_mut() {
+                        // if !mogura_state.selected_atoms.contains(&atom_id.id()) {
+                        //     continue;
+                        // }
                         let position = frame.positions()[atom_id.id()];
                         transform.translation = Vec3::new(position[0], position[1], position[2]);
                     }
 
                     for (mut transform, bond_id) in current_visualized_bonds.iter_mut() {
+                        // if !mogura_state
+                        //     .selected_bonds
+                        //     .contains(&(bond_id.atomid1(), bond_id.atomid2()))
+                        //     && !mogura_state
+                        //         .selected_bonds
+                        //         .contains(&(bond_id.atomid2(), bond_id.atomid1()))
+                        // {
+                        //     continue;
+                        // }
                         let position1 = frame.positions()[bond_id.atomid1()];
                         let position2 = frame.positions()[bond_id.atomid2()];
                         let start = Vec3::new(position1[0], position1[1], position1[2]);
@@ -42,6 +63,7 @@ pub fn update_trajectory(
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         transform.translation = pos_1_4;
                         transform.rotation = rotation;
+                        transform.scale = Vec3::ONE * length / 2.;
                     }
                 }
                 _ => (),

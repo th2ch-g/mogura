@@ -18,6 +18,16 @@ use mogura_io::prelude::*;
 
 // pub(crate) const BOND_LENGTH_PADDING: f32 = 0.3;
 
+#[derive(Clone)]
+pub struct MoguraStructurePlugins;
+
+impl Plugin for MoguraStructurePlugins {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(MaterialPlugin::<LineMaterial>::default())
+            .add_systems(Update, update_structure);
+    }
+}
+
 #[derive(Copy, Eq, Hash, Debug, Clone, PartialEq)]
 pub enum DrawingMethod {
     Line,
@@ -33,7 +43,7 @@ pub struct StructureParams {
     pub drawing_method: DrawingMethod,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct AtomID {
     id: usize,
 }
@@ -48,7 +58,7 @@ impl AtomID {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct BondID {
     pub atomid1: AtomID,
     pub atomid2: AtomID,
@@ -69,14 +79,70 @@ impl BondID {
     }
 }
 
-pub fn update_structure(
+pub trait MoguraSelection {
+    fn eval(&self, atom: &Atom) -> bool;
+    fn select_atoms(&self, atoms: &Vec<Atom>) -> std::collections::HashSet<usize> {
+        atoms
+            .iter()
+            .filter(|atom| self.eval(atom))
+            .map(|atom| atom.id())
+            .collect()
+    }
+    fn select_atoms_bonds(
+        &self,
+        atoms: &Vec<Atom>,
+        bonds: &Vec<(usize, usize)>,
+    ) -> (
+        std::collections::HashSet<usize>,
+        std::collections::HashSet<(usize, usize)>,
+    ) {
+        let selected_atoms = self.select_atoms(atoms);
+        let selected_bonds = bonds
+            .iter()
+            .filter(|bond| selected_atoms.contains(&bond.0) && selected_atoms.contains(&bond.1))
+            .map(|bond| *bond)
+            .collect();
+        (selected_atoms, selected_bonds)
+    }
+}
+
+impl MoguraSelection for mogura_asl::Selection {
+    fn eval(&self, atom: &Atom) -> bool {
+        match self {
+            mogura_asl::Selection::All => true,
+            mogura_asl::Selection::ResName(names) => {
+                names.iter().any(|name| name == &atom.residue_name())
+            }
+            mogura_asl::Selection::ResId(ids) => {
+                ids.iter().any(|id| *id == atom.residue_id() as usize)
+            }
+            mogura_asl::Selection::Index(indices) => {
+                indices.iter().any(|index| index == &atom.atom_id())
+            }
+            mogura_asl::Selection::Name(names) => {
+                names.iter().any(|name| name == &atom.atom_name())
+            }
+            mogura_asl::Selection::Not(selection) => !selection.eval(atom),
+            mogura_asl::Selection::And(selections) => selections.iter().all(|s| s.eval(atom)),
+            mogura_asl::Selection::Or(selections) => selections.iter().any(|s| s.eval(atom)),
+            mogura_asl::Selection::Braket(selection) => selection.eval(atom),
+            mogura_asl::Selection::Protein => atom.is_protein(),
+            mogura_asl::Selection::Water => atom.is_water(),
+            mogura_asl::Selection::Ion => atom.is_ion(),
+            mogura_asl::Selection::Backbone => atom.is_backbone(),
+            mogura_asl::Selection::Sidechain => atom.is_sidechain(),
+        }
+    }
+}
+
+fn update_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut line_materials: ResMut<Assets<LineMaterial>>,
     mut mogura_state: ResMut<MoguraState>,
     mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
-    mut trackball_camera: Query<&mut TrackballCamera, With<Camera>>,
+    mut trackball_camera: Query<&mut bevy_trackball::TrackballCamera, With<Camera>>,
 ) {
     if mogura_state.redraw {
         mogura_state.redraw = false;
@@ -85,24 +151,26 @@ pub fn update_structure(
             commands.entity(entity).despawn_recursive();
         }
 
-        let structure_data = match mogura_state.structure_data.as_ref() {
-            Some(data) => data,
+        if mogura_state.structure_data.is_some() {
+            mogura_state.apply_selection().unwrap();
+        }
+
+        let (atoms, bonds) = match &mogura_state.structure_data {
             None => {
                 return;
             }
-        };
-        let atoms = structure_data.atoms();
-        let bonds = structure_data.bonds_indirected();
-
-        match &mogura_state.structure_data {
             Some(structure_data) => {
+                let atoms = structure_data.atoms();
+                let bonds = structure_data.bonds_indirected();
+
                 let center = structure_data.center();
                 let center_vec = Vec3::new(center[0], center[1], center[2]);
                 let mut trackball_camera = trackball_camera.single_mut();
                 trackball_camera.frame.set_target(center_vec.into());
+
+                (atoms, bonds)
             }
-            None => (),
-        }
+        };
 
         commands
             .spawn((
@@ -123,6 +191,9 @@ pub fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
+                        if !mogura_state.selected_atoms.contains(&atom.id()) {
+                            continue;
+                        }
                         if !mesh_materials.contains_key(&atom.element()) {
                             let material = materials.add(atom.color());
                             mesh_materials.insert(atom.element(), material);
@@ -148,6 +219,10 @@ pub fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
+                        if !mogura_state.selected_atoms.contains(&atom.id()) {
+                            continue;
+                        }
+
                         if !mesh_materials.contains_key(&atom.element()) {
                             let material = materials.add(atom.color());
                             mesh_materials.insert(atom.element(), material);
@@ -170,6 +245,10 @@ pub fn update_structure(
                         ..default()
                     });
                     for bond in bonds {
+                        if !mogura_state.selected_bonds.contains(&bond) {
+                            continue;
+                        }
+
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
@@ -223,6 +302,9 @@ pub fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for bond in bonds {
+                        if !mogura_state.selected_bonds.contains(&bond) {
+                            continue;
+                        }
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
@@ -282,6 +364,9 @@ pub fn update_structure(
                         // lines: vec![(Vec3::new(0., 0., 0.), Vec3::new(0., 1., 0.))],
                     });
                     for bond in bonds {
+                        if !mogura_state.selected_bonds.contains(&bond) {
+                            continue;
+                        }
                         let i = bond.0;
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());

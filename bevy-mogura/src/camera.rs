@@ -46,7 +46,17 @@ use bevy_trackball::prelude::*;
 //     }
 // }
 
-pub fn setup_camera(mut commands: Commands) {
+#[derive(Clone)]
+pub struct MoguraCameraPlugins;
+
+impl Plugin for MoguraCameraPlugins {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(TrackballPlugin)
+            .add_systems(Startup, setup_camera);
+    }
+}
+
+fn setup_camera(mut commands: Commands) {
     // let target = Vec3::ZERO;
     // let up = Vec3::Y;
     // let init_pos = Vec3::new(0., 30., 0.);

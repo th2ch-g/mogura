@@ -5,6 +5,27 @@ use bevy::prelude::*;
 use bevy_trackball::prelude::*;
 use mogura_io::prelude::*;
 
+#[derive(Clone)]
+pub struct MoguraGuiPlugins;
+
+impl Plugin for MoguraGuiPlugins {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<OccupiedScreenSpace>()
+            .add_plugins(bevy_egui::EguiPlugin)
+            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+            .add_systems(
+                PreUpdate,
+                (absorb_egui_inputs)
+                    .after(bevy_egui::systems::process_input_system)
+                    .before(bevy_egui::EguiSet::BeginPass),
+            )
+            .add_systems(Update, poll_rfd_structure)
+            .add_systems(Update, poll_rfd_trajectory)
+            .add_systems(Update, poll_downloadpdb)
+            .add_systems(Update, update_gui);
+    }
+}
+
 #[derive(Default, Resource)]
 pub struct OccupiedScreenSpace {
     left: f32,
@@ -21,7 +42,7 @@ pub struct SelectedStructureFile(bevy::tasks::Task<Option<(String, String)>>);
 #[derive(Component)]
 pub struct SelectedTrajectoryFile(bevy::tasks::Task<Option<String>>);
 
-pub fn poll_rfd_trajectory(
+fn poll_rfd_trajectory(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SelectedTrajectoryFile)>,
     mut mogura_state: ResMut<MoguraState>,
@@ -59,7 +80,7 @@ pub fn poll_rfd_trajectory(
     }
 }
 
-pub fn poll_rfd_structure(
+fn poll_rfd_structure(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SelectedStructureFile)>,
     mut mogura_state: ResMut<MoguraState>,
@@ -98,7 +119,7 @@ pub fn poll_rfd_structure(
     }
 }
 
-pub fn poll_downloadpdb(
+fn poll_downloadpdb(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut DownloadPDB)>,
     mut mogura_state: ResMut<MoguraState>,
@@ -121,7 +142,7 @@ pub fn poll_downloadpdb(
 #[derive(Component)]
 pub struct DownloadPDB(bevy::tasks::Task<Result<PDBData, anyhow::Error>>);
 
-pub fn update_gui(
+fn update_gui(
     mut commands: Commands,
     mut contexts: bevy_egui::EguiContexts,
     mut occupied_screen_space: ResMut<OccupiedScreenSpace>,
@@ -355,7 +376,27 @@ pub fn update_gui(
     occupied_screen_space.right = egui::SidePanel::right("right")
         .resizable(true)
         .show(ctx, |ui| {
-            ui.label("Data panel");
+            ui.label("Selection panel");
+
+            ui.separator();
+
+            if let Some(structure_data) = &mogura_state.structure_data {
+                let _response = egui::TextEdit::singleline(&mut mogura_state.atom_selection)
+                    .hint_text("protein")
+                    .show(ui);
+                if ui.button("Apply").clicked() {
+                    let selection_result = mogura_state.apply_selection();
+                    match selection_result {
+                        Ok(_) => {
+                            mogura_state.redraw = true;
+                        }
+                        Err(e) => {
+                            ui.label(format!("Error: {}", e));
+                        }
+                    }
+                }
+            }
+
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
@@ -363,7 +404,7 @@ pub fn update_gui(
         .width();
 
     occupied_screen_space.top = egui::TopBottomPanel::top("top")
-        .resizable(true)
+        // .resizable(true)
         .show(ctx, |ui| {
             ui.label("Visualization panel");
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
@@ -414,7 +455,7 @@ pub fn update_gui(
 // }
 
 // ref: https://github.com/vladbat00/bevy_egui/issues/47
-pub fn absorb_egui_inputs(
+fn absorb_egui_inputs(
     mut contexts: bevy_egui::EguiContexts,
     mut mouse: ResMut<ButtonInput<MouseButton>>,
     mut mouse_wheel: ResMut<Events<bevy::input::mouse::MouseWheel>>,

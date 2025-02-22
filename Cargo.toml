@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "mogura-io",
-    "mogura-select",
+    "mogura-asl",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
@@ -10,7 +10,7 @@ members = [
 
 default-members = [
     "mogura-io",
-    "mogura-select",
+    "mogura-asl",
     "bevy-mogura",
     "mogura-cli",
     "mogura-wasm",
@@ -70,6 +70,7 @@ bevy_egui = "0.31.0"
 egui = "0.29"
 rfd = "0.13.0"
 log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
+nom = "8.0.0"
 
 [profile.release]
 opt-level = "s"

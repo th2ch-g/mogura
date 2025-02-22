@@ -1,7 +1,6 @@
+use crate::structure::*;
 use bevy::prelude::*;
-use bevy_trackball::prelude::*;
 use mogura_io::prelude::*;
-use structure::LineMaterial;
 
 mod camera;
 mod gui;
@@ -13,7 +12,7 @@ pub mod prelude {
     pub use crate::MoguraPlugins;
 }
 
-#[derive(Clone, Resource)]
+#[derive(Clone)]
 pub struct MoguraPlugins {
     pub input_structure_file: Option<String>,
     pub input_trajectory_file: Option<String>,
@@ -43,25 +42,11 @@ impl Plugin for MoguraPlugins {
         );
 
         app.insert_resource(mogura_state)
-            .init_resource::<gui::OccupiedScreenSpace>()
-            .add_plugins(MaterialPlugin::<LineMaterial>::default())
-            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
-            .add_plugins(TrackballPlugin)
-            .add_plugins(bevy_egui::EguiPlugin)
-            // .add_systems(Startup, dbg::setup_test)
-            .add_systems(Startup, light::setup_light)
-            .add_systems(Startup, camera::setup_camera)
-            .add_systems(
-                PreUpdate,
-                gui::absorb_egui_inputs
-                    .after(bevy_egui::systems::process_input_system)
-                    .before(bevy_egui::EguiSet::BeginPass),
-            )
-            .add_systems(Update, structure::update_structure)
-            .add_systems(Update, trajectory::update_trajectory)
-            .add_systems(Update, (gui::poll_rfd_structure, gui::poll_rfd_trajectory))
-            .add_systems(Update, gui::poll_downloadpdb)
-            .add_systems(Update, gui::update_gui);
+            .add_plugins(camera::MoguraCameraPlugins)
+            .add_plugins(gui::MoguraGuiPlugins)
+            .add_plugins(light::MoguraLightPlugins)
+            .add_plugins(structure::MoguraStructurePlugins)
+            .add_plugins(trajectory::MoguraTrajectoryPlugins);
     }
 }
 
@@ -77,6 +62,9 @@ pub struct MoguraState {
     pub update_tmp_trajectory: bool,
     pub loop_trajectory: bool,
     pub current_frame_id: usize,
+    pub atom_selection: String,
+    pub selected_atoms: std::collections::HashSet<usize>,
+    pub selected_bonds: std::collections::HashSet<(usize, usize)>,
 }
 
 impl MoguraState {
@@ -106,6 +94,9 @@ impl MoguraState {
             update_tmp_trajectory: false,
             loop_trajectory: false,
             current_frame_id: 0,
+            atom_selection: "all".to_string(),
+            selected_atoms: std::collections::HashSet::new(),
+            selected_bonds: std::collections::HashSet::new(),
         }
     }
 
@@ -140,6 +131,19 @@ impl MoguraState {
         if self.current_frame_id >= n_frame {
             self.current_frame_id = 0;
         }
+    }
+
+    pub fn apply_selection(&mut self) -> Result<(), String> {
+        let selection = mogura_asl::parse_selection(&self.atom_selection)?;
+        let (selected_atoms, selected_bonds) = {
+            let atoms = self.structure_data.as_ref().unwrap().atoms();
+            let bonds = self.structure_data.as_ref().unwrap().bonds_indirected();
+            let (selected_atoms, selected_bonds) = selection.select_atoms_bonds(&atoms, &bonds);
+            (selected_atoms, selected_bonds)
+        };
+        self.selected_atoms = selected_atoms;
+        self.selected_bonds = selected_bonds;
+        Ok(())
     }
 }
 

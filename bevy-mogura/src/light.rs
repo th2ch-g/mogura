@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-pub fn setup_light(mut commands: Commands) {
+fn setup_light(mut commands: Commands) {
     let base = 1.0;
     let positions = [
         Vec3::new(base, base, base),
@@ -17,5 +17,14 @@ pub fn setup_light(mut commands: Commands) {
             transform: Transform::from_translation(position).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         });
+    }
+}
+
+#[derive(Clone)]
+pub struct MoguraLightPlugins;
+
+impl Plugin for MoguraLightPlugins {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, setup_light);
     }
 }
