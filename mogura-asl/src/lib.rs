@@ -26,7 +26,9 @@ pub fn parse_selection(selection: &str) -> Result<Selection, String> {
 }
 
 fn parse_expr(input: &str) -> nom::IResult<&str, Selection> {
-    parse_or.parse(input)
+    let (input, expr) = parse_or.parse(input)?;
+    let (input, _) = nom::character::complete::space0(input)?;
+    Ok((input, expr))
 }
 
 fn parse_or(input: &str) -> nom::IResult<&str, Selection> {
@@ -236,6 +238,10 @@ mod tests {
         let selection = "all";
         let parsed = parse_selection(selection).unwrap();
         assert_eq!(parsed, Selection::All);
+
+        let selection = " all ";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(parsed, Selection::All);
     }
 
     #[test]
@@ -265,6 +271,13 @@ mod tests {
     #[test]
     fn name_multiple() {
         let selection = "name CA CB";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(
+            parsed,
+            Selection::Name(vec!["CA".to_string(), "CB".to_string()])
+        );
+
+        let selection = " name  CA  CB ";
         let parsed = parse_selection(selection).unwrap();
         assert_eq!(
             parsed,
@@ -330,6 +343,16 @@ mod tests {
     #[test]
     fn or() {
         let selection = "resname ALA or resname GLU";
+        let parsed = parse_selection(selection).unwrap();
+        assert_eq!(
+            parsed,
+            Selection::Or(vec![
+                Box::new(Selection::ResName(vec!["ALA".to_string()])),
+                Box::new(Selection::ResName(vec!["GLU".to_string()]))
+            ])
+        );
+
+        let selection = "  resname   ALA  or  resname GLU ";
         let parsed = parse_selection(selection).unwrap();
         assert_eq!(
             parsed,
