@@ -13,12 +13,12 @@ pub struct GroData {
 impl StructureData for GroData {
     fn load(structure_file: &str) -> Self {
         let mut id = 0;
-        let mut atoms = Vec::new();
-        let mut residues = Vec::new();
 
         let mut system = System::from_file(structure_file).unwrap();
 
         let system_atoms = system.get_atoms_copy();
+        let mut atoms = Vec::with_capacity(system_atoms.len());
+        let mut residues = Vec::with_capacity(system_atoms.len());
 
         for atom in system_atoms {
             atoms.push(crate::structure_data::Atom {

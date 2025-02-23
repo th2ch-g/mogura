@@ -99,105 +99,17 @@ pub trait StructureData: Sync + Send {
         }
         bonds
     }
-    fn secondary_structure(
-        &self,
-        mode: SecondaryStructureAlgorithms,
-    ) -> Vec<SecondaryStructureType> {
-        let residues = self.residues();
-        let n = residues.len();
-        let mut sstype = vec![SecondaryStructureType::Loop; n];
-        let mut hydrogen_bonds = vec![vec![]; n];
-
-        match mode {
-            SecondaryStructureAlgorithms::DSSP => {
-                // check hydrogen bonds in all-pair
-                for i in 0..n {
-                    for j in 0..i {
-                        let prev_residue = &residues[i];
-                        let residue = &residues[j];
-
-                        let (prev_residue_o, _prev_residue_n, prev_residue_c, _prev_residue_ca) =
-                            if let Some(prev_residue) = prev_residue.backbone() {
-                                (
-                                    prev_residue.0,
-                                    prev_residue.1,
-                                    prev_residue.2,
-                                    prev_residue.3,
-                                )
-                            } else {
-                                continue;
-                            };
-                        let (residue_o, residue_n, residue_c, _residue_ca) =
-                            if let Some(residue) = residue.backbone() {
-                                (residue.0, residue.1, residue.2, residue.3)
-                            } else {
-                                continue;
-                            };
-
-                        let r_h = residue_c.distance(&residue_o);
-
-                        let r_on = prev_residue_o.distance(&residue_n);
-                        let r_ch = prev_residue_c.distance(&residue_n) + r_h;
-                        let r_oh = prev_residue_o.distance(&residue_c) + r_h;
-                        let r_cn = prev_residue_c.distance(&residue_o);
-
-                        let energy =
-                            0.084 * 332.0 * (1.0 / r_on + 1.0 / r_cn - 1.0 / r_oh - 1.0 / r_cn);
-
-                        if energy < -0.5 {
-                            hydrogen_bonds[i].push(j);
-                            hydrogen_bonds[j].push(i);
-                        }
-                    }
-                }
-                // determine sstype
-                // check DSSPType::H
-                for i in 0..n - 4 {
-                    if hydrogen_bonds[i].contains(&(i + 4)) {
-                        sstype[i] = SecondaryStructureType::H;
-                        sstype[i + 1] = SecondaryStructureType::H;
-                        sstype[i + 2] = SecondaryStructureType::H;
-                        sstype[i + 4] = SecondaryStructureType::H;
-                    }
-                }
-
-                // check DSSPType::E
-                // for i in 0..n {
-                //     // if hydrogen_bonds[i].len() > 0 {
-                //     //     sstype[i] = SecondaryStructureType::DSSPType(DSSPType::E);
-                //     // }
-                // }
-            }
-            _ => {
-                unimplemented!("{:?} is not supported", mode);
+    fn protein(&self) -> Vec<Atom> {
+        let atoms = self.atoms();
+        let mut atoms_in_protein = Vec::with_capacity(atoms.len());
+        for atom in atoms {
+            if PROTEIN_RESNAME.contains(&atom.residue_name()) {
+                atoms_in_protein.push(atom.clone());
             }
         }
-        sstype
+        atoms_in_protein
     }
     fn residues(&self) -> &Vec<Residue>;
-}
-
-#[derive(Debug, Clone)]
-pub enum SecondaryStructureAlgorithms {
-    DSSP,
-    // STRIDE,
-    // SST,
-}
-
-#[derive(Debug, Clone)]
-pub enum SecondaryStructureType {
-    // DSSP v4.
-    // https://doi.org/10.1021/acs.jcim.3c01344
-    H,     // 4-helix (alpha-helix)
-    B,     // residue in isolated beta-bridge (beta-bridge)
-    E,     // extended strand participates in beta-ladder (beta-strand)
-    G,     // 3-helix (3_10-helix)
-    I,     // 5-helix (pi-helix)
-    P,     // kappa-helix (polyproline II helix)
-    S,     // bend
-    T,     // H-bonded turn
-    Break, // =, !, break
-    Loop,  // ~, <space> loop
 }
 
 #[derive(Debug, Clone)]

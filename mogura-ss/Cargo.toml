@@ -1,0 +1,11 @@
+[package]
+name = "mogura-dssp"
+description = "secondary structure prediction algorithm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dev-dependencies]
+mogura-io = { path = "../mogura-io/" }
+anyhow.workspace = true
+pollster = "0.4.0"
