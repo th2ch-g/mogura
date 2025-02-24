@@ -126,6 +126,9 @@ impl Residue {
     pub fn atoms(&self) -> &Vec<Atom> {
         &self.atoms
     }
+    pub fn residue_name(&self) -> &str {
+        &self.residue_name
+    }
 
     pub fn center(&self) -> [f32; 3] {
         let mut center = [0., 0., 0.];

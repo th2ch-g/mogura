@@ -1,7 +1,8 @@
-mod dssp;
+mod rama;
 
 #[derive(Debug, Clone)]
 pub struct Residue {
+    name: String,
     atoms: Vec<Atom>,
 }
 
@@ -15,29 +16,30 @@ pub struct Atom {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SSAlgorithm {
-    DSSP, // currently DSSP classify only H or B or Loop
-          // STRIDE,
-          // SST,
+    Ramachandran,
+    // DSSP,
+    // STRIDE,
+    // SST,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SS {
     // DSSP v4, https://doi.org/10.1021/acs.jcim.3c01344
-    H,     // 4-helix (alpha-helix)
-    B,     // residue in isolated beta-bridge (beta-bridge)
-    E,     // extended strand participates in beta-ladder (beta-strand)
-    G,     // 3-helix (3_10-helix)
-    I,     // 5-helix (pi-helix)
-    P,     // kappa-helix (polyproline II helix)
-    S,     // bend
-    T,     // H-bonded turn
-    Break, // =, !, break
-    Loop,  // ~, <space> loop
+    H, // 4-helix (alpha-helix)
+    // B,     // residue in isolated beta-bridge (beta-bridge)
+    E, // extended strand participates in beta-ladder (beta-strand)
+    // G,     // 3-helix (3_10-helix)
+    // I,     // 5-helix (pi-helix)
+    // P,     // kappa-helix (polyproline II helix)
+    // S,     // bend
+    // T,     // H-bonded turn
+    // Break, // =, !, break
+    Loop, // ~, <space> loop
 }
 
-pub fn assign_ss(atoms_in_protein: &Vec<Atom>, algo: SSAlgorithm) -> Vec<SS> {
+pub fn assign_ss(residues_in_protein: &Vec<Residue>, algo: SSAlgorithm) -> Vec<SS> {
     match algo {
-        SSAlgorithm::DSSP => dssp::assign_ss(atoms_in_protein),
+        SSAlgorithm::Ramachandran => rama::assign_ss(residues_in_protein),
         _ => todo!(),
     }
 }
@@ -45,43 +47,91 @@ pub fn assign_ss(atoms_in_protein: &Vec<Atom>, algo: SSAlgorithm) -> Vec<SS> {
 #[cfg(test)]
 mod tests {
     use crate::*;
+    use itertools::Itertools;
     use mogura_io::prelude::*;
 
-    fn assign_ss_from_moguraIO(
-        atoms_in_protein: &Vec<mogura_io::prelude::Atom>,
-        algo: SSAlgorithm,
-    ) -> Vec<SS> {
-        assign_ss(&convert_from_mogura_io(atoms_in_protein), algo)
-    }
+    struct Atoms(pub Vec<mogura_io::prelude::Atom>); // to aviod E0117
 
-    fn convert_from_mogura_io(
-        atoms_in_protein: &Vec<mogura_io::prelude::Atom>,
-    ) -> Vec<crate::Atom> {
-        let mut res = Vec::with_capacity(atoms_in_protein.len());
-        for atom in atoms_in_protein {
-            res.push(crate::Atom {
-                name: atom.atom_name().to_string(),
-                x: atom.x(),
-                y: atom.y(),
-                z: atom.z(),
-            });
+    impl From<Atoms> for Vec<crate::Residue> {
+        fn from(atoms_in_protein: Atoms) -> Self {
+            atoms_in_protein
+                .0
+                .into_iter()
+                .chunk_by(|atom| atom.residue_name().to_string())
+                .into_iter()
+                .map(|(res_name, group)| crate::Residue {
+                    name: res_name.to_string(),
+                    atoms: group
+                        .map(|atom| crate::Atom {
+                            name: atom.atom_name().to_string(),
+                            x: atom.x(),
+                            y: atom.y(),
+                            z: atom.z(),
+                        })
+                        .collect(),
+                })
+                .collect()
         }
-        res
     }
 
-    #[test]
-    fn pdb_5AWL_dssp_simple() {
-        let pdb = pollster::block_on(async { PDBData::download("5AWL").await });
+    // #[test]
+    // fn pdb_5AWL_rama() {
+    //     let pdb = pollster::block_on(async { PDBData::download("5AWL").await });
+    //
+    //     let protein = match pdb {
+    //         Ok(pdb) => pdb.protein(),
+    //         Err(err) => panic!("PDB load error: {}", err),
+    //     };
+    //
+    //     let ss = assign_ss(&Atoms(protein).into(), SSAlgorithm::Ramachandran);
+    //
+    //     // gmx 2024.4
+    //     // ~~~SSS~~~~
+    //     // assert_eq!(ss, vec![SS::Loop, SS::Loop, SS::Loop, SS::S, SS::S, SS::S, SS::Loop, SS::Loop, SS::Loop, SS::Loop]);
+    //
+    //     assert_eq!(
+    //         ss,
+    //         vec![
+    //             SS::Loop,
+    //             SS::Loop,
+    //             SS::Loop,
+    //             SS::E,
+    //             SS::E,
+    //             SS::E,
+    //             SS::Loop,
+    //             SS::Loop,
+    //             SS::Loop,
+    //             SS::Loop
+    //         ]
+    //     );
+    // }
 
-        let protein = match pdb {
-            Ok(pdb) => pdb.protein(),
-            Err(err) => panic!("PDB load error: {}", err),
-        };
-
-        let ss = assign_ss_from_moguraIO(&protein, SSAlgorithm::DSSP);
-
-        dbg!(&ss);
-
-        panic!();
-    }
+    // #[test]
+    // fn pdb_8gng() {
+    //     let pdb = pollster::block_on(async { PDBData::download("8GNG").await });
+    //
+    //     let protein = match pdb {
+    //         Ok(pdb) => pdb.protein(),
+    //         Err(err) => panic!("PDB load error: {}", err),
+    //     };
+    //
+    //     let ss = assign_ss(&Atoms(protein).into(), SSAlgorithm::Ramachandran);
+    //
+    //     dbg!(&ss);
+    //
+    //     panic!();
+    // }
+    //
+    // #[test]
+    // fn gro_a2a_simple() {
+    //     let gro = structure_loader("../../example-input/a2a.gro");
+    //
+    //     let protein = gro.protein();
+    //
+    //     let ss = assign_ss(&Atoms(protein).into(), SSAlgorithm::Ramachandran);
+    //
+    //     dbg!(&ss);
+    //
+    //     panic!();
+    // }
 }
