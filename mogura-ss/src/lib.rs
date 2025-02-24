@@ -17,9 +17,9 @@ pub struct Atom {
 #[derive(Clone, Debug, PartialEq)]
 pub enum SSAlgorithm {
     Ramachandran,
-    // DSSP,
-    // STRIDE,
-    // SST,
+    DSSP,
+    STRIDE,
+    SST,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -40,7 +40,9 @@ pub enum SS {
 pub fn assign_ss(residues_in_protein: &Vec<Residue>, algo: SSAlgorithm) -> Vec<SS> {
     match algo {
         SSAlgorithm::Ramachandran => rama::assign_ss(residues_in_protein),
-        _ => todo!(),
+        SSAlgorithm::DSSP => todo!(),
+        SSAlgorithm::STRIDE => todo!(),
+        SSAlgorithm::SST => todo!(),
     }
 }
 

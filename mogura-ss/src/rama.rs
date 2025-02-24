@@ -1,5 +1,4 @@
 use crate::*;
-use std::f32::consts::PI;
 
 fn find_atom(res: &Residue, name: &str) -> Option<Atom> {
     res.atoms.iter().find(|atom| atom.name == name).cloned()
