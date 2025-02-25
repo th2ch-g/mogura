@@ -414,7 +414,9 @@ fn update_structure(
                         ));
                     }
                 }
-                DrawingMethod::Cartoon => {}
+                DrawingMethod::Cartoon => {
+
+                },
                 DrawingMethod::NewCartoon => {}
                 _ => {}
             });

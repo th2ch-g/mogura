@@ -1,5 +1,5 @@
 [package]
-name = "mogura-dssp"
+name = "mogura-ss"
 description = "secondary structure prediction algorithm"
 version.workspace = true
 edition.workspace = true
