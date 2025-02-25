@@ -75,6 +75,12 @@ pub trait StructureData: Sync + Send {
                 if i == j {
                     continue;
                 }
+                // TODO
+                // too heavy
+                // if (!atoms[i].is_protein() || !atoms[j].is_protein()) &&
+                //     (atoms[i].residue_name() != atoms[j].residue_name()) {
+                //     continue;
+                // }
                 if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
                     bonds.push((i, j));
                 }
@@ -91,6 +97,10 @@ pub trait StructureData: Sync + Send {
                 if i == j {
                     continue;
                 }
+                // if (!atoms[i].is_protein() || !atoms[j].is_protein()) &&
+                //     (atoms[i].residue_name() != atoms[j].residue_name()) {
+                //     continue;
+                // }
                 if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
                     bonds.push((i, j));
                     bonds.push((j, i));
