@@ -119,6 +119,16 @@ pub trait StructureData: Sync + Send {
         }
         atoms_in_protein
     }
+    fn backbone(&self) -> Vec<Atom> {
+        let atoms = self.atoms();
+        let mut atoms_in_backbone = Vec::with_capacity(atoms.len());
+        for atom in atoms {
+            if atom.is_backbone() {
+                atoms_in_backbone.push(atom.clone());
+            }
+        }
+        atoms_in_backbone
+    }
     fn residues(&self) -> &Vec<Residue>;
 }
 
@@ -152,17 +162,19 @@ impl Residue {
         center[2] /= self.atoms.len() as f32;
         center
     }
-    pub fn backbone(&self) -> Option<(Atom, Atom, Atom, Atom)> {
+    pub fn backbone(&self) -> Option<(Atom, Atom, Atom, Atom, Atom)> {
         let atom_o = self.atoms.iter().find(|atom| atom.atom_name == "O")?;
         let atom_n = self.atoms.iter().find(|atom| atom.atom_name == "N")?;
         let atom_c = self.atoms.iter().find(|atom| atom.atom_name == "C")?;
         let atom_ca = self.atoms.iter().find(|atom| atom.atom_name == "CA")?;
+        let atom_ha = self.atoms.iter().find(|atom| atom.atom_name == "HA")?;
 
         Some((
             atom_o.clone(),
             atom_n.clone(),
             atom_c.clone(),
             atom_ca.clone(),
+            atom_ha.clone(),
         ))
     }
     pub fn is_water(&self) -> bool {

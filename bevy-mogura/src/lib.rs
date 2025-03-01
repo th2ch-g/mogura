@@ -42,7 +42,7 @@ impl Plugin for MoguraPlugins {
         );
 
         app.insert_resource(mogura_state)
-            .add_systems(Startup, dbg::setup_test)
+            // .add_systems(Startup, dbg::setup_test)
             .add_plugins(camera::MoguraCameraPlugins)
             .add_plugins(gui::MoguraGuiPlugins)
             .add_plugins(light::MoguraLightPlugins)

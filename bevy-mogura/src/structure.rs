@@ -34,6 +34,7 @@ pub enum DrawingMethod {
     VDW,
     Licorise,
     Bonds,
+    Tube,
     Cartoon,
     NewCartoon,
 }
@@ -414,13 +415,102 @@ fn update_structure(
                         ));
                     }
                 }
-                DrawingMethod::Cartoon => {
+                DrawingMethod::Tube => {
+                    const INTERPOLATION_STEPS: usize = 30;
+                    let mut target_atoms = Vec::with_capacity(atoms.len());
 
-                },
+                    // TODO for mogura-io or bevy-mogura
+                    // make index graph
+                    //     single bond means edge if N -> start atom
+                    // extract group and push to target_atoms
+                    // get N, Ca, C, N_next for each step
+                    // calc interpolated position using catmull rom
+                    // draw
+
+                    // assume that next residue is combined with current residue
+                    for atom in atoms {
+                        if !atom.is_backbone()
+                            || (atom.is_backbone() && atom.atom_name() == "HA")
+                            || (atom.is_backbone() && atom.atom_name() == "O")
+                        {
+                            continue;
+                        }
+                        target_atoms.push(atom.id());
+                    }
+
+                    let mut points = Vec::with_capacity(target_atoms.len() * INTERPOLATION_STEPS);
+                    for i in 1..target_atoms.len() - 2 {
+                        for j in 0..=INTERPOLATION_STEPS {
+                            let t = j as f32 / INTERPOLATION_STEPS as f32;
+                            let point = catmull_rom_interpolate(
+                                Vec3::new(
+                                    atoms[target_atoms[i - 1]].x(),
+                                    atoms[target_atoms[i - 1]].y(),
+                                    atoms[target_atoms[i - 1]].z(),
+                                ),
+                                Vec3::new(
+                                    atoms[target_atoms[i]].x(),
+                                    atoms[target_atoms[i]].y(),
+                                    atoms[target_atoms[i]].z(),
+                                ),
+                                Vec3::new(
+                                    atoms[target_atoms[i + 1]].x(),
+                                    atoms[target_atoms[i + 1]].y(),
+                                    atoms[target_atoms[i + 1]].z(),
+                                ),
+                                Vec3::new(
+                                    atoms[target_atoms[i + 2]].x(),
+                                    atoms[target_atoms[i + 2]].y(),
+                                    atoms[target_atoms[i + 2]].z(),
+                                ),
+                                t,
+                            );
+                            points.push(point);
+                        }
+                    }
+
+                    let cylinder = meshes.add(Cylinder {
+                        radius: 1.,
+                        ..default()
+                    });
+
+                    for point in points.windows(2) {
+                        let start = point[0];
+                        let end = point[1];
+                        let direction = end - start;
+                        let length = direction.length();
+                        let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+                        if length > 0.1 {
+                            continue;
+                        }
+                        parent.spawn(
+                            (PbrBundle {
+                                mesh: Mesh3d(cylinder.clone()),
+                                transform: Transform {
+                                    translation: start,
+                                    rotation,
+                                    scale: Vec3::ONE * length,
+                                },
+                                ..default()
+                            }),
+                        );
+                    }
+                }
+                DrawingMethod::Cartoon => {}
                 DrawingMethod::NewCartoon => {}
-                _ => {}
             });
     }
+}
+
+fn catmull_rom_interpolate(p0: Vec3, p1: Vec3, p2: Vec3, p3: Vec3, t: f32) -> Vec3 {
+    let t2 = t * t;
+    let t3 = t2 * t;
+    let term1 = 2.0 * p1;
+    let term2 = (p2 - p0) * t;
+    let term3 = (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2;
+    let term4 = (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3;
+
+    (term1 + term2 + term3 + term4) * 0.5
 }
 
 trait AtomColor {
