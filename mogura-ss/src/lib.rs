@@ -6,12 +6,24 @@ pub struct Residue {
     atoms: Vec<Atom>,
 }
 
+impl Residue {
+    pub fn new(name: String, atoms: Vec<Atom>) -> Self {
+        Self { name, atoms }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Atom {
     name: String,
     x: f32,
     y: f32,
     z: f32,
+}
+
+impl Atom {
+    pub fn new(name: String, x: f32, y: f32, z: f32) -> Self {
+        Self { name, x, y, z }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

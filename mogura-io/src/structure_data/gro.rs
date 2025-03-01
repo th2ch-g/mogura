@@ -1,4 +1,5 @@
 use crate::structure_data::*;
+use itertools::Itertools;
 
 #[cfg(feature = "groan_rs")]
 use groan_rs::prelude::*;
@@ -18,9 +19,8 @@ impl StructureData for GroData {
 
         let system_atoms = system.get_atoms_copy();
         let mut atoms = Vec::with_capacity(system_atoms.len());
-        let mut residues = Vec::with_capacity(system_atoms.len());
 
-        for atom in system_atoms {
+        for atom in &system_atoms {
             atoms.push(crate::structure_data::Atom {
                 id,
                 model_id: 0,
@@ -39,6 +39,22 @@ impl StructureData for GroData {
                 z: atom.get_position().unwrap().z * 10.0,
             });
 
+            id += 1;
+        }
+
+        let mut id = 0;
+        let mut residues = Vec::with_capacity(system_atoms.len());
+        for (residue_id, group) in &atoms.iter().group_by(|a| a.residue_id) {
+            let group_atoms: Vec<_> = group.cloned().collect();
+            let first_atom = group_atoms.clone().into_iter().next().unwrap();
+            residues.push(Residue {
+                id,
+                model_id: 0,
+                chain_name: first_atom.chain_name.clone(),
+                residue_id: first_atom.residue_id,
+                residue_name: first_atom.residue_name.clone(),
+                atoms: group_atoms,
+            });
             id += 1;
         }
 

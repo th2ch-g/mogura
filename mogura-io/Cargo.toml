@@ -10,6 +10,7 @@ pdbtbx.workspace = true
 groan_rs = { workspace = true, optional = true }
 reqwest.workspace = true
 anyhow.workspace = true
+itertools.workspace = true
 
 [features]
 default = []
