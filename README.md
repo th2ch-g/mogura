@@ -9,7 +9,7 @@
 ## Quick Start
 ### Install
 ~~~bash
-cargo install --git https://github.com/mogura-rs/mogura mogura
+cargo install --git https://github.com/mogura-rs/mogura mogura --locked
 ~~~
 
 ### Run mogura
