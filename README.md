@@ -69,6 +69,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - wgpu
   - https://github.com/gfx-rs/wgpu
   - https://github.com/jack1232/wgpu-step-by-step
+  - https://github.com/jinleili/simuverse
 - pdb, gro, xtc
   - https://github.com/douweschulte/pdbtbx
   - https://github.com/Ladme/groan_rs
@@ -78,6 +79,8 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - [PyMol](https://github.com/schrodinger/pymol-open-source)
   - [VMD](https://www.ks.uiuc.edu/Research/vmd/)
   - [ChimeraX](https://github.com/RBVI/ChimeraX)
+  - [molstar](https://github.com/molstar/molstar)
+    - [VSCoding-Sequence](https://github.com/molstar/VSCoding-Sequence)
   - [Cuemol](https://github.com/CueMol/cuemol2)
   - [ngl](https://github.com/nglviewer/ngl)
 - other visualizer in Rust
