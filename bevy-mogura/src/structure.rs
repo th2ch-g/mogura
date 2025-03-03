@@ -498,6 +498,9 @@ fn update_structure(
                         );
                     }
                 }
+                // TODO
+                // accuracy of ss is low
+                // cartoon is not used currently
                 DrawingMethod::Cartoon => {
                     let cylinder = meshes.add(Cylinder {
                         radius: 1.,

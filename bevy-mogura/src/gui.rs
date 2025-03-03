@@ -283,11 +283,11 @@ fn update_gui(
                 DrawingMethod::Licorise,
                 "Licorise",
             );
-            ui.radio_value(
-                &mut mogura_state.drawing_method,
-                DrawingMethod::Cartoon,
-                "Cartoon",
-            );
+            // ui.radio_value(
+            //     &mut mogura_state.drawing_method,
+            //     DrawingMethod::Cartoon,
+            //     "Cartoon",
+            // );
             ui.radio_value(
                 &mut mogura_state.drawing_method,
                 DrawingMethod::Tube,
