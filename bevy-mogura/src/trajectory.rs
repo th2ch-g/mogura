@@ -14,11 +14,18 @@ impl Plugin for MoguraTrajectoryPlugins {
 
 fn update_trajectory(
     mut mogura_state: ResMut<MoguraState>,
-    // mut current_visualized_atoms: Query<(&mut Transform, &AtomID), Without<BondID>>,
-    // mut current_visualized_bonds: Query<(&mut Transform, &BondID), Without<AtomID>>,
-    mut current_visualized_atoms: Query<(&mut Transform, &AtomID), (Without<InterpolationID>, Without<BondID>)>,
-    mut current_visualized_bonds: Query<(&mut Transform, &BondID), (Without<InterpolationID>, Without<AtomID>)>,
-    mut current_visualized_tubes: Query<(&mut Transform, &InterpolationID), (Without<AtomID>, Without<BondID>)>,
+    mut current_visualized_atoms: Query<
+        (&mut Transform, &AtomID),
+        (Without<InterpolationID>, Without<BondID>),
+    >,
+    mut current_visualized_bonds: Query<
+        (&mut Transform, &BondID),
+        (Without<InterpolationID>, Without<AtomID>),
+    >,
+    mut current_visualized_tubes: Query<
+        (&mut Transform, &InterpolationID),
+        (Without<AtomID>, Without<BondID>),
+    >,
 ) {
     if mogura_state.update_trajectory
         || mogura_state.update_tmp_trajectory
@@ -63,6 +70,9 @@ fn update_trajectory(
                         // let pos_3_4 = start + (end - start) * 0.75;
                         let direction = end - start;
                         let length = direction.length();
+                        if length > 1.6 {
+                            continue;
+                        }
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         transform.translation = pos_1_4;
                         transform.rotation = rotation;
@@ -101,8 +111,6 @@ fn update_trajectory(
                     }
 
                     for (mut transform, interpolation_id) in current_visualized_tubes.iter_mut() {
-                        // let start_id = interpolation_id.atomid1();
-                        // let end_id = interpolation_id.atomid2();
                         let start_id = interpolation_id.start_id();
                         let end_id = interpolation_id.end_id();
                         let start = points[start_id].0;

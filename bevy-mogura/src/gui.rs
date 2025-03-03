@@ -422,15 +422,15 @@ fn update_gui(
         .rect
         .height();
 
-    occupied_screen_space.bottom = egui::TopBottomPanel::bottom("bottom")
-        .resizable(true)
-        .show(ctx, |ui| {
-            ui.label("Log panel");
-            ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
-        })
-        .response
-        .rect
-        .height();
+    // occupied_screen_space.bottom = egui::TopBottomPanel::bottom("bottom")
+    //     .resizable(true)
+    //     .show(ctx, |ui| {
+    //         ui.label("Log panel");
+    //         ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
+    //     })
+    //     .response
+    //     .rect
+    //     .height();
 }
 
 // https://github.com/vladbat00/bevy_egui/blob/main/examples/side_panel.rs

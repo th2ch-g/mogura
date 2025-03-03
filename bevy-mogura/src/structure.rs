@@ -100,7 +100,6 @@ impl InterpolationID {
     }
 }
 
-
 pub trait MoguraSelection {
     fn eval(&self, atom: &Atom) -> bool;
     fn select_atoms(&self, atoms: &Vec<Atom>) -> std::collections::HashSet<usize> {
@@ -516,7 +515,6 @@ fn update_structure(
                                 },
                                 ..default()
                             },
-                            // BondID::new(start_id, end_id),
                             InterpolationID::new(start_id, end_id),
                         ));
                     }
