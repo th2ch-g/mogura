@@ -36,7 +36,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 
 ## Feature
 - Visualize PDB, GRO format
-  - stick, stick&ball, ball, tube, line mode are supported
+  - stick, stick&ball, ball, tube(catmull-rom), line mode are supported
   - wasm does not suppert line (because WebGPU)
 - Visualize MD simulation using XTC format
   - topology must be PDB or GRO format
@@ -66,7 +66,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - https://github.com/bytestring-net/bevy_lunex
   - https://github.com/bevyengine/bevy
   - https://github.com/qu1x/bevy_trackball
-  - 
+  -
 - graphics
   - https://github.com/svenstaro/bvh
   - https://github.com/pannapudi/voidin
@@ -75,7 +75,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - https://github.com/NotCamelCase/RasterizationInOneWeekend
   - https://github.com/RayTracing
     - https://github.com/RayTracing/gpu-tracing
-    - https://github.com/RayTracing/raytracing.github.io 
+    - https://github.com/RayTracing/raytracing.github.io
 - egui
   - https://github.com/emilk/egui
   - https://github.com/vladbat00/bevy_egui
