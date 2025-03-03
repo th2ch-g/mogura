@@ -82,6 +82,25 @@ impl BondID {
     }
 }
 
+#[derive(Component, Debug, Clone)]
+pub struct InterpolationID {
+    start_id: usize,
+    end_id: usize,
+}
+
+impl InterpolationID {
+    pub fn new(start_id: usize, end_id: usize) -> Self {
+        Self { start_id, end_id }
+    }
+    pub fn start_id(&self) -> usize {
+        self.start_id
+    }
+    pub fn end_id(&self) -> usize {
+        self.end_id
+    }
+}
+
+
 pub trait MoguraSelection {
     fn eval(&self, atom: &Atom) -> bool;
     fn select_atoms(&self, atoms: &Vec<Atom>) -> std::collections::HashSet<usize> {
@@ -497,7 +516,8 @@ fn update_structure(
                                 },
                                 ..default()
                             },
-                            BondID::new(start_id, end_id),
+                            // BondID::new(start_id, end_id),
+                            InterpolationID::new(start_id, end_id),
                         ));
                     }
                 }
