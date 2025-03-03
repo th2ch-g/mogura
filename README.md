@@ -51,12 +51,22 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - dirty pdb file will cause parse error because of pdbtbx.
 
 
+## TODO
+- [ ] Path tracing using [bevy-hikari](https://github.com/cryscan/bevy-hikari)(but no more developed) or [developing default feature](https://github.com/bevyengine/bevy/issues/639)
+- [ ] Secondary structure prediction using DSSP or STRIDE
+- [ ] Visualize structure as Cartoon and NewCartoon
+- [ ] Morphing by specifing two structures
+
+
 ## Useful Reference
+
+<details><summary> References </summary>
 
 - bevy
   - https://github.com/bytestring-net/bevy_lunex
   - https://github.com/bevyengine/bevy
-  -
+  - https://github.com/qu1x/bevy_trackball
+  - 
 - graphics
   - https://github.com/svenstaro/bvh
   - https://github.com/pannapudi/voidin
@@ -64,8 +74,11 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - https://github.com/servo/pathfinder
   - https://github.com/NotCamelCase/RasterizationInOneWeekend
   - https://github.com/RayTracing
+    - https://github.com/RayTracing/gpu-tracing
+    - https://github.com/RayTracing/raytracing.github.io 
 - egui
   - https://github.com/emilk/egui
+  - https://github.com/vladbat00/bevy_egui
 - wgpu
   - https://github.com/gfx-rs/wgpu
   - https://github.com/jack1232/wgpu-step-by-step
@@ -85,3 +98,5 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - [ngl](https://github.com/nglviewer/ngl)
 - other visualizer in Rust
   - [ferricyanide](https://github.com/frodofine/ferricyanide)
+
+</details>
