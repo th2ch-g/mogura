@@ -63,8 +63,8 @@ impl AtomID {
 
 #[derive(Component, Debug, Clone)]
 pub struct BondID {
-    pub atomid1: AtomID,
-    pub atomid2: AtomID,
+    atomid1: AtomID,
+    atomid2: AtomID,
 }
 
 impl BondID {
@@ -441,6 +441,7 @@ fn update_structure(
                     }
 
                     let mut points = Vec::with_capacity(target_atoms.len() * INTERPOLATION_STEPS);
+                    let mut interpolation_id = 0;
                     for i in 1..target_atoms.len() - 2 {
                         for j in 0..=INTERPOLATION_STEPS {
                             let t = j as f32 / INTERPOLATION_STEPS as f32;
@@ -467,7 +468,8 @@ fn update_structure(
                                 ),
                                 t,
                             );
-                            points.push(point);
+                            points.push((point, interpolation_id));
+                            interpolation_id += 1;
                         }
                     }
 
@@ -477,16 +479,16 @@ fn update_structure(
                     });
 
                     for point in points.windows(2) {
-                        let start = point[0];
-                        let end = point[1];
+                        let (start, start_id) = point[0];
+                        let (end, end_id) = point[1];
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         if length > 0.1 {
                             continue;
                         }
-                        parent.spawn(
-                            (PbrBundle {
+                        parent.spawn((
+                            PbrBundle {
                                 mesh: Mesh3d(cylinder.clone()),
                                 transform: Transform {
                                     translation: start,
@@ -494,8 +496,9 @@ fn update_structure(
                                     scale: Vec3::ONE * length,
                                 },
                                 ..default()
-                            }),
-                        );
+                            },
+                            BondID::new(start_id, end_id),
+                        ));
                     }
                 }
                 // TODO
@@ -607,19 +610,21 @@ fn update_structure(
                             .atoms()
                             .iter()
                             .find(|atom| atom.atom_name() == "N")
-                            .map(|atom| atom.id()) {
-                                Some(id) => id,
-                                None => continue
-                            };
+                            .map(|atom| atom.id())
+                        {
+                            Some(id) => id,
+                            None => continue,
+                        };
 
                         let atom_end = match residues[resid_end]
                             .atoms()
                             .iter()
                             .find(|atom| atom.atom_name() == "C")
-                            .map(|atom| atom.id()) {
-                                Some(id) => id,
-                                None => continue
-                            };
+                            .map(|atom| atom.id())
+                        {
+                            Some(id) => id,
+                            None => continue,
+                        };
 
                         match ty {
                             mogura_ss::SS::H => {
@@ -662,7 +667,7 @@ fn update_structure(
     }
 }
 
-fn catmull_rom_interpolate(p0: Vec3, p1: Vec3, p2: Vec3, p3: Vec3, t: f32) -> Vec3 {
+pub fn catmull_rom_interpolate(p0: Vec3, p1: Vec3, p2: Vec3, p3: Vec3, t: f32) -> Vec3 {
     let t2 = t * t;
     let t3 = t2 * t;
     let term1 = 2.0 * p1;
