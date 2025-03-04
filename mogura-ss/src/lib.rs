@@ -59,6 +59,7 @@ pub fn assign_ss(residues_in_protein: &Vec<Residue>, algo: SSAlgorithm) -> Vec<S
     }
 }
 
+#[allow(unused)]
 #[cfg(test)]
 mod tests {
     use crate::*;

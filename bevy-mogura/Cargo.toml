@@ -20,7 +20,6 @@ itertools.workspace = true
 
 [dev-dependencies]
 cargo-husky.workspace = true
-# cargo-husky = { version = "1.5.0", default-features = false, features = ["precommit-hook", "run-cargo-clippy", "run-cargo-check", "run-cargo-fmt"] }
 
 [features]
 default = ["mogura-io/default"]

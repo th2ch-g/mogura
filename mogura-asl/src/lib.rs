@@ -451,6 +451,7 @@ mod tests {
 
     #[test]
     fn sample_eval() {
+        #[allow(non_local_definitions)]
         impl Selection {
             fn eval(&self, state: &State) -> bool {
                 match self {
