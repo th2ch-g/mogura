@@ -57,6 +57,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - [ ] Visualize structure as Cartoon and NewCartoon
 - [ ] Morphing by specifing two structures
 - [ ] Load multiple structure files
+- [ ] Pick up atoms and Hightlight it
 
 ## Useful Reference
 
@@ -66,7 +67,6 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - https://github.com/bytestring-net/bevy_lunex
   - https://github.com/bevyengine/bevy
   - https://github.com/qu1x/bevy_trackball
-  -
 - graphics
   - https://github.com/svenstaro/bvh
   - https://github.com/pannapudi/voidin
