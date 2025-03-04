@@ -39,8 +39,8 @@ pub enum DrawingMethod {
 
 #[derive(Component)]
 pub struct StructureParams {
-    #[allow(unused)]
-    pub drawing_method: DrawingMethod,
+    // pub drawing_method: DrawingMethod,
+    pub id: usize, // corresponds to index of mogura_state.selections: Vec<EachSelection>
 }
 
 #[derive(Component, Debug, Clone)]
@@ -156,56 +156,94 @@ fn update_structure(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut line_materials: ResMut<Assets<LineMaterial>>,
-    mut mogura_state: ResMut<MoguraState>,
+    mogura_state: Res<MoguraState>,
+    mut mogura_selections: ResMut<MoguraSelections>,
     mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
     mut trackball_camera: Query<&mut bevy_trackball::TrackballCamera, With<Camera>>,
 ) {
-    if mogura_state.redraw {
-        mogura_state.redraw = false;
+    let delete_index: std::collections::HashSet<usize> = mogura_selections
+        .0
+        .iter()
+        .enumerate()
+        .filter(|&(_, selection)| selection.delete)
+        .map(|(idx, _)| idx)
+        .collect();
 
-        for (entity, _structure_params) in current_visualized_structure.iter_mut() {
+    let old2new_index: std::collections::HashMap<usize, usize> = mogura_selections
+        .0
+        .iter()
+        .enumerate()
+        .filter(|&(_, selection)| !selection.delete)
+        .enumerate()
+        .map(|(new_idx, (old_idx, _))| (old_idx, new_idx))
+        .collect();
+
+    mogura_selections.0.retain(|selection| !selection.delete);
+
+    assert_eq!(old2new_index.len(), mogura_selections.0.len());
+
+    if mogura_state.structure_data.is_none() {
+        return;
+    }
+
+    for (entity, mut structure_params) in current_visualized_structure.iter_mut() {
+        if delete_index.contains(&structure_params.id) {
+            commands.entity(entity).despawn_recursive();
+        } else {
+            structure_params.id = old2new_index[&structure_params.id];
+        }
+    }
+
+    let (atoms, bonds, _residues) = match &mogura_state.structure_data {
+        None => {
+            return;
+        }
+        Some(structure_data) => {
+            let atoms = structure_data.atoms();
+            let residues = structure_data.residues();
+            let bonds = structure_data.bonds_indirected();
+
+            let center = structure_data.center();
+            let center_vec = Vec3::new(center[0], center[1], center[2]);
+            let mut trackball_camera = trackball_camera.single_mut();
+            trackball_camera.frame.set_target(center_vec.into());
+
+            (atoms, bonds, residues)
+        }
+    };
+
+    for (selection_id, selection) in mogura_selections.0.iter_mut().enumerate() {
+        if !selection.redraw {
+            continue;
+        }
+        selection.redraw = false;
+
+        for (entity, _structure_params) in current_visualized_structure.iter() {
             commands.entity(entity).despawn_recursive();
         }
 
-        if mogura_state.structure_data.is_some() {
-            mogura_state.apply_selection().unwrap();
-        }
-
-        let (atoms, bonds, _residues) = match &mogura_state.structure_data {
-            None => {
-                return;
-            }
-            Some(structure_data) => {
-                let atoms = structure_data.atoms();
-                let residues = structure_data.residues();
-                let bonds = structure_data.bonds_indirected();
-
-                let center = structure_data.center();
-                let center_vec = Vec3::new(center[0], center[1], center[2]);
-                let mut trackball_camera = trackball_camera.single_mut();
-                trackball_camera.frame.set_target(center_vec.into());
-
-                (atoms, bonds, residues)
-            }
-        };
+        selection
+            .apply_selection(&mogura_state.structure_data.as_ref().unwrap())
+            .unwrap();
 
         commands
             .spawn((
                 StructureParams {
-                    drawing_method: mogura_state.drawing_method,
+                    // drawing_method: selection.drawing_method,
+                    id: selection_id,
                 },
                 GlobalTransform::default(),
                 Transform::default(),
                 Visibility::default(),
                 InheritedVisibility::default(),
             ))
-            .with_children(|parent| match mogura_state.drawing_method {
+            .with_children(|parent| match selection.drawing_method {
                 DrawingMethod::Ball => {
                     let sphere = meshes.add(Sphere { radius: 0.3 });
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
-                        if !mogura_state.selected_atoms.contains(&atom.id()) {
+                        if !selection.selected_atoms.contains(&atom.id()) {
                             continue;
                         }
                         mesh_materials
@@ -224,7 +262,7 @@ fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
-                        if !mogura_state.selected_atoms.contains(&atom.id()) {
+                        if !selection.selected_atoms.contains(&atom.id()) {
                             continue;
                         }
                         mesh_materials
@@ -242,8 +280,8 @@ fn update_structure(
                         radius: 0.2,
                         ..default()
                     });
-                    for bond in bonds {
-                        if !mogura_state.selected_bonds.contains(&bond) {
+                    for bond in &bonds {
+                        if !selection.selected_bonds.contains(&bond) {
                             continue;
                         }
 
@@ -293,8 +331,8 @@ fn update_structure(
                     });
                     let mut mesh_materials = std::collections::HashMap::new();
 
-                    for bond in bonds {
-                        if !mogura_state.selected_bonds.contains(&bond) {
+                    for bond in &bonds {
+                        if !selection.selected_bonds.contains(&bond) {
                             continue;
                         }
                         let i = bond.0;
@@ -347,8 +385,8 @@ fn update_structure(
                         lines: vec![(Vec3::new(0., -0.5, 0.), Vec3::new(0., 0.5, 0.))],
                         // lines: vec![(Vec3::new(0., 0., 0.), Vec3::new(0., 1., 0.))],
                     });
-                    for bond in bonds {
-                        if !mogura_state.selected_bonds.contains(&bond) {
+                    for bond in &bonds {
+                        if !selection.selected_bonds.contains(&bond) {
                             continue;
                         }
                         let i = bond.0;
@@ -422,6 +460,10 @@ fn update_structure(
                     let mut interpolation_id = 0;
                     for i in 1..target_atoms.len() - 2 {
                         for j in 0..=INTERPOLATION_STEPS {
+                            if !selection.selected_atoms.contains(&target_atoms[i]) {
+                                interpolation_id += 1;
+                                continue;
+                            }
                             let t = j as f32 / INTERPOLATION_STEPS as f32;
                             let point = catmull_rom_interpolate(
                                 Vec3::new(
@@ -478,9 +520,11 @@ fn update_structure(
                             InterpolationID::new(start_id, end_id),
                         ));
                     }
-                } // TODO
+                } //
+                  // TODO
                   // accuracy of ss is low
                   // cartoon is not used currently
+                  //
                   // DrawingMethod::Cartoon => {
                   //     let cylinder = meshes.add(Cylinder {
                   //         radius: 1.,
