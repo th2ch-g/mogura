@@ -10,6 +10,7 @@ impl Plugin for MoguraTrajectoryPlugins {
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn update_trajectory(
     mut mogura_state: ResMut<MoguraState>,
     mut current_visualized_atoms: Query<
@@ -40,9 +41,9 @@ fn update_trajectory(
 
         match mogura_state.drawing_method {
             DrawingMethod::Line
-            | DrawingMethod::VDW
-            | DrawingMethod::Licorise
-            | DrawingMethod::Bonds => {
+            | DrawingMethod::Ball
+            | DrawingMethod::BallAndStick
+            | DrawingMethod::Stick => {
                 for (mut transform, atom_id) in current_visualized_atoms.iter_mut() {
                     // if !mogura_state.selected_atoms.contains(&atom_id.id()) {
                     //     continue;

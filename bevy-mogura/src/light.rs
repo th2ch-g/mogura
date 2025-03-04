@@ -13,10 +13,10 @@ fn setup_light(mut commands: Commands) {
         Vec3::new(-base, base, -base),
     ];
     for position in positions {
-        commands.spawn(DirectionalLightBundle {
-            transform: Transform::from_translation(position).looking_at(Vec3::ZERO, Vec3::Y),
-            ..default()
-        });
+        commands.spawn((
+            DirectionalLight::default(),
+            Transform::from_translation(position).looking_at(Vec3::ZERO, Vec3::Y),
+        ));
     }
 }
 

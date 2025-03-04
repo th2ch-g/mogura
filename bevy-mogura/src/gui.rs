@@ -8,7 +8,7 @@ impl Plugin for MoguraGuiPlugins {
     fn build(&self, app: &mut App) {
         app.init_resource::<OccupiedScreenSpace>()
             .add_plugins(bevy_egui::EguiPlugin)
-            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin)
             .add_systems(
                 PreUpdate,
                 (absorb_egui_inputs)
@@ -27,6 +27,7 @@ pub struct OccupiedScreenSpace {
     left: f32,
     top: f32,
     right: f32,
+    #[allow(unused)]
     bottom: f32,
 }
 
@@ -58,7 +59,7 @@ fn poll_rfd_trajectory(
             #[cfg(not(target_arch = "wasm32"))]
             {
                 if let Some(ref top_file) = mogura_state.structure_file {
-                    mogura_state.trajectory_data = Some(trajectory_loader(&top_file, &path));
+                    mogura_state.trajectory_data = Some(trajectory_loader(top_file, &path));
                 }
             }
 
@@ -87,6 +88,7 @@ fn poll_rfd_structure(
         ) {
             commands.entity(entity).despawn_recursive();
 
+            #[allow(unused_variables)]
             let (path, content) = if let Some(result) = result {
                 result
             } else {
@@ -138,6 +140,7 @@ fn poll_downloadpdb(
 #[derive(Component)]
 pub struct DownloadPDB(bevy::tasks::Task<Result<PDBData, anyhow::Error>>);
 
+#[allow(clippy::too_many_arguments)]
 fn update_gui(
     mut commands: Commands,
     mut contexts: bevy_egui::EguiContexts,
@@ -228,11 +231,9 @@ fn update_gui(
                     #[cfg(not(target_arch = "wasm32"))]
                     {
                         let task = task_pool.spawn(async move {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                Some(path.display().to_string())
-                            } else {
-                                None
-                            }
+                            rfd::FileDialog::new()
+                                .pick_file()
+                                .map(|path| path.display().to_string())
                         });
                         commands.spawn(SelectedTrajectoryFile(task));
                     }
@@ -273,11 +274,15 @@ fn update_gui(
                     "Line",
                 );
             }
-            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::VDW, "VDW");
             ui.radio_value(
                 &mut mogura_state.drawing_method,
-                DrawingMethod::Licorise,
-                "Licorise",
+                DrawingMethod::Ball,
+                "Ball",
+            );
+            ui.radio_value(
+                &mut mogura_state.drawing_method,
+                DrawingMethod::BallAndStick,
+                "BallAndStick",
             );
             // ui.radio_value(
             //     &mut mogura_state.drawing_method,
@@ -292,8 +297,8 @@ fn update_gui(
             // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
             ui.radio_value(
                 &mut mogura_state.drawing_method,
-                DrawingMethod::Bonds,
-                "Bonds",
+                DrawingMethod::Stick,
+                "Stick",
             );
             if pre_drawing_method != mogura_state.drawing_method {
                 mogura_state.redraw = true;
@@ -303,14 +308,11 @@ fn update_gui(
 
             ui.label("Looking at Structure");
             if ui.button("Look").clicked() {
-                match &mogura_state.structure_data {
-                    Some(structure_data) => {
-                        let center = structure_data.center();
-                        let center_vec = Vec3::new(center[0], center[1], center[2]);
-                        let mut trackball_camera = trackball_camera.single_mut();
-                        trackball_camera.frame.set_target(center_vec.into());
-                    }
-                    None => (),
+                if let Some(structure_data) = &mogura_state.structure_data {
+                    let center = structure_data.center();
+                    let center_vec = Vec3::new(center[0], center[1], center[2]);
+                    let mut trackball_camera = trackball_camera.single_mut();
+                    trackball_camera.frame.set_target(center_vec.into());
                 }
             }
 
@@ -385,7 +387,7 @@ fn update_gui(
 
             ui.separator();
 
-            if let Some(structure_data) = &mogura_state.structure_data {
+            if let Some(_structure_data) = &mogura_state.structure_data {
                 let _response = egui::TextEdit::singleline(&mut mogura_state.atom_selection)
                     .hint_text("protein")
                     .show(ui);

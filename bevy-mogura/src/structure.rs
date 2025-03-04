@@ -30,9 +30,9 @@ impl Plugin for MoguraStructurePlugins {
 #[derive(Copy, Eq, Hash, Debug, Clone, PartialEq)]
 pub enum DrawingMethod {
     Line,
-    VDW,
-    Licorise,
-    Bonds,
+    Ball,
+    BallAndStick,
+    Stick,
     Tube,
     Cartoon,
     NewCartoon,
@@ -40,6 +40,7 @@ pub enum DrawingMethod {
 
 #[derive(Component)]
 pub struct StructureParams {
+    #[allow(unused)]
     pub drawing_method: DrawingMethod,
 }
 
@@ -99,7 +100,7 @@ impl InterpolationID {
 
 pub trait MoguraSelection {
     fn eval(&self, atom: &Atom) -> bool;
-    fn select_atoms(&self, atoms: &Vec<Atom>) -> std::collections::HashSet<usize> {
+    fn select_atoms(&self, atoms: &[Atom]) -> std::collections::HashSet<usize> {
         atoms
             .iter()
             .filter(|atom| self.eval(atom))
@@ -108,8 +109,8 @@ pub trait MoguraSelection {
     }
     fn select_atoms_bonds(
         &self,
-        atoms: &Vec<Atom>,
-        bonds: &Vec<(usize, usize)>,
+        atoms: &[Atom],
+        bonds: &[(usize, usize)],
     ) -> (
         std::collections::HashSet<usize>,
         std::collections::HashSet<(usize, usize)>,
@@ -129,17 +130,15 @@ impl MoguraSelection for mogura_asl::Selection {
         match self {
             mogura_asl::Selection::All => true,
             mogura_asl::Selection::ResName(names) => {
-                names.iter().any(|name| name == &atom.residue_name())
+                names.iter().any(|name| name == atom.residue_name())
             }
             mogura_asl::Selection::ResId(ids) => {
                 ids.iter().any(|id| *id == atom.residue_id() as usize)
             }
             mogura_asl::Selection::Index(indices) => {
-                indices.iter().any(|index| index == &atom.atom_id())
+                indices.iter().any(|index| *index == atom.atom_id())
             }
-            mogura_asl::Selection::Name(names) => {
-                names.iter().any(|name| name == &atom.atom_name())
-            }
+            mogura_asl::Selection::Name(names) => names.iter().any(|name| name == atom.atom_name()),
             mogura_asl::Selection::Not(selection) => !selection.eval(atom),
             mogura_asl::Selection::And(selections) => selections.iter().all(|s| s.eval(atom)),
             mogura_asl::Selection::Or(selections) => selections.iter().any(|s| s.eval(atom)),
@@ -165,7 +164,7 @@ fn update_structure(
     if mogura_state.redraw {
         mogura_state.redraw = false;
 
-        for (entity, structure_params) in current_visualized_structure.iter_mut() {
+        for (entity, _structure_params) in current_visualized_structure.iter_mut() {
             commands.entity(entity).despawn_recursive();
         }
 
@@ -202,56 +201,40 @@ fn update_structure(
                 InheritedVisibility::default(),
             ))
             .with_children(|parent| match mogura_state.drawing_method {
-                DrawingMethod::VDW => {
-                    let sphere = meshes.add(Sphere {
-                        radius: 0.3,
-                        ..default()
-                    });
+                DrawingMethod::Ball => {
+                    let sphere = meshes.add(Sphere { radius: 0.3 });
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
                         if !mogura_state.selected_atoms.contains(&atom.id()) {
                             continue;
                         }
-                        mesh_materials.entry(atom.element()).or_insert_with(|| {
-                            materials.add(atom.color());
-                        });
+                        mesh_materials
+                            .entry(atom.element())
+                            .or_insert_with(|| materials.add(atom.color()));
                         parent.spawn((
-                            PbrBundle {
-                                mesh: Mesh3d(sphere.clone()),
-                                transform: Transform::from_translation(atom.xyz().into()),
-                                material: MeshMaterial3d(
-                                    mesh_materials.get(&atom.element()).unwrap().clone(),
-                                ),
-                                ..default()
-                            },
+                            Mesh3d(sphere.clone()),
+                            Transform::from_translation(atom.xyz().into()),
+                            MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
                             AtomID::new(atom.id()),
                         ));
                     }
                 }
-                DrawingMethod::Licorise => {
-                    let sphere = meshes.add(Sphere {
-                        radius: 0.3,
-                        ..default()
-                    });
+                DrawingMethod::BallAndStick => {
+                    let sphere = meshes.add(Sphere { radius: 0.3 });
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for atom in atoms {
                         if !mogura_state.selected_atoms.contains(&atom.id()) {
                             continue;
                         }
-                        mesh_materials.entry(atom.element()).or_insert_with(|| {
-                            materials.add(atom.color());
-                        });
+                        mesh_materials
+                            .entry(atom.element())
+                            .or_insert_with(|| materials.add(atom.color()));
                         parent.spawn((
-                            PbrBundle {
-                                mesh: Mesh3d(sphere.clone()),
-                                transform: Transform::from_translation(atom.xyz().into()),
-                                material: MeshMaterial3d(
-                                    mesh_materials.get(&atom.element()).unwrap().clone(),
-                                ),
-                                ..default()
-                            },
+                            Mesh3d(sphere.clone()),
+                            Transform::from_translation(atom.xyz().into()),
+                            MeshMaterial3d(mesh_materials.get(&atom.element()).unwrap().clone()),
                             AtomID::new(atom.id()),
                         ));
                     }
@@ -277,40 +260,34 @@ fn update_structure(
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         parent.spawn((
-                            PbrBundle {
-                                mesh: Mesh3d(cylinder.clone()),
-                                material: MeshMaterial3d(
-                                    mesh_materials.get(&atoms[i].element()).unwrap().clone(),
-                                ),
-                                transform: Transform {
-                                    translation: pos_1_4,
-                                    rotation,
-                                    // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
-                                    scale: Vec3::ONE * length / 2.,
-                                },
-                                ..default()
+                            Mesh3d(cylinder.clone()),
+                            MeshMaterial3d(
+                                mesh_materials.get(&atoms[i].element()).unwrap().clone(),
+                            ),
+                            Transform {
+                                translation: pos_1_4,
+                                rotation,
+                                // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
+                                scale: Vec3::ONE * length / 2.,
                             },
                             BondID::new(atoms[i].id(), atoms[j].id()),
                         ));
                         parent.spawn((
-                            PbrBundle {
-                                mesh: Mesh3d(cylinder.clone()),
-                                material: MeshMaterial3d(
-                                    mesh_materials.get(&atoms[j].element()).unwrap().clone(),
-                                ),
-                                transform: Transform {
-                                    translation: pos_3_4,
-                                    rotation,
-                                    // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
-                                    scale: Vec3::ONE * length / 2.,
-                                },
-                                ..default()
+                            Mesh3d(cylinder.clone()),
+                            MeshMaterial3d(
+                                mesh_materials.get(&atoms[j].element()).unwrap().clone(),
+                            ),
+                            Transform {
+                                translation: pos_3_4,
+                                rotation,
+                                // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
+                                scale: Vec3::ONE * length / 2.,
                             },
                             BondID::new(atoms[j].id(), atoms[i].id()),
                         ));
                     }
                 }
-                DrawingMethod::Bonds => {
+                DrawingMethod::Stick => {
                     let cylinder = meshes.add(Cylinder {
                         radius: 0.2,
                         ..default()
@@ -332,41 +309,34 @@ fn update_structure(
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                        mesh_materials.entry(atoms[i].element()).or_insert_with(|| {
-                            materials.add(atoms[i].color());
-                        });
-                        mesh_materials.entry(atoms[j].element()).or_insert_with(|| {
-                            let material = materials.add(atoms[j].color());
-                            material
-                        });
+                        mesh_materials
+                            .entry(atoms[i].element())
+                            .or_insert_with(|| materials.add(atoms[i].color()));
+                        mesh_materials
+                            .entry(atoms[j].element())
+                            .or_insert_with(|| materials.add(atoms[j].color()));
                         parent.spawn((
-                            PbrBundle {
-                                mesh: Mesh3d(cylinder.clone()),
-                                material: MeshMaterial3d(
-                                    mesh_materials.get(&atoms[i].element()).unwrap().clone(),
-                                ),
-                                transform: Transform {
-                                    translation: pos_1_4,
-                                    rotation,
-                                    // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
-                                    scale: Vec3::ONE * length / 2.,
-                                },
-                                ..default()
+                            Mesh3d(cylinder.clone()),
+                            MeshMaterial3d(
+                                mesh_materials.get(&atoms[i].element()).unwrap().clone(),
+                            ),
+                            Transform {
+                                translation: pos_1_4,
+                                rotation,
+                                // scale: Vec3::ONE * length / 2. * (1. - BOND_LENGTH_PADDING),
+                                scale: Vec3::ONE * length / 2.,
                             },
                             BondID::new(atoms[i].id(), atoms[j].id()),
                         ));
                         parent.spawn((
-                            PbrBundle {
-                                mesh: Mesh3d(cylinder.clone()),
-                                material: MeshMaterial3d(
-                                    mesh_materials.get(&atoms[j].element()).unwrap().clone(),
-                                ),
-                                transform: Transform {
-                                    translation: pos_3_4,
-                                    rotation,
-                                    scale: Vec3::ONE * length / 2.,
-                                },
-                                ..default()
+                            Mesh3d(cylinder.clone()),
+                            MeshMaterial3d(
+                                mesh_materials.get(&atoms[j].element()).unwrap().clone(),
+                            ),
+                            Transform {
+                                translation: pos_3_4,
+                                rotation,
+                                scale: Vec3::ONE * length / 2.,
                             },
                             BondID::new(atoms[j].id(), atoms[i].id()),
                         ));
@@ -392,10 +362,14 @@ fn update_structure(
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         mesh_materials.entry(atoms[i].element()).or_insert_with(|| {
-                            materials.add(atoms[i].color());
+                            line_materials.add(LineMaterial {
+                                color: LinearRgba::from(atoms[i].color()),
+                            })
                         });
                         mesh_materials.entry(atoms[j].element()).or_insert_with(|| {
-                            materials.add(atoms[j].color());
+                            line_materials.add(LineMaterial {
+                                color: LinearRgba::from(atoms[j].color()),
+                            })
                         });
                         parent.spawn((
                             Mesh3d(line.clone()),
@@ -483,6 +457,8 @@ fn update_structure(
                         ..default()
                     });
 
+                    let mesh_material = materials.add(Color::srgb(0.4, 0.5, 0.3));
+
                     for point in points.windows(2) {
                         let (start, start_id) = point[0];
                         let (end, end_id) = point[1];
@@ -493,14 +469,12 @@ fn update_structure(
                             continue;
                         }
                         parent.spawn((
-                            PbrBundle {
-                                mesh: Mesh3d(cylinder.clone()),
-                                transform: Transform {
-                                    translation: start,
-                                    rotation,
-                                    scale: Vec3::ONE * length,
-                                },
-                                ..default()
+                            Mesh3d(cylinder.clone()),
+                            MeshMaterial3d(mesh_material.clone()),
+                            Transform {
+                                translation: start,
+                                rotation,
+                                scale: Vec3::ONE * length,
                             },
                             InterpolationID::new(start_id, end_id),
                         ));
@@ -532,7 +506,7 @@ fn update_structure(
                     let ss_grouped = ss
                         .iter()
                         .enumerate()
-                        .group_by(|&(_, ss)| ss.clone())
+                        .chunk_by(|&(_, ss)| ss.clone())
                         .into_iter()
                         .map(|(_, group)| group.map(|(i, ss)| (i, ss.clone())).collect())
                         .collect::<Vec<Vec<(usize, mogura_ss::SS)>>>();
@@ -591,15 +565,14 @@ fn update_structure(
                         if length > 0.1 {
                             continue;
                         }
-                        parent.spawn(PbrBundle {
-                            mesh: Mesh3d(cylinder.clone()),
-                            transform: Transform {
+                        parent.spawn((
+                            Mesh3d(cylinder.clone()),
+                            Transform {
                                 translation: start,
                                 rotation,
                                 scale: Vec3::ONE * length,
                             },
-                            ..default()
-                        });
+                        ));
                     }
 
                     for group in ss_grouped {
@@ -645,18 +618,17 @@ fn update_structure(
                                 let length = direction.length();
                                 let rotation =
                                     Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                                parent.spawn(PbrBundle {
-                                    mesh: Mesh3d(meshes.add(Cylinder {
+                                parent.spawn((
+                                    Mesh3d(meshes.add(Cylinder {
                                         radius: 0.7 / length,
                                         ..default()
                                     })),
-                                    transform: Transform {
+                                    Transform {
                                         translation: (start + end) / 2.,
                                         rotation,
                                         scale: Vec3::ONE * length,
                                     },
-                                    ..default()
-                                });
+                                ));
                             }
                             mogura_ss::SS::E => {}
                             mogura_ss::SS::Loop => (),

@@ -61,13 +61,11 @@ pub struct MoguraState {
 
 impl MoguraState {
     pub fn new(structure_file: Option<String>, trajectory_file: Option<String>) -> Self {
-        let structure_data = structure_file.as_ref().map(|file| structure_loader(&file));
+        let structure_data = structure_file.as_ref().map(|file| structure_loader(file));
         let trajectory_data = if let Some(ref str_file) = structure_file {
-            if let Some(ref traj_file) = trajectory_file {
-                Some(trajectory_loader(str_file, traj_file))
-            } else {
-                None
-            }
+            trajectory_file
+                .as_ref()
+                .map(|file| trajectory_loader(str_file, file))
         } else {
             None
         };
@@ -76,7 +74,7 @@ impl MoguraState {
             structure_file,
             trajectory_data,
             trajectory_file,
-            drawing_method: structure::DrawingMethod::Licorise,
+            drawing_method: structure::DrawingMethod::BallAndStick,
             redraw: true,
             update_trajectory: false,
             update_tmp_trajectory: false,
@@ -133,6 +131,7 @@ impl MoguraState {
     }
 }
 
+#[allow(dead_code)]
 mod dbg {
     use bevy::prelude::*;
     pub fn setup_test(

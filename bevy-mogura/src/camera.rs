@@ -51,7 +51,8 @@ pub struct MoguraCameraPlugins;
 
 impl Plugin for MoguraCameraPlugins {
     fn build(&self, app: &mut App) {
-        app.add_plugins(TrackballPlugin)
+        app.insert_resource(ClearColor(Color::srgb(1., 1., 1.)))
+            .add_plugins(TrackballPlugin)
             .add_systems(Startup, setup_camera);
     }
 }
@@ -79,14 +80,15 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn((
         TrackballController::default(),
         TrackballCamera::look_at(target, eye, up),
-        Camera3dBundle {
-            camera: Camera {
-                // bg color
-                clear_color: ClearColorConfig::Custom(Color::srgb(1., 1., 1.)),
-                ..default()
-            },
-            ..default()
-        },
+        Camera3d::default(),
+        // Camera3dBundle {
+        //     camera: Camera {
+        //         // bg color
+        //         clear_color: ClearColorConfig::Custom(Color::srgb(1., 1., 1.)),
+        //         ..default()
+        //     },
+        //     ..default()
+        // },
     ));
 }
 
