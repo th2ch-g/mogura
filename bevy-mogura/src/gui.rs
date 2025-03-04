@@ -349,12 +349,12 @@ fn update_gui(
                 ui.separator();
 
                 if let Some(structure_data) = &mogura_state.structure_data {
-                    for (_selection_id, selection) in mogura_selections.0.iter_mut().enumerate() {
+                    for selection in mogura_selections.0.iter_mut() {
                         let _response = egui::TextEdit::singleline(&mut selection.atom_selection)
                             .hint_text("protein")
                             .show(ui);
                         if ui.button("Apply").clicked() {
-                            let selection_result = selection.apply_selection(&structure_data);
+                            let selection_result = selection.apply_selection(structure_data);
                             match selection_result {
                                 Ok(_) => {
                                     selection.redraw = true;

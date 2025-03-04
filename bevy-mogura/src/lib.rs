@@ -60,6 +60,7 @@ pub struct EachSelection {
 }
 
 impl EachSelection {
+    #[allow(clippy::borrowed_box)]
     pub fn apply_selection(
         &mut self,
         structure_data: &Box<dyn StructureData>,

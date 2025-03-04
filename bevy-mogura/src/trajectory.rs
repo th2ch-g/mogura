@@ -42,7 +42,6 @@ fn update_trajectory(
             .frame(current_frame_id);
 
         for (structure_params, childlen) in parent_query.iter() {
-
             let drawing_method = mogura_selections.0[structure_params.id].drawing_method;
 
             for &child in childlen.iter() {

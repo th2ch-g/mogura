@@ -151,6 +151,7 @@ impl MoguraSelection for mogura_asl::Selection {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update_structure(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -223,7 +224,7 @@ fn update_structure(
         }
 
         selection
-            .apply_selection(&mogura_state.structure_data.as_ref().unwrap())
+            .apply_selection(mogura_state.structure_data.as_ref().unwrap())
             .unwrap();
 
         commands
@@ -281,7 +282,7 @@ fn update_structure(
                         ..default()
                     });
                     for bond in &bonds {
-                        if !selection.selected_bonds.contains(&bond) {
+                        if !selection.selected_bonds.contains(bond) {
                             continue;
                         }
 
@@ -332,7 +333,7 @@ fn update_structure(
                     let mut mesh_materials = std::collections::HashMap::new();
 
                     for bond in &bonds {
-                        if !selection.selected_bonds.contains(&bond) {
+                        if !selection.selected_bonds.contains(bond) {
                             continue;
                         }
                         let i = bond.0;
@@ -386,7 +387,7 @@ fn update_structure(
                         // lines: vec![(Vec3::new(0., 0., 0.), Vec3::new(0., 1., 0.))],
                     });
                     for bond in &bonds {
-                        if !selection.selected_bonds.contains(&bond) {
+                        if !selection.selected_bonds.contains(bond) {
                             continue;
                         }
                         let i = bond.0;
