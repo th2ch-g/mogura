@@ -70,7 +70,7 @@ fn update_trajectory(
                     // let pos_3_4 = start + (end - start) * 0.75;
                     let direction = end - start;
                     let length = direction.length();
-                    if length > 1.6 {
+                    if length > GENERAL_BOND_CUTOFF {
                         continue;
                     }
                     let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
@@ -118,7 +118,7 @@ fn update_trajectory(
                     let direction = end - start;
                     let length = direction.length();
                     let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                    if length > 0.1 {
+                    if length > GENERAL_BOND_CUTOFF / INTERPOLATION_STEPS as f32 * 2. {
                         continue;
                     }
                     transform.translation = start;
@@ -126,7 +126,6 @@ fn update_trajectory(
                     transform.scale = Vec3::ONE * length;
                 }
             }
-            _ => (),
         }
 
         if mogura_state.update_trajectory {

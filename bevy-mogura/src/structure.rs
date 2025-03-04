@@ -14,7 +14,6 @@ use bevy::{
 };
 use itertools::Itertools;
 
-// pub(crate) const BOND_LENGTH_PADDING: f32 = 0.3;
 pub(crate) const INTERPOLATION_STEPS: usize = 30;
 
 #[derive(Clone)]
@@ -34,8 +33,8 @@ pub enum DrawingMethod {
     BallAndStick,
     Stick,
     Tube,
-    Cartoon,
-    NewCartoon,
+    // Cartoon,
+    // NewCartoon,
 }
 
 #[derive(Component)]
@@ -172,7 +171,7 @@ fn update_structure(
             mogura_state.apply_selection().unwrap();
         }
 
-        let (atoms, bonds, residues) = match &mogura_state.structure_data {
+        let (atoms, bonds, _residues) = match &mogura_state.structure_data {
             None => {
                 return;
             }
@@ -465,7 +464,7 @@ fn update_structure(
                         let direction = end - start;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                        if length > 0.1 {
+                        if length > GENERAL_BOND_CUTOFF / INTERPOLATION_STEPS as f32 * 2. {
                             continue;
                         }
                         parent.spawn((
@@ -479,163 +478,162 @@ fn update_structure(
                             InterpolationID::new(start_id, end_id),
                         ));
                     }
-                }
-                // TODO
-                // accuracy of ss is low
-                // cartoon is not used currently
-                DrawingMethod::Cartoon => {
-                    let cylinder = meshes.add(Cylinder {
-                        radius: 1.,
-                        ..default()
-                    });
-
-                    let protein = {
-                        let mut protein = Vec::with_capacity(atoms.len());
-                        for atom in atoms {
-                            if atom.is_protein() {
-                                protein.push(atom.clone());
-                            }
-                        }
-                        protein
-                    };
-
-                    let ss = mogura_ss::assign_ss(
-                        &SSConverter(protein.clone()).into(),
-                        mogura_ss::SSAlgorithm::Ramachandran,
-                    );
-                    let ss_grouped = ss
-                        .iter()
-                        .enumerate()
-                        .chunk_by(|&(_, ss)| ss.clone())
-                        .into_iter()
-                        .map(|(_, group)| group.map(|(i, ss)| (i, ss.clone())).collect())
-                        .collect::<Vec<Vec<(usize, mogura_ss::SS)>>>();
-                    dbg!(&ss_grouped);
-
-                    let mut target_atoms = Vec::with_capacity(atoms.len());
-
-                    for atom in atoms {
-                        if !atom.is_backbone()
-                            || (atom.is_backbone() && atom.atom_name() == "HA")
-                            || (atom.is_backbone() && atom.atom_name() == "O")
-                        {
-                            continue;
-                        }
-                        target_atoms.push(atom.id());
-                    }
-
-                    let mut points = Vec::with_capacity(target_atoms.len() * INTERPOLATION_STEPS);
-                    for i in 1..target_atoms.len() - 2 {
-                        for j in 0..=INTERPOLATION_STEPS {
-                            let t = j as f32 / INTERPOLATION_STEPS as f32;
-                            let point = catmull_rom_interpolate(
-                                Vec3::new(
-                                    atoms[target_atoms[i - 1]].x(),
-                                    atoms[target_atoms[i - 1]].y(),
-                                    atoms[target_atoms[i - 1]].z(),
-                                ),
-                                Vec3::new(
-                                    atoms[target_atoms[i]].x(),
-                                    atoms[target_atoms[i]].y(),
-                                    atoms[target_atoms[i]].z(),
-                                ),
-                                Vec3::new(
-                                    atoms[target_atoms[i + 1]].x(),
-                                    atoms[target_atoms[i + 1]].y(),
-                                    atoms[target_atoms[i + 1]].z(),
-                                ),
-                                Vec3::new(
-                                    atoms[target_atoms[i + 2]].x(),
-                                    atoms[target_atoms[i + 2]].y(),
-                                    atoms[target_atoms[i + 2]].z(),
-                                ),
-                                t,
-                            );
-                            points.push(point);
-                        }
-                    }
-
-                    // Loop
-                    for point in points.windows(2) {
-                        let start = point[0];
-                        let end = point[1];
-                        let direction = end - start;
-                        let length = direction.length();
-                        let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                        if length > 0.1 {
-                            continue;
-                        }
-                        parent.spawn((
-                            Mesh3d(cylinder.clone()),
-                            Transform {
-                                translation: start,
-                                rotation,
-                                scale: Vec3::ONE * length,
-                            },
-                        ));
-                    }
-
-                    for group in ss_grouped {
-                        let ty = &group.first().unwrap().1;
-                        let resid_start = group.first().unwrap().0;
-                        let resid_end = group.last().unwrap().0;
-
-                        dbg!(&resid_start, &resid_end);
-
-                        let atom_start = match residues[resid_start]
-                            .atoms()
-                            .iter()
-                            .find(|atom| atom.atom_name() == "N")
-                            .map(|atom| atom.id())
-                        {
-                            Some(id) => id,
-                            None => continue,
-                        };
-
-                        let atom_end = match residues[resid_end]
-                            .atoms()
-                            .iter()
-                            .find(|atom| atom.atom_name() == "C")
-                            .map(|atom| atom.id())
-                        {
-                            Some(id) => id,
-                            None => continue,
-                        };
-
-                        match ty {
-                            mogura_ss::SS::H => {
-                                let start = Vec3::new(
-                                    atoms[atom_start].x(),
-                                    atoms[atom_start].y(),
-                                    atoms[atom_start].z(),
-                                );
-                                let end = Vec3::new(
-                                    atoms[atom_end].x(),
-                                    atoms[atom_end].y(),
-                                    atoms[atom_end].z(),
-                                );
-                                let direction = end - start;
-                                let length = direction.length();
-                                let rotation =
-                                    Quat::from_rotation_arc(Vec3::Y, direction.normalize());
-                                parent.spawn((
-                                    Mesh3d(meshes.add(Cylinder {
-                                        radius: 0.7 / length,
-                                        ..default()
-                                    })),
-                                    Transform {
-                                        translation: (start + end) / 2.,
-                                        rotation,
-                                        scale: Vec3::ONE * length,
-                                    },
-                                ));
-                            }
-                            mogura_ss::SS::E => {}
-                            mogura_ss::SS::Loop => (),
-                        }
-                    }
-                }
-                DrawingMethod::NewCartoon => {}
+                } // TODO
+                  // accuracy of ss is low
+                  // cartoon is not used currently
+                  // DrawingMethod::Cartoon => {
+                  //     let cylinder = meshes.add(Cylinder {
+                  //         radius: 1.,
+                  //         ..default()
+                  //     });
+                  //
+                  //     let protein = {
+                  //         let mut protein = Vec::with_capacity(atoms.len());
+                  //         for atom in atoms {
+                  //             if atom.is_protein() {
+                  //                 protein.push(atom.clone());
+                  //             }
+                  //         }
+                  //         protein
+                  //     };
+                  //
+                  //     let ss = mogura_ss::assign_ss(
+                  //         &SSConverter(protein.clone()).into(),
+                  //         mogura_ss::SSAlgorithm::Ramachandran,
+                  //     );
+                  //     let ss_grouped = ss
+                  //         .iter()
+                  //         .enumerate()
+                  //         .chunk_by(|&(_, ss)| ss.clone())
+                  //         .into_iter()
+                  //         .map(|(_, group)| group.map(|(i, ss)| (i, ss.clone())).collect())
+                  //         .collect::<Vec<Vec<(usize, mogura_ss::SS)>>>();
+                  //     dbg!(&ss_grouped);
+                  //
+                  //     let mut target_atoms = Vec::with_capacity(atoms.len());
+                  //
+                  //     for atom in atoms {
+                  //         if !atom.is_backbone()
+                  //             || (atom.is_backbone() && atom.atom_name() == "HA")
+                  //             || (atom.is_backbone() && atom.atom_name() == "O")
+                  //         {
+                  //             continue;
+                  //         }
+                  //         target_atoms.push(atom.id());
+                  //     }
+                  //
+                  //     let mut points = Vec::with_capacity(target_atoms.len() * INTERPOLATION_STEPS);
+                  //     for i in 1..target_atoms.len() - 2 {
+                  //         for j in 0..=INTERPOLATION_STEPS {
+                  //             let t = j as f32 / INTERPOLATION_STEPS as f32;
+                  //             let point = catmull_rom_interpolate(
+                  //                 Vec3::new(
+                  //                     atoms[target_atoms[i - 1]].x(),
+                  //                     atoms[target_atoms[i - 1]].y(),
+                  //                     atoms[target_atoms[i - 1]].z(),
+                  //                 ),
+                  //                 Vec3::new(
+                  //                     atoms[target_atoms[i]].x(),
+                  //                     atoms[target_atoms[i]].y(),
+                  //                     atoms[target_atoms[i]].z(),
+                  //                 ),
+                  //                 Vec3::new(
+                  //                     atoms[target_atoms[i + 1]].x(),
+                  //                     atoms[target_atoms[i + 1]].y(),
+                  //                     atoms[target_atoms[i + 1]].z(),
+                  //                 ),
+                  //                 Vec3::new(
+                  //                     atoms[target_atoms[i + 2]].x(),
+                  //                     atoms[target_atoms[i + 2]].y(),
+                  //                     atoms[target_atoms[i + 2]].z(),
+                  //                 ),
+                  //                 t,
+                  //             );
+                  //             points.push(point);
+                  //         }
+                  //     }
+                  //
+                  //     // Loop
+                  //     for point in points.windows(2) {
+                  //         let start = point[0];
+                  //         let end = point[1];
+                  //         let direction = end - start;
+                  //         let length = direction.length();
+                  //         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+                  //         if length > GENERAL_BOND_CUTOFF / INTERPOLATION_STEPS as f32 * 2. {
+                  //             continue;
+                  //         }
+                  //         parent.spawn((
+                  //             Mesh3d(cylinder.clone()),
+                  //             Transform {
+                  //                 translation: start,
+                  //                 rotation,
+                  //                 scale: Vec3::ONE * length,
+                  //             },
+                  //         ));
+                  //     }
+                  //
+                  //     for group in ss_grouped {
+                  //         let ty = &group.first().unwrap().1;
+                  //         let resid_start = group.first().unwrap().0;
+                  //         let resid_end = group.last().unwrap().0;
+                  //
+                  //         dbg!(&resid_start, &resid_end);
+                  //
+                  //         let atom_start = match residues[resid_start]
+                  //             .atoms()
+                  //             .iter()
+                  //             .find(|atom| atom.atom_name() == "N")
+                  //             .map(|atom| atom.id())
+                  //         {
+                  //             Some(id) => id,
+                  //             None => continue,
+                  //         };
+                  //
+                  //         let atom_end = match residues[resid_end]
+                  //             .atoms()
+                  //             .iter()
+                  //             .find(|atom| atom.atom_name() == "C")
+                  //             .map(|atom| atom.id())
+                  //         {
+                  //             Some(id) => id,
+                  //             None => continue,
+                  //         };
+                  //
+                  //         match ty {
+                  //             mogura_ss::SS::H => {
+                  //                 let start = Vec3::new(
+                  //                     atoms[atom_start].x(),
+                  //                     atoms[atom_start].y(),
+                  //                     atoms[atom_start].z(),
+                  //                 );
+                  //                 let end = Vec3::new(
+                  //                     atoms[atom_end].x(),
+                  //                     atoms[atom_end].y(),
+                  //                     atoms[atom_end].z(),
+                  //                 );
+                  //                 let direction = end - start;
+                  //                 let length = direction.length();
+                  //                 let rotation =
+                  //                     Quat::from_rotation_arc(Vec3::Y, direction.normalize());
+                  //                 parent.spawn((
+                  //                     Mesh3d(meshes.add(Cylinder {
+                  //                         radius: 0.7 / length,
+                  //                         ..default()
+                  //                     })),
+                  //                     Transform {
+                  //                         translation: (start + end) / 2.,
+                  //                         rotation,
+                  //                         scale: Vec3::ONE * length,
+                  //                     },
+                  //                 ));
+                  //             }
+                  //             mogura_ss::SS::E => {}
+                  //             mogura_ss::SS::Loop => (),
+                  //         }
+                  //     }
+                  // }
+                  // DrawingMethod::NewCartoon => {}
             });
     }
 }

@@ -402,6 +402,8 @@ fn update_gui(
                         }
                     }
                 }
+
+                if ui.button("+ Add New Selection").clicked() {}
             }
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());

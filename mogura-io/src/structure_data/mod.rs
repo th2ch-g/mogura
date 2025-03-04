@@ -3,7 +3,7 @@ pub mod pdb;
 use crate::structure_data::gro::GroData;
 use crate::structure_data::pdb::PDBData;
 
-pub(crate) const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
+pub const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
 pub(crate) const PROTEIN_RESNAME: [&str; 20] = [
     "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
     "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
