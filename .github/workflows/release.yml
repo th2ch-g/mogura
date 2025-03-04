@@ -1,0 +1,68 @@
+name: release cd
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+    types: [closed]
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      startsWith(github.event.pull_request.head.ref, 'release-v')
+    strategy:
+      matrix:
+        include:
+          # macOS (Apple Silicon, x86_64)
+          - name: "macOS aarch64"
+            os: macos-latest
+            target: aarch64-apple-darwin
+          - name: "macOS x86_64"
+            os: macos-latest
+            target: x86_64-apple-darwin
+
+          # Windows (MSVC)
+          - name: "Windows x86_64"
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+
+          # Linux (GNU, MUSL)
+          - name: "Linux x86_64 (gnu)"
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - name: "Linux x86_64 (musl)"
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: build
+        run: cargo build -r --target ${{ matrix.target }}
+
+      - name: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: mogura-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/mogura
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: artifacts
+
+      - name: release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+
