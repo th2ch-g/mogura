@@ -1,4 +1,4 @@
-# mogura: A molecular graphic (toy) visualizer in Rust
+# mogura: A molecular graphic (toy) visualizer written in Rust
 
 [Try demo with WASM](https://mogura-rs.github.io/mogura/)
 
