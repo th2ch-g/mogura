@@ -30,6 +30,12 @@ jobs:
         run: RUSTFLAGS="--cfg web_sys_unstable_apis" trunk build --release --public-url .
         working-directory: ./mogura-wasm
 
+      - name: wasm-opt
+        uses: NiklasEi/wasm-opt-action@v2
+        with:
+          file: ./mogura-wasm/dist/mogura-wasm*.wasm
+          optimize_all: true
+
       - name: deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
