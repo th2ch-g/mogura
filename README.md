@@ -56,7 +56,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - [ ] Secondary structure prediction using DSSP or STRIDE
 - [ ] Visualize structure as Cartoon and NewCartoon
 - [ ] Morphing by specifing two structures
-
+- [ ] Load multiple structure files
 
 ## Useful Reference
 

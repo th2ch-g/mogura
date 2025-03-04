@@ -252,11 +252,11 @@ fn update_structure(
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        let pos_1_4 = start + (end - start) * 0.25;
-                        // let pos_1_4 = start + (end - start) * 0.25 * (1. + BOND_LENGTH_PADDING);
-                        let pos_3_4 = start + (end - start) * 0.75;
-                        // let pos_3_4 = end + (start - end) * 0.25 * (1. + BOND_LENGTH_PADDING);
                         let direction = end - start;
+                        let pos_1_4 = start + direction * 0.25;
+                        // let pos_1_4 = start + direction * 0.25 * (1. + BOND_LENGTH_PADDING);
+                        let pos_3_4 = start + (end - start) * 0.75;
+                        // let pos_3_4 = end - direction * 0.25 * (1. + BOND_LENGTH_PADDING);
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         parent.spawn((
@@ -302,11 +302,11 @@ fn update_structure(
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        let pos_1_4 = start + (end - start) * 0.25;
-                        // let pos_1_4 = start + (end - start) * 0.25 * (1. + BOND_LENGTH_PADDING);
-                        let pos_3_4 = start + (end - start) * 0.75;
-                        // let pos_3_4 = end + (start - end) * 0.25 * (1. + BOND_LENGTH_PADDING);
                         let direction = end - start;
+                        let pos_1_4 = start + direction * 0.25;
+                        // let pos_1_4 = start + direction * 0.25 * (1. + BOND_LENGTH_PADDING);
+                        let pos_3_4 = start + direction * 0.75;
+                        // let pos_3_4 = end - direction * 0.25 * (1. + BOND_LENGTH_PADDING);
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         mesh_materials
@@ -356,9 +356,9 @@ fn update_structure(
                         let j = bond.1;
                         let start = Vec3::new(atoms[i].x(), atoms[i].y(), atoms[i].z());
                         let end = Vec3::new(atoms[j].x(), atoms[j].y(), atoms[j].z());
-                        let pos_1_4 = start + (end - start) * 0.25;
-                        let pos_3_4 = start + (end - start) * 0.75;
                         let direction = end - start;
+                        let pos_1_4 = start + direction * 0.25;
+                        let pos_3_4 = start + direction * 0.75;
                         let length = direction.length();
                         let rotation = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
                         mesh_materials.entry(atoms[i].element()).or_insert_with(|| {

@@ -25,9 +25,8 @@ authors = ["th"]
 description = "A molecular visualizer in Rust"
 
 [workspace.dependencies]
-# bevy = "0.15.0"
 # remove unnecessary features
-bevy = { version = "0.15.0", default-features = false, features = [
+bevy = { version = "0.15.3", default-features = false, features = [
     "android-game-activity",
     "android_shared_stdcxx",
     "animation",

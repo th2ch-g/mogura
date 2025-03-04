@@ -36,6 +36,7 @@ impl PDBData {
         // .unwrap();
 
         let (input_pdb, _errors) = pdbtbx::ReadOptions::new()
+            .set_format(pdbtbx::Format::Pdb)
             .set_level(pdbtbx::StrictnessLevel::Loose)
             .read_raw(reader)
             .unwrap();

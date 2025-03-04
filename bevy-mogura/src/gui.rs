@@ -65,7 +65,7 @@ fn poll_rfd_trajectory(
 
             #[cfg(target_arch = "wasm32")]
             {
-                let extension = std::path::Path::new(&path)
+                let _extension = std::path::Path::new(&path)
                     .extension()
                     .unwrap()
                     .to_str()

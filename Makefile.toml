@@ -7,6 +7,7 @@ skip_core_tasks = true
 [tasks.dev]
 workspace = false
 script = """
+cargo test
 cargo run --bin mogura
 """
 
