@@ -19,7 +19,7 @@ log.workspace = true
 itertools.workspace = true
 
 [dev-dependencies]
-cargo-husky.workspace = true
+# cargo-husky.workspace = true
 
 [features]
 default = ["mogura-io/default"]
