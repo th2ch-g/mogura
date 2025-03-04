@@ -1,9 +1,5 @@
-use crate::camera;
-use crate::structure::*;
 use crate::*;
-use bevy::prelude::*;
 use bevy_trackball::prelude::*;
-use mogura_io::prelude::*;
 
 #[derive(Clone)]
 pub struct MoguraGuiPlugins;

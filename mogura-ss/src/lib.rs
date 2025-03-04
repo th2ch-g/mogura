@@ -1,5 +1,6 @@
 mod rama;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Residue {
     name: String,

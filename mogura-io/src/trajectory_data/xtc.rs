@@ -17,11 +17,10 @@ impl TrajectoryData for XtcData {
     fn load(topology_file: &str, trajectory_file: &str) -> Self {
         let mut topology = System::from_file(topology_file).unwrap();
 
-        let mut trajectory = topology.xtc_iter(trajectory_file).unwrap();
+        let trajectory = topology.xtc_iter(trajectory_file).unwrap();
 
         let mut frames = Vec::new();
-        let mut frame_id = 0;
-        for frame in trajectory {
+        for (frame_id, frame) in trajectory.enumerate() {
             match frame {
                 Ok(frame) => {
                     let frame_atoms = frame.get_atoms_copy();
@@ -40,7 +39,6 @@ impl TrajectoryData for XtcData {
                     panic!("{:?}", e);
                 }
             }
-            frame_id += 1;
         }
         Self { frames }
     }

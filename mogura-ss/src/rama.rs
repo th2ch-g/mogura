@@ -4,10 +4,6 @@ fn find_atom(res: &Residue, name: &str) -> Option<Atom> {
     res.atoms.iter().find(|atom| atom.name == name).cloned()
 }
 
-fn vec_sub(a: &Atom, b: &Atom) -> [f32; 3] {
-    [a.x - b.x, a.y - b.y, a.z - b.z]
-}
-
 fn cross(u: &[f32; 3], v: &[f32; 3]) -> [f32; 3] {
     [
         u[1] * v[2] - u[2] * v[1],
@@ -52,6 +48,7 @@ fn dihedral(p1: &Atom, p2: &Atom, p3: &Atom, p4: &Atom) -> f32 {
     angle.to_degrees()
 }
 
+#[allow(clippy::ptr_arg)]
 pub fn assign_ss(residues_in_protein: &Vec<Residue>) -> Vec<SS> {
     let n_res = residues_in_protein.len();
     let mut ss = vec![SS::Loop; n_res];
@@ -74,11 +71,7 @@ pub fn assign_ss(residues_in_protein: &Vec<Residue>) -> Vec<SS> {
         // φ = dihedral(C(i-1), N(i), CA(i), C(i))
         let phi = if i > 0 {
             let prev = &residues_in_protein[i - 1];
-            if let Some(prev_c) = find_atom(prev, "C") {
-                Some(dihedral(&prev_c, &n_atom, &ca_atom, &c_atom))
-            } else {
-                None
-            }
+            find_atom(prev, "C").map(|prev_c| dihedral(&prev_c, &n_atom, &ca_atom, &c_atom))
         } else {
             None
         };
@@ -86,22 +79,18 @@ pub fn assign_ss(residues_in_protein: &Vec<Residue>) -> Vec<SS> {
         // ψ = dihedral(N(i), CA(i), C(i), N(i+1))
         let psi = if i < n_res - 1 {
             let next = &residues_in_protein[i + 1];
-            if let Some(next_n) = find_atom(next, "N") {
-                Some(dihedral(&n_atom, &ca_atom, &c_atom, &next_n))
-            } else {
-                None
-            }
+            find_atom(next, "N").map(|next_n| dihedral(&n_atom, &ca_atom, &c_atom, &next_n))
         } else {
             None
         };
 
         if let (Some(phi_val), Some(psi_val)) = (phi, psi) {
             // α-helix, φ ∈ [–90, –30], ψ ∈ [–77, –17]）
-            if phi_val >= -90.0 && phi_val <= -30.0 && psi_val >= -77.0 && psi_val <= -17.0 {
+            if (-90.0..=-30.0).contains(&phi_val) && (-77.0..=-17.0).contains(&psi_val) {
                 ss[i] = SS::H;
             }
             // β-strand, φ ∈ [–150, –90], ψ ∈ [90, 180]）
-            else if phi_val >= -150.0 && phi_val <= -90.0 && psi_val >= 90.0 && psi_val <= 180.0 {
+            else if (-150.0..=-90.0).contains(&phi_val) && (90.0..=180.0).contains(&psi_val) {
                 ss[i] = SS::E;
             }
         }

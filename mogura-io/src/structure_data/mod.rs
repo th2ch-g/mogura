@@ -132,6 +132,7 @@ pub trait StructureData: Sync + Send {
     fn residues(&self) -> &Vec<Residue>;
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Residue {
     id: usize,
@@ -269,26 +270,17 @@ impl Atom {
     }
     pub fn is_backbone(&self) -> bool {
         if self.is_protein() {
-            if self.atom_name == "N"
+            self.atom_name == "N"
                 || self.atom_name == "CA"
                 || self.atom_name == "C"
                 || self.atom_name == "O"
                 || self.atom_name == "HA"
-            {
-                true
-            } else {
-                false
-            }
         } else {
             false
         }
     }
     pub fn is_sidechain(&self) -> bool {
-        if self.is_protein() && !self.is_backbone() {
-            true
-        } else {
-            false
-        }
+        self.is_protein() && !self.is_backbone()
     }
 }
 

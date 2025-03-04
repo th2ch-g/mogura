@@ -155,7 +155,7 @@ fn parse_resid(input: &str) -> nom::IResult<&str, Selection> {
             nom::bytes::complete::tag("resid"),
             nom::sequence::preceded(nom::character::complete::space1, parse_numbers),
         ),
-        |nums| Selection::ResId(nums),
+        Selection::ResId,
     )
     .parse(input)
 }
@@ -166,7 +166,7 @@ fn parse_index(input: &str) -> nom::IResult<&str, Selection> {
             nom::bytes::complete::tag("index"),
             nom::sequence::preceded(nom::character::complete::space1, parse_numbers),
         ),
-        |nums| Selection::Index(nums),
+        Selection::Index,
     )
     .parse(input)
 }

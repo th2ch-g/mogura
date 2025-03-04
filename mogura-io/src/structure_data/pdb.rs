@@ -27,12 +27,19 @@ impl StructureData for PDBData {
 impl PDBData {
     pub fn load_from_content(content: &str) -> Self {
         let reader = std::io::BufReader::new(std::io::Cursor::new(content));
-        let (input_pdb, _errors) = pdbtbx::open_pdb_raw(
-            reader,
-            pdbtbx::Context::show("a.pdb"), // random anme
-            pdbtbx::StrictnessLevel::Loose,
-        )
-        .unwrap();
+
+        // let (input_pdb, _errors) = pdbtbx::open_pdb_raw(
+        //     reader,
+        //     pdbtbx::Context::show("a.pdb"), // random anme
+        //     pdbtbx::StrictnessLevel::Loose,
+        // )
+        // .unwrap();
+
+        let (input_pdb, _errors) = pdbtbx::ReadOptions::new()
+            .set_level(pdbtbx::StrictnessLevel::Loose)
+            .read_raw(reader)
+            .unwrap();
+
         let mut id = 0;
         let mut atoms = Vec::new();
         let mut residues = Vec::new();

@@ -13,14 +13,12 @@ pub struct GroData {
 #[cfg(feature = "groan_rs")]
 impl StructureData for GroData {
     fn load(structure_file: &str) -> Self {
-        let mut id = 0;
-
-        let mut system = System::from_file(structure_file).unwrap();
+        let system = System::from_file(structure_file).unwrap();
 
         let system_atoms = system.get_atoms_copy();
         let mut atoms = Vec::with_capacity(system_atoms.len());
 
-        for atom in &system_atoms {
+        for (id, atom) in system_atoms.iter().enumerate() {
             atoms.push(crate::structure_data::Atom {
                 id,
                 model_id: 0,
@@ -38,13 +36,13 @@ impl StructureData for GroData {
                 y: atom.get_position().unwrap().y * 10.0,
                 z: atom.get_position().unwrap().z * 10.0,
             });
-
-            id += 1;
         }
 
-        let mut id = 0;
         let mut residues = Vec::with_capacity(system_atoms.len());
-        for (residue_id, group) in &atoms.iter().group_by(|a| a.residue_id) {
+        for (id, (_residue_id, group)) in (&atoms.iter().chunk_by(|a| a.residue_id))
+            .into_iter()
+            .enumerate()
+        {
             let group_atoms: Vec<_> = group.cloned().collect();
             let first_atom = group_atoms.clone().into_iter().next().unwrap();
             residues.push(Residue {
@@ -55,7 +53,6 @@ impl StructureData for GroData {
                 residue_name: first_atom.residue_name.clone(),
                 atoms: group_atoms,
             });
-            id += 1;
         }
 
         Self { atoms, residues }
