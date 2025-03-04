@@ -3,12 +3,26 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        pass_filenames: false
+        always_run: true
       - id: end-of-file-fixer
+        pass_filenames: false
+        always_run: true
       - id: check-yaml
+        pass_filenames: false
+        always_run: true
       - id: check-json
+        pass_filenames: false
+        always_run: true
       - id: check-toml
+        pass_filenames: false
+        always_run: true
       - id: check-merge-conflict
+        pass_filenames: false
+        always_run: true
       - id: check-added-large-files
+        pass_filenames: false
+        always_run: true
 
   - repo: local
     hooks:
@@ -17,8 +31,12 @@ repos:
         entry: cargo fmt -- --check
         language: rust
         types: [rust]
+        pass_filenames: false
+        always_run: true
       - id: cargo-clippy
         name: Cargo Clippy
         entry: cargo clippy -- -D warnings
         language: rust
         types: [rust]
+        pass_filenames: false
+        always_run: true
