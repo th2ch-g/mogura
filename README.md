@@ -1,8 +1,14 @@
 # mogura: A molecular graphic (toy) visualizer written in Rust
 
-[Try demo with WASM](https://mogura-rs.github.io/mogura/)
+<div align="center">
+
+--> [Try demo with WASM](https://mogura-rs.github.io/mogura/) <--
+
+</div>
 
 > [!WARNING]
+> RAM $\geq$ 8GB, CPU $\geq$ 8cores and GPU are desirable.
+> 
 > There are some limitation for WASM version.
 > See [Feature](#feature)
 
