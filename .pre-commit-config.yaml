@@ -40,3 +40,10 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+      - id: cargo-check
+        name: Cargo Check
+        entry: cargo check
+        language: rust
+        types: [rust]
+        pass_filenames: false
+        always_run: true

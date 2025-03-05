@@ -8,7 +8,7 @@
 
 > [!WARNING]
 > RAM $\geq$ 8GB, CPU $\geq$ 8cores and GPU are desirable.
-> 
+>
 > There are some limitation for WASM version.
 > See [Feature](#feature)
 
@@ -87,6 +87,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - https://github.com/vladbat00/bevy_egui
 - wgpu
   - https://github.com/gfx-rs/wgpu
+  - https://sotrh.github.io/learn-wgpu/
   - https://github.com/jack1232/wgpu-step-by-step
   - https://github.com/jinleili/simuverse
 - pdb, gro, xtc

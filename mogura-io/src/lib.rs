@@ -6,8 +6,8 @@ pub mod prelude {
     pub use crate::structure_data::gro::GroData;
     pub use crate::structure_data::pdb::PDBData;
     pub use crate::structure_data::{
-        structure_loader, structure_loader_from_content, Atom, Element, StructureData,
-        GENERAL_BOND_CUTOFF,
+        Atom, Element, GENERAL_BOND_CUTOFF, StructureData, structure_loader,
+        structure_loader_from_content,
     };
-    pub use crate::trajectory_data::{trajectory_loader, TrajectoryData};
+    pub use crate::trajectory_data::{TrajectoryData, trajectory_loader};
 }
