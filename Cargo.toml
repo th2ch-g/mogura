@@ -82,6 +82,7 @@ opt-level = "s"
 lto = "fat"
 strip = true
 codegen-units = 1
+panic = "abort"
 
 [profile.dev]
 opt-level = 1
