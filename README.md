@@ -2,7 +2,7 @@
 
 <div align="center">
 
---> [Try demo with WASM](https://mogura-rs.github.io/mogura/) <--
+--> [Try demo with WASM using WebGPU](https://mogura-rs.github.io/mogura/) <--
 
 </div>
 
@@ -26,24 +26,14 @@ mogura 8gng.pdb
 mogura init.gro input.mol.compact.xtc
 ~~~
 
-## About the name
-
-$$
-\text{Molecular Graphic Visualizer} \rightarrow \text{Mole + graphic} \rightarrow \text{Mo + gra} \rightarrow \text{mogura}
-$$
-
-mogura also means "Mole".
-
-
 ## Gallery
 Input files are available [here](https://github.com/mogura-rs/example-inputs)
-
 
 
 ## Feature
 - Visualize PDB, GRO format
   - stick, stick&ball, ball, tube(catmull-rom), line mode are supported
-  - wasm does not support line (because WebGPU)
+  - WASM does not support line (because WebGPU)
 - Visualize MD simulation using XTC format
   - topology must be PDB or GRO format
   - WASM does not support this (because of groan_rs, this crate depends internally on libc)
@@ -56,7 +46,6 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - Fetch PDB
   - dirty pdb file will cause parse error because of pdbtbx.
 
-
 ## TODO
 - [ ] Lv1: Change selection color
 - [ ] Lv1: Load multiple structure files
@@ -65,6 +54,15 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - [ ] Lv3: Secondary structure prediction using DSSP or STRIDE
 - [ ] Lv3: Visualize structure as Cartoon and NewCartoon
 - [ ] Lv4: Path tracing using [bevy-hikari](https://github.com/cryscan/bevy-hikari)(but no more developed) or [developing default feature](https://github.com/bevyengine/bevy/issues/639)
+
+## About the name
+
+$$
+\text{Molecular Graphic Visualizer} \rightarrow \text{Mole + graphic} \rightarrow \text{Mo + gra} \rightarrow \text{mogura}
+$$
+
+mogura also means "Mole".
+
 
 ## Useful Reference
 
