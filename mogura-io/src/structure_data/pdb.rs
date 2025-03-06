@@ -30,7 +30,7 @@ impl PDBData {
 
         // let (input_pdb, _errors) = pdbtbx::open_pdb_raw(
         //     reader,
-        //     pdbtbx::Context::show("a.pdb"), // random anme
+        //     pdbtbx::Context::show("a.pdb"), // random name
         //     pdbtbx::StrictnessLevel::Loose,
         // )
         // .unwrap();

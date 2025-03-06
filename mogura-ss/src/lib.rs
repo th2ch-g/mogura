@@ -66,7 +66,7 @@ mod tests {
     use itertools::Itertools;
     use mogura_io::prelude::*;
 
-    struct Atoms(pub Vec<mogura_io::prelude::Atom>); // to aviod E0117
+    struct Atoms(pub Vec<mogura_io::prelude::Atom>); // to avoid E0117
 
     impl From<Atoms> for Vec<crate::Residue> {
         fn from(atoms_in_protein: Atoms) -> Self {

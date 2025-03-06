@@ -43,7 +43,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 ## Feature
 - Visualize PDB, GRO format
   - stick, stick&ball, ball, tube(catmull-rom), line mode are supported
-  - wasm does not suppert line (because WebGPU)
+  - wasm does not support line (because WebGPU)
 - Visualize MD simulation using XTC format
   - topology must be PDB or GRO format
   - WASM does not support this (because of groan_rs, this crate depends internally on libc)
@@ -61,17 +61,18 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - [ ] Path tracing using [bevy-hikari](https://github.com/cryscan/bevy-hikari)(but no more developed) or [developing default feature](https://github.com/bevyengine/bevy/issues/639)
 - [ ] Secondary structure prediction using DSSP or STRIDE
 - [ ] Visualize structure as Cartoon and NewCartoon
-- [ ] Morphing by specifing two structures
+- [ ] Morphing by specifying two structures
 - [ ] Load multiple structure files
-- [ ] Pick up atoms and Hightlight it
+- [ ] Pick up atoms and Highlight it
 
 ## Useful Reference
 
 <details><summary> References </summary>
 
 - bevy
-  - https://github.com/bytestring-net/bevy_lunex
   - https://github.com/bevyengine/bevy
+  - https://bevy-cheatbook.github.io/
+  - https://github.com/bytestring-net/bevy_lunex
   - https://github.com/qu1x/bevy_trackball
 - graphics
   - https://github.com/svenstaro/bvh

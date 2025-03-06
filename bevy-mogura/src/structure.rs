@@ -141,7 +141,7 @@ impl MoguraSelection for mogura_asl::Selection {
             mogura_asl::Selection::Not(selection) => !selection.eval(atom),
             mogura_asl::Selection::And(selections) => selections.iter().all(|s| s.eval(atom)),
             mogura_asl::Selection::Or(selections) => selections.iter().any(|s| s.eval(atom)),
-            mogura_asl::Selection::Braket(selection) => selection.eval(atom),
+            mogura_asl::Selection::Bracket(selection) => selection.eval(atom),
             mogura_asl::Selection::Protein => atom.is_protein(),
             mogura_asl::Selection::Water => atom.is_water(),
             mogura_asl::Selection::Ion => atom.is_ion(),

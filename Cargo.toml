@@ -23,6 +23,17 @@ version = "0.1.0"
 edition = "2024"
 authors = ["th https://github.com/th2ch-g"]
 description = "A molecular visualizer in Rust"
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/mogura-rs"
+keywords = [
+    "molecule",
+    "visualization",
+    "protein",
+    "graphics",
+    "bioinformatics",
+]
+repository = "https://github.com/mogura-rs/mogura"
+rust-version = "1.85.0"
 
 [workspace.dependencies]
 # remove unnecessary features
@@ -60,17 +71,18 @@ bevy = { version = "0.15.3", default-features = false, features = [
     "tonemapping_luts",
     "vorbis",
     "webgpu",
-    "x11"] }
-clap = { version = "3.2.22", features = ["derive"] }
+    "x11",
+] }
+clap = { version = "4.5.31", features = ["derive"] }
 pdbtbx = "0.12.0"
 groan_rs = "0.9.0"
-bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", branch = "main" }
+bevy_trackball = { git = "https://github.com/qu1x/bevy_trackball.git", rev = "95e4273" }
 anyhow = "1.0"
 reqwest = { version = "0.12.4", features = ["blocking"] }
 bevy_egui = "0.31.0"
 egui = "0.29"
-rfd = "0.13.0"
-log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
+rfd = "0.15.2"
+# log = { version = "0.4.25", features = ["max_level_debug", "release_max_level_warn"] }
 nom = "8.0.0"
 itertools = "0.14.0"
 

@@ -4,6 +4,7 @@ description = "secondary structure prediction algorithm"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 
 [dev-dependencies]
 mogura-io = { path = "../mogura-io/", features = ["groan_rs"] }
