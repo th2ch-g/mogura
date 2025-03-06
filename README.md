@@ -58,13 +58,13 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 
 
 ## TODO
-- [ ] Path tracing using [bevy-hikari](https://github.com/cryscan/bevy-hikari)(but no more developed) or [developing default feature](https://github.com/bevyengine/bevy/issues/639)
-- [ ] Secondary structure prediction using DSSP or STRIDE
-- [ ] Visualize structure as Cartoon and NewCartoon
-- [ ] Morphing by specifying two structures
-- [ ] Load multiple structure files
-- [ ] Pick up atoms and highlight them with their name
-- [ ] Change selection color
+- [ ] Lv1: Change selection color
+- [ ] Lv1: Load multiple structure files
+- [ ] Lv1: Morphing by specifying two structures
+- [ ] Lv2: Pick up atoms and highlight them with their name
+- [ ] Lv3: Secondary structure prediction using DSSP or STRIDE
+- [ ] Lv3: Visualize structure as Cartoon and NewCartoon
+- [ ] Lv4: Path tracing using [bevy-hikari](https://github.com/cryscan/bevy-hikari)(but no more developed) or [developing default feature](https://github.com/bevyengine/bevy/issues/639)
 
 ## Useful Reference
 
@@ -73,17 +73,17 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - bevy
   - https://github.com/bevyengine/bevy
   - https://bevy-cheatbook.github.io/
-  - https://github.com/bytestring-net/bevy_lunex
   - https://github.com/qu1x/bevy_trackball
+  - https://github.com/bytestring-net/bevy_lunex
 - graphics
+  - https://github.com/RayTracing
+    - https://github.com/RayTracing/gpu-tracing
+    - https://github.com/RayTracing/raytracing.github.io
+  - https://github.com/NotCamelCase/RasterizationInOneWeekend
   - https://github.com/svenstaro/bvh
   - https://github.com/pannapudi/voidin
   - https://github.com/BLaZeKiLL/webray
   - https://github.com/servo/pathfinder
-  - https://github.com/NotCamelCase/RasterizationInOneWeekend
-  - https://github.com/RayTracing
-    - https://github.com/RayTracing/gpu-tracing
-    - https://github.com/RayTracing/raytracing.github.io
 - egui
   - https://github.com/emilk/egui
   - https://github.com/vladbat00/bevy_egui
@@ -95,8 +95,6 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - pdb, gro, xtc
   - https://github.com/douweschulte/pdbtbx
   - https://github.com/Ladme/groan_rs
-- nom
-  - https://github.com/rust-bakery/nom
 - other great visualizer
   - [PyMol](https://github.com/schrodinger/pymol-open-source)
   - [VMD](https://www.ks.uiuc.edu/Research/vmd/)
