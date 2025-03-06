@@ -114,6 +114,7 @@ fn poll_rfd_structure(
 
             mogura_state.structure_file = Some(path);
             mogura_selections.0[0].redraw = true;
+            mogura_state.init_look_at = true;
         }
     }
 }
@@ -134,6 +135,7 @@ fn poll_downloadpdb(
                 mogura_selections.0[0].redraw = true;
                 mogura_state.structure_data = Some(Box::new(structure_data));
                 mogura_state.structure_file = None;
+                mogura_state.init_look_at = true;
             }
         }
     }
@@ -219,7 +221,6 @@ fn update_gui(
                     if ui.button("Clear").clicked() {
                         mogura_state.structure_file = None;
                         mogura_state.structure_data = None;
-                        mogura_selections.0[0].redraw = true;
                     }
                 });
 
@@ -261,6 +262,7 @@ fn update_gui(
                     if ui.button("Clear").clicked() {
                         mogura_state.trajectory_file = None;
                         mogura_state.trajectory_data = None;
+                        mogura_selections.0.clear();
                     }
                 });
                 ui.separator();

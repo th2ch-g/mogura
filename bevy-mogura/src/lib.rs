@@ -110,6 +110,7 @@ pub struct MoguraState {
     pub update_tmp_trajectory: bool,
     pub loop_trajectory: bool,
     pub current_frame_id: usize,
+    pub init_look_at: bool,
     // pub selections: Vec<EachSelection>,
 }
 
@@ -133,6 +134,7 @@ impl MoguraState {
             update_tmp_trajectory: false,
             loop_trajectory: false,
             current_frame_id: 0,
+            init_look_at: true,
             // selections: vec![EachSelection::default()],
         }
     }

@@ -157,11 +157,18 @@ fn update_structure(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut line_materials: ResMut<Assets<LineMaterial>>,
-    mogura_state: Res<MoguraState>,
+    mut mogura_state: ResMut<MoguraState>,
     mut mogura_selections: ResMut<MoguraSelections>,
     mut current_visualized_structure: Query<(Entity, &mut structure::StructureParams)>,
     mut trackball_camera: Query<&mut bevy_trackball::TrackballCamera, With<Camera>>,
 ) {
+    if mogura_state.structure_data.is_none() {
+        for (entity, _structure_params) in current_visualized_structure.iter() {
+            commands.entity(entity).despawn_recursive();
+        }
+        return;
+    }
+
     let delete_index: std::collections::HashSet<usize> = mogura_selections
         .0
         .iter()
@@ -170,48 +177,28 @@ fn update_structure(
         .map(|(idx, _)| idx)
         .collect();
 
-    let old2new_index: std::collections::HashMap<usize, usize> = mogura_selections
-        .0
-        .iter()
-        .enumerate()
-        .filter(|&(_, selection)| !selection.delete)
-        .enumerate()
-        .map(|(new_idx, (old_idx, _))| (old_idx, new_idx))
-        .collect();
+    if !delete_index.is_empty() {
+        let old2new_index: std::collections::HashMap<usize, usize> = mogura_selections
+            .0
+            .iter()
+            .enumerate()
+            .filter(|&(_, selection)| !selection.delete)
+            .enumerate()
+            .map(|(new_idx, (old_idx, _))| (old_idx, new_idx))
+            .collect();
 
-    mogura_selections.0.retain(|selection| !selection.delete);
+        mogura_selections.0.retain(|selection| !selection.delete);
 
-    assert_eq!(old2new_index.len(), mogura_selections.0.len());
+        assert_eq!(old2new_index.len(), mogura_selections.0.len());
 
-    if mogura_state.structure_data.is_none() {
-        return;
-    }
-
-    for (entity, mut structure_params) in current_visualized_structure.iter_mut() {
-        if delete_index.contains(&structure_params.id) {
-            commands.entity(entity).despawn_recursive();
-        } else {
-            structure_params.id = old2new_index[&structure_params.id];
+        for (entity, mut structure_params) in current_visualized_structure.iter_mut() {
+            if delete_index.contains(&structure_params.id) {
+                commands.entity(entity).despawn_recursive();
+            } else {
+                structure_params.id = old2new_index[&structure_params.id];
+            }
         }
     }
-
-    let (atoms, bonds, _residues) = match &mogura_state.structure_data {
-        None => {
-            return;
-        }
-        Some(structure_data) => {
-            let atoms = structure_data.atoms();
-            let residues = structure_data.residues();
-            let bonds = structure_data.bonds_indirected();
-
-            let center = structure_data.center();
-            let center_vec = Vec3::new(center[0], center[1], center[2]);
-            let mut trackball_camera = trackball_camera.single_mut();
-            trackball_camera.frame.set_target(center_vec.into());
-
-            (atoms, bonds, residues)
-        }
-    };
 
     for (selection_id, selection) in mogura_selections.0.iter_mut().enumerate() {
         if !selection.redraw {
@@ -219,13 +206,36 @@ fn update_structure(
         }
         selection.redraw = false;
 
-        for (entity, _structure_params) in current_visualized_structure.iter() {
-            commands.entity(entity).despawn_recursive();
+        for (entity, structure_params) in current_visualized_structure.iter() {
+            if structure_params.id == selection_id {
+                commands.entity(entity).despawn_recursive();
+            }
         }
+
+        // at most 1 call
+        let (atoms, bonds, _residues) = match &mogura_state.structure_data {
+            None => {
+                return;
+            }
+            Some(structure_data) => {
+                let atoms = structure_data.atoms();
+                let residues = structure_data.residues();
+                let bonds = structure_data.bonds_indirected();
+
+                if mogura_state.init_look_at {
+                    let center = structure_data.center();
+                    let center_vec = Vec3::new(center[0], center[1], center[2]);
+                    let mut trackball_camera = trackball_camera.single_mut();
+                    trackball_camera.frame.set_target(center_vec.into());
+                }
+
+                (atoms, bonds, residues)
+            }
+        };
 
         selection
             .apply_selection(mogura_state.structure_data.as_ref().unwrap())
-            .unwrap();
+            .unwrap(); // already checked
 
         commands
             .spawn((
@@ -680,6 +690,10 @@ fn update_structure(
                   // }
                   // DrawingMethod::NewCartoon => {}
             });
+
+        if mogura_state.init_look_at {
+            mogura_state.init_look_at = false;
+        }
     }
 }
 

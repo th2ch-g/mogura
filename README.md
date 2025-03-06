@@ -63,7 +63,8 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - [ ] Visualize structure as Cartoon and NewCartoon
 - [ ] Morphing by specifying two structures
 - [ ] Load multiple structure files
-- [ ] Pick up atoms and Highlight it
+- [ ] Pick up atoms and highlight them with their name
+- [ ] Change selection color
 
 ## Useful Reference
 
