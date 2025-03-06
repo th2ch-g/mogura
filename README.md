@@ -1,4 +1,4 @@
-# mogura: A molecular graphic (toy) visualizer written in Rust
+# mogura: A molecular graphic (toy) visualizer in Rust
 
 <div align="center">
 
@@ -70,8 +70,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 
 <details><summary> References </summary>
 
-- bevy
-  - https://github.com/bevyengine/bevy
+- [bevy](https://github.com/bevyengine/bevy)
   - https://bevy-cheatbook.github.io/
   - https://github.com/qu1x/bevy_trackball
   - https://github.com/bytestring-net/bevy_lunex
@@ -84,11 +83,9 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - https://github.com/pannapudi/voidin
   - https://github.com/BLaZeKiLL/webray
   - https://github.com/servo/pathfinder
-- egui
-  - https://github.com/emilk/egui
+- [egui](https://github.com/emilk/egui)
   - https://github.com/vladbat00/bevy_egui
-- wgpu
-  - https://github.com/gfx-rs/wgpu
+- [wgpu](https://github.com/gfx-rs/wgpu)
   - https://sotrh.github.io/learn-wgpu/
   - https://github.com/jack1232/wgpu-step-by-step
   - https://github.com/jinleili/simuverse
