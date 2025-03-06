@@ -47,6 +47,13 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+      - id: cargo-test
+        name: Cargo Test
+        entry: cargo test
+        language: rust
+        types: [rust]
+        pass_filenames: false
+        always_run: true
       - id: toml-format
         name: Toml Format
         entry: taplo fmt
