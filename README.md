@@ -39,7 +39,7 @@ mogura init.gro input.mol.compact.xtc
   <tr>
     <td><img src="assets/simple_8gng.png" alt="simple_8gng" width="400"/></td>
     <td><img src="assets/selected_8gng.png" alt="selected_8gng" width="400"/></td>
-    <td><img src="assets/chignolin_trajectory.gif" alt="chignolin_trajectory" width="200"/></td>
+    <td><img src="assets/chignolin_trajectory.gif" alt="chignolin_trajectory" width="250"/></td>
   </tr>
 </table>
 
