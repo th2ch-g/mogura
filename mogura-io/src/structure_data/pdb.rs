@@ -118,13 +118,28 @@ impl PDBData {
         opts.method("GET");
         opts.mode(web_sys::RequestMode::Cors);
         let url = format!("https://files.rcsb.org/view/{}.pdb", pdbid);
-        let request = web_sys::Request::new_with_str_and_init(&url, &opts)?;
+        let request = web_sys::Request::new_with_str_and_init(&url, &opts)
+            .map_err(|_| anyhow::anyhow!("Failed to create request"))?;
         let window = gloo::utils::window();
-        let resp_value =
-            wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request)).await?;
-        let resp: web_sys::Response = resp_value.dyn_into().unwrap();
-        let text = wasm_bindgen_futures::JsFuture::from(resp.text().unwrap()).await?;
+        let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request))
+            .await
+            .map_err(|_| anyhow::anyhow!("Failed to fetch"))?;
+        let resp: web_sys::Response = resp_value
+            .dyn_into()
+            .map_err(|_| anyhow::anyhow!("Failed to get response"))?;
+        let text = wasm_bindgen_futures::JsFuture::from(
+            resp.text()
+                .map_err(|_| anyhow::anyhow!("Failed to get text"))?,
+        )
+        .await
+        .map_err(|_| anyhow::anyhow!("Failed to get text"))?;
 
-        Ok(Self::load_from_content(&text.as_string())?)
+        let content = match text.as_string() {
+            Some(content) => Ok(content.to_string()),
+            None => Err(()),
+        }
+        .map_err(|_| anyhow::anyhow!("Failed to get content"))?;
+
+        Ok(Self::load_from_content(&content)?)
     }
 }
