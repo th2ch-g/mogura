@@ -26,12 +26,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
+      - name: Install cross
+        if: matrix.job.use-cross
+        run: cargo install cross
       - name: Build
         run: |
           rustup update
           rustc -V
           rustup target add ${{ matrix.job.target }}
-          cargo build -r --target ${{ matrix.job.target }}
+          # cargo build -r --target ${{ matrix.job.target }}
+          if [ "${{ matrix.job.use-cross }}" == "true" ]; then
+            cross build --release --target ${{ matrix.job.target }}
+          else
+            cargo build --release --target ${{ matrix.job.target }}
+          fi
+        shell: bash
       - name: Rename artifacts
         shell: bash
         run: |
