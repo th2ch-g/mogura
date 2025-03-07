@@ -26,13 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-      - name: Rustup
+      - name: Build
         run: |
-          rustup self update
           rustup update
           rustc -V
-      - name: Build
-        run: cargo build -r --target ${{ matrix.job.target }}
+          rustup target add ${{ matrix.job.target }}
+          cargo build -r --target ${{ matrix.job.target }}
       - name: Rename artifacts
         shell: bash
         run: |
