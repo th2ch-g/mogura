@@ -41,6 +41,11 @@ mogura init.gro input.mol.compact.xtc
     <td><img src="assets/selected_8gng.png" alt="selected_8gng" width="400"/></td>
     <td><img src="assets/chignolin_trajectory.gif" alt="chignolin_trajectory" width="250"/></td>
   </tr>
+  <tr>
+    <td><img src="assets/simple_5awl.png" alt="simple_5awl" width="400"/></td>
+    <td><img src="assets/3jac_demo.gif" alt="3jac_demo" width="400"/></td>
+    <td><img src="assets/a2a_demo.gif" alt="a2a_demo" width="250"/></td>
+  </tr>
 </table>
 
 Input files are available [here](https://github.com/mogura-rs/example-inputs)
@@ -62,7 +67,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
   - dirty pdb file will cause parse error because of pdbtbx.
 
 ## TODO
-- [ ] Lv1: Change selection color
+- [ ] Lv1: Change configuration of selected atoms (e.g. Color, Radius, Opacity)
 - [ ] Lv1: Load multiple structure files
 - [ ] Lv1: Morphing by specifying two structures
 - [ ] Lv2: Pick up atoms and highlight them with their name
