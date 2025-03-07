@@ -47,14 +47,14 @@ fn update_trajectory(
         for (structure_params, childlen) in parent_query.iter() {
             let drawing_method = mogura_selections.0[structure_params.id].drawing_method;
 
-            for &child in childlen.iter() {
-                match drawing_method {
-                    DrawingMethod::Line
-                    | DrawingMethod::Ball
-                    | DrawingMethod::BallAndStick
-                    | DrawingMethod::Stick => {
+            match drawing_method {
+                DrawingMethod::Line
+                | DrawingMethod::Ball
+                | DrawingMethod::BallAndStick
+                | DrawingMethod::Stick => {
+                    for child in childlen.iter() {
                         if let Ok((mut transform, atom_id)) =
-                            current_visualized_atoms.get_mut(child)
+                            current_visualized_atoms.get_mut(*child)
                         {
                             let position = frame.positions()[atom_id.id()];
                             transform.translation =
@@ -62,7 +62,7 @@ fn update_trajectory(
                         }
 
                         if let Ok((mut transform, bond_id)) =
-                            current_visualized_bonds.get_mut(child)
+                            current_visualized_bonds.get_mut(*child)
                         {
                             let position1 = frame.positions()[bond_id.atomid1()];
                             let position2 = frame.positions()[bond_id.atomid2()];
@@ -81,40 +81,41 @@ fn update_trajectory(
                             transform.scale = Vec3::ONE * length / 2.;
                         }
                     }
-                    DrawingMethod::Tube => {
-                        let atoms = mogura_state.structure_data.as_ref().unwrap().atoms();
-                        let mut target_atoms = Vec::with_capacity(atoms.len());
+                }
+                DrawingMethod::Tube => {
+                    let atoms = mogura_state.structure_data.as_ref().unwrap().atoms();
+                    let mut target_atoms = Vec::with_capacity(atoms.len());
 
-                        for atom in atoms {
-                            if !atom.is_backbone()
-                                || (atom.is_backbone() && atom.atom_name() == "HA")
-                                || (atom.is_backbone() && atom.atom_name() == "O")
-                            {
-                                continue;
-                            }
-                            target_atoms.push(atom.id());
+                    for atom in atoms {
+                        if !atom.is_backbone()
+                            || (atom.is_backbone() && atom.atom_name() == "HA")
+                            || (atom.is_backbone() && atom.atom_name() == "O")
+                        {
+                            continue;
                         }
+                        target_atoms.push(atom.id());
+                    }
 
-                        let mut points =
-                            Vec::with_capacity(target_atoms.len() * INTERPOLATION_STEPS);
-                        let mut interpolation_id = 0;
-                        for i in 1..target_atoms.len() - 2 {
-                            for j in 0..=INTERPOLATION_STEPS {
-                                let t = j as f32 / INTERPOLATION_STEPS as f32;
-                                let point = catmull_rom_interpolate(
-                                    frame.positions()[target_atoms[i - 1]].into(),
-                                    frame.positions()[target_atoms[i]].into(),
-                                    frame.positions()[target_atoms[i + 1]].into(),
-                                    frame.positions()[target_atoms[i + 2]].into(),
-                                    t,
-                                );
-                                points.push((point, interpolation_id));
-                                interpolation_id += 1;
-                            }
+                    let mut points = Vec::with_capacity(target_atoms.len() * INTERPOLATION_STEPS);
+                    let mut interpolation_id = 0;
+                    for i in 1..target_atoms.len() - 2 {
+                        for j in 0..=INTERPOLATION_STEPS {
+                            let t = j as f32 / INTERPOLATION_STEPS as f32;
+                            let point = catmull_rom_interpolate(
+                                frame.positions()[target_atoms[i - 1]].into(),
+                                frame.positions()[target_atoms[i]].into(),
+                                frame.positions()[target_atoms[i + 1]].into(),
+                                frame.positions()[target_atoms[i + 2]].into(),
+                                t,
+                            );
+                            points.push((point, interpolation_id));
+                            interpolation_id += 1;
                         }
+                    }
 
+                    for child in childlen.iter() {
                         if let Ok((mut transform, interpolation_id)) =
-                            current_visualized_tubes.get_mut(child)
+                            current_visualized_tubes.get_mut(*child)
                         {
                             let start_id = interpolation_id.start_id();
                             let end_id = interpolation_id.end_id();
