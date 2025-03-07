@@ -12,8 +12,8 @@ pub struct GroData {
 
 #[cfg(feature = "groan_rs")]
 impl StructureData for GroData {
-    fn load(structure_file: &str) -> Self {
-        let system = System::from_file(structure_file).unwrap();
+    fn load(structure_file: &str) -> Result<Self, anyhow::Error> {
+        let system = System::from_file(structure_file).map_err(anyhow::Error::msg)?;
 
         let system_atoms = system.get_atoms_copy();
         let mut atoms = Vec::with_capacity(system_atoms.len());
@@ -55,7 +55,7 @@ impl StructureData for GroData {
             });
         }
 
-        Self { atoms, residues }
+        Ok(Self { atoms, residues })
     }
 
     fn atoms(&self) -> &Vec<crate::structure_data::Atom> {

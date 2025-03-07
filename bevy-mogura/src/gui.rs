@@ -58,8 +58,19 @@ fn poll_rfd_trajectory(
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                if let Some(ref top_file) = mogura_state.structure_file {
-                    mogura_state.trajectory_data = Some(trajectory_loader(top_file, &path));
+                if mogura_state.structure_file.is_none() {
+                    return;
+                }
+                let trajectory_data =
+                    trajectory_loader(mogura_state.structure_file.as_ref().unwrap(), &path);
+                match trajectory_data {
+                    Ok(trajectory_data) => {
+                        mogura_state.trajectory_data = Some(trajectory_data);
+                        mogura_state.logs.push("Trajectory file loaded".to_string());
+                    }
+                    Err(e) => {
+                        mogura_state.logs.push(e.to_string());
+                    }
                 }
             }
 
@@ -98,7 +109,17 @@ fn poll_rfd_structure(
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                mogura_state.structure_data = Some(structure_loader(&path));
+                match structure_loader(&path) {
+                    Ok(structure_data) => {
+                        mogura_state.structure_data = Some(structure_data);
+                        mogura_state
+                            .logs
+                            .push("Structure file loaded from path".to_string());
+                    }
+                    Err(e) => {
+                        mogura_state.logs.push(e.to_string());
+                    }
+                }
             }
 
             #[cfg(target_arch = "wasm32")]
@@ -108,13 +129,26 @@ fn poll_rfd_structure(
                     .unwrap()
                     .to_str()
                     .unwrap();
-                mogura_state.structure_data =
-                    Some(structure_loader_from_content(&content, &extension));
+
+                match structure_loader_from_content(&content, &extension) {
+                    Ok(structure_data) => {
+                        mogura_state.structure_data = Some(structure_data);
+                        mogura_state
+                            .logs
+                            .push("Structure file loaded from content".to_string());
+                    }
+                    Err(e) => {
+                        mogura_state.logs.push(e.to_string());
+                    }
+                }
             }
 
             mogura_state.structure_file = Some(path);
-            mogura_selections.0[0].redraw = true;
             mogura_state.init_look_at = true;
+            if mogura_selections.0.is_empty() {
+                mogura_selections.0.push(EachSelection::default());
+            }
+            mogura_selections.0[0].redraw = true;
         }
     }
 }
@@ -132,10 +166,18 @@ fn poll_downloadpdb(
             commands.entity(entity).despawn_recursive();
 
             if let Ok(structure_data) = result {
+                if mogura_selections.0.is_empty() {
+                    mogura_selections.0.push(EachSelection::default());
+                }
                 mogura_selections.0[0].redraw = true;
                 mogura_state.structure_data = Some(Box::new(structure_data));
                 mogura_state.structure_file = None;
                 mogura_state.init_look_at = true;
+                mogura_state
+                    .logs
+                    .push("Structure file downloaded".to_string());
+            } else {
+                mogura_state.logs.push("Structure file download failed\nPDB ID may not correct. Or some PDB files have dirty format so pdbtbx could not parse".to_string());
             }
         }
     }
@@ -162,11 +204,9 @@ fn update_gui(
     occupied_screen_space.left = egui::SidePanel::left("left")
         .resizable(true)
         .show(ctx, |ui| {
+            ui.label("Controlpanel");
+            ui.separator();
             egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.label("Controlpanel");
-
-                ui.separator();
-
                 let _response = egui::TextEdit::singleline(&mut *target_pdbid)
                     .hint_text("PDB ID here. e.g. 8GNG")
                     .show(ui);
@@ -221,6 +261,7 @@ fn update_gui(
                     if ui.button("Clear").clicked() {
                         mogura_state.structure_file = None;
                         mogura_state.structure_data = None;
+                        mogura_state.logs.push("Structure file cleared".to_string());
                     }
                 });
 
@@ -262,7 +303,9 @@ fn update_gui(
                     if ui.button("Clear").clicked() {
                         mogura_state.trajectory_file = None;
                         mogura_state.trajectory_data = None;
-                        mogura_selections.0.clear();
+                        mogura_state
+                            .logs
+                            .push("Trajectory file cleared".to_string());
                     }
                 });
                 ui.separator();
@@ -345,11 +388,9 @@ fn update_gui(
     occupied_screen_space.right = egui::SidePanel::right("right")
         .resizable(true)
         .show(ctx, |ui| {
+            ui.label("Selection panel");
+            ui.separator();
             egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.label("Selection panel");
-
-                ui.separator();
-
                 if let Some(structure_data) = &mogura_state.structure_data {
                     for selection in mogura_selections.0.iter_mut() {
                         let _response = egui::TextEdit::singleline(&mut selection.atom_selection)
@@ -428,17 +469,21 @@ fn update_gui(
         .rect
         .height();
 
-    // TODO
-    // log panel
-    // occupied_screen_space.bottom = egui::TopBottomPanel::bottom("bottom")
-    //     .resizable(true)
-    //     .show(ctx, |ui| {
-    //         ui.label("Log panel");
-    //         ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
-    //     })
-    //     .response
-    //     .rect
-    //     .height();
+    occupied_screen_space.bottom = egui::TopBottomPanel::bottom("bottom")
+        .max_height(90.0)
+        .show(ctx, |ui| {
+            ui.label("Log panel (the higher the newest)");
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.separator();
+                for log in mogura_state.logs.iter().rev() {
+                    ui.label(log);
+                }
+            });
+            ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
+        })
+        .response
+        .rect
+        .height();
 }
 
 // https://github.com/vladbat00/bevy_egui/blob/main/examples/side_panel.rs

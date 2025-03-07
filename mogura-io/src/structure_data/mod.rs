@@ -4,52 +4,75 @@ use crate::structure_data::gro::GroData;
 use crate::structure_data::pdb::PDBData;
 
 pub const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
-pub(crate) const PROTEIN_RESNAME: [&str; 20] = [
+pub(crate) const PROTEIN_RESNAME: [&str; 24] = [
     "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
-    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL", "CYX", "HID", "HIE", "HIP",
 ];
+// ACE
+// NME
 
-pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
+pub fn structure_loader(structure_file: &str) -> Result<Box<dyn StructureData>, anyhow::Error> {
     let extension = std::path::Path::new(structure_file)
         .extension()
         .and_then(|ext| ext.to_str());
     if let Some(extension) = extension {
         match extension {
-            "pdb" => Box::new(PDBData::load(structure_file)),
+            "pdb" => Ok(Box::new(PDBData::load(structure_file)?)),
             "gro" => {
                 #[cfg(feature = "groan_rs")]
                 {
-                    Box::new(GroData::load(structure_file))
+                    Ok(Box::new(GroData::load(structure_file)?))
                 }
 
                 #[cfg(not(feature = "groan_rs"))]
                 {
-                    unimplemented!("This extension is not supported.");
+                    // unimplemented!("This extension is not supported.");
+                    // Err("This extension is not supported.".to_string())
+                    Err(anyhow::anyhow!("This extension is not supported."))
                 }
             }
             _ => {
-                unimplemented!("This extension is not supported.")
+                // unimplemented!("This extension is not supported.")
+                // Err("This extension is not supported.".to_string())
+                Err(anyhow::anyhow!("This extension is not supported."))
             }
         }
     } else {
-        panic!("structure_file: {} has no extension.", structure_file);
+        // panic!("structure_file: {} has no extension.", structure_file);
+        // Err(format!(
+        //     "structure_file: {} has no extension.",
+        //     structure_file
+        // ))
+        Err(anyhow::anyhow!(format!(
+            "structure_file: {} has no extension.",
+            structure_file
+        )))
     }
 }
 
-pub fn structure_loader_from_content(content: &str, extension: &str) -> Box<dyn StructureData> {
+pub fn structure_loader_from_content(
+    content: &str,
+    extension: &str,
+) -> Result<Box<dyn StructureData>, anyhow::Error> {
     match extension {
-        "pdb" => Box::new(PDBData::load_from_content(content)),
+        "pdb" => Ok(Box::new(PDBData::load_from_content(content)?)),
         "gro" => {
-            unimplemented!("gro is not supported for loading from content")
+            // unimplemented!("gro is not supported for loading from content")
+            // Err("gro is not supported for loading from content".to_string())
+            Err(anyhow::anyhow!(
+                "gro is not supported for loading from content"
+            ))
         }
         _ => {
-            unimplemented!("This extension is not supported.")
+            // unimplemented!("This extension is not supported.")
+            // Err("This extension is not supported.".to_string())
+            Err(anyhow::anyhow!("This extension is not supported."))
         }
     }
 }
 
 pub trait StructureData: Sync + Send {
-    fn load(structure_file: &str) -> Self
+    fn load(structure_file: &str) -> Result<Self, anyhow::Error>
     where
         Self: Sized;
     // fn export(output_path: &str);

@@ -111,16 +111,29 @@ pub struct MoguraState {
     pub loop_trajectory: bool,
     pub current_frame_id: usize,
     pub init_look_at: bool,
+    pub logs: Vec<String>,
     // pub selections: Vec<EachSelection>,
 }
 
 impl MoguraState {
     pub fn new(structure_file: Option<String>, trajectory_file: Option<String>) -> Self {
-        let structure_data = structure_file.as_ref().map(|file| structure_loader(file));
+        let structure_data = structure_file
+            .as_ref()
+            .map(|file| match structure_loader(file) {
+                Ok(data) => data,
+                Err(e) => {
+                    panic!("Failed to load structure file: {}", e);
+                }
+            });
         let trajectory_data = if let Some(ref str_file) = structure_file {
             trajectory_file
                 .as_ref()
-                .map(|file| trajectory_loader(str_file, file))
+                .map(|file| match trajectory_loader(str_file, file) {
+                    Ok(data) => data,
+                    Err(e) => {
+                        panic!("Failed to load trajectory file: {}", e);
+                    }
+                })
         } else {
             None
         };
@@ -135,6 +148,7 @@ impl MoguraState {
             loop_trajectory: false,
             current_frame_id: 0,
             init_look_at: true,
+            logs: Vec::new(),
             // selections: vec![EachSelection::default()],
         }
     }

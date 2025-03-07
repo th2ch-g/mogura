@@ -51,6 +51,7 @@ Input files are available [here](https://github.com/mogura-rs/example-inputs)
 - [ ] Lv1: Load multiple structure files
 - [ ] Lv1: Morphing by specifying two structures
 - [ ] Lv2: Pick up atoms and highlight them with their name
+- [ ] Lv2: Allow more flexible configuration of plugins
 - [ ] Lv3: Secondary structure prediction using DSSP or STRIDE
 - [ ] Lv3: Visualize structure as Cartoon and NewCartoon
 - [ ] Lv4: Path tracing using [bevy-hikari](https://github.com/cryscan/bevy-hikari)(but no more developed) or [developing default feature](https://github.com/bevyengine/bevy/issues/639)
