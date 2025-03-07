@@ -13,12 +13,12 @@ jobs:
       fail-fast: false
       matrix:
         job:
-          - { os: ubuntu-20.04  , target: x86_64-unknown-linux-gnu       , use-cross: false , extension: ""   }
-          - { os: ubuntu-20.04  , target: x86_64-unknown-linux-musl      , use-cross: true  , extension: ""   }
-          - { os: ubuntu-20.04  , target: armv7-unknown-linux-gnueabihf  , use-cross: true  , extension: ""   }
-          - { os: ubuntu-20.04  , target: armv7-unknown-linux-musleabihf , use-cross: true  , extension: ""   }
-          - { os: ubuntu-20.04  , target: aarch64-unknown-linux-gnu      , use-cross: true  , extension: ""   }
-          - { os: ubuntu-20.04  , target: aarch64-unknown-linux-musl     , use-cross: true  , extension: ""   }
+          - { os: ubuntu-latest , target: x86_64-unknown-linux-gnu       , use-cross: false , extension: ""   }
+          - { os: ubuntu-latest , target: x86_64-unknown-linux-musl      , use-cross: true  , extension: ""   }
+          - { os: ubuntu-latest , target: armv7-unknown-linux-gnueabihf  , use-cross: true  , extension: ""   }
+          - { os: ubuntu-latest , target: armv7-unknown-linux-musleabihf , use-cross: true  , extension: ""   }
+          - { os: ubuntu-latest , target: aarch64-unknown-linux-gnu      , use-cross: true  , extension: ""   }
+          - { os: ubuntu-latest , target: aarch64-unknown-linux-musl     , use-cross: true  , extension: ""   }
           - { os: macos-latest   , target: x86_64-apple-darwin            , use-cross: false , extension: ""   }
           - { os: macos-latest   , target: aarch64-apple-darwin           , use-cross: false , extension: ""   }
           - { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: .exe }
@@ -26,8 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-      - name: Install Linux dependencies
-        uses: ./.github/actions/install-linux-deps
       - name: Install cross
         if: matrix.job.use-cross
         run: cargo install cross
@@ -36,7 +34,6 @@ jobs:
           rustup update
           rustc -V
           rustup target add ${{ matrix.job.target }}
-          # cargo build -r --target ${{ matrix.job.target }}
           if [ "${{ matrix.job.use-cross }}" == "true" ]; then
             cross build --release --target ${{ matrix.job.target }}
           else

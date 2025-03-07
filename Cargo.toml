@@ -71,7 +71,7 @@ bevy = { version = "0.15.3", default-features = false, features = [
     "tonemapping_luts",
     # "vorbis",
     "webgpu",
-    "x11",
+    # "x11", # because of openssl,wayland error on ubuntu
 ] }
 clap = { version = "4.5.31", features = ["derive"] }
 pdbtbx = "0.12.0"
