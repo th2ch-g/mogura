@@ -26,16 +26,23 @@ repos:
 
   - repo: local
     hooks:
+      - id: toml-format
+        name: Toml Format
+        entry: taplo fmt
+        language: system
+        types: [toml]
+        pass_filenames: false
+        always_run: true
+      - id: typo-check
+        name: Typo Check
+        entry: typos
+        language: rust
+        types: [file]
+        pass_filenames: false
+        always_run: true
       - id: cargo-fmt-check
         name: Cargo Format Check
         entry: cargo fmt -- --check
-        language: rust
-        types: [rust]
-        pass_filenames: false
-        always_run: true
-      - id: cargo-clippy
-        name: Cargo Clippy
-        entry: cargo clippy -- -D warnings
         language: rust
         types: [rust]
         pass_filenames: false
@@ -54,18 +61,11 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
-      - id: toml-format
-        name: Toml Format
-        entry: taplo fmt
-        language: system
-        types: [toml]
-        pass_filenames: false
-        always_run: true
-      - id: typo-check
-        name: Typo Check
-        entry: typos
+      - id: cargo-clippy
+        name: Cargo Clippy
+        entry: cargo clippy -- -D warnings
         language: rust
-        types: [file]
+        types: [rust]
         pass_filenames: false
         always_run: true
       - id: Cargo deny
