@@ -4,6 +4,7 @@ description = "A plugin for molecular graphic visualization"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 
 [dependencies]
 anyhow.workspace = true
@@ -11,10 +12,15 @@ bevy.workspace = true
 bevy_trackball.workspace = true
 mogura-io = { path = "../mogura-io", optional = true }
 mogura-asl = { path = "../mogura-asl" }
+mogura-ss = { path = "../mogura-ss" }
 bevy_egui.workspace = true
 egui.workspace = true
 rfd.workspace = true
-log.workspace = true
+# log.workspace = true
+itertools.workspace = true
+
+[dev-dependencies]
+# cargo-husky.workspace = true
 
 [features]
 default = ["mogura-io/default"]

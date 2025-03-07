@@ -1,7 +1,10 @@
 pub mod xtc;
 use crate::trajectory_data::xtc::XtcData;
 
-pub fn trajectory_loader(topology_file: &str, trajectory_file: &str) -> Box<dyn TrajectoryData> {
+pub fn trajectory_loader(
+    topology_file: &str,
+    trajectory_file: &str,
+) -> Result<Box<dyn TrajectoryData>, anyhow::Error> {
     let extension = std::path::Path::new(trajectory_file)
         .extension()
         .and_then(|ext| ext.to_str());
@@ -10,20 +13,32 @@ pub fn trajectory_loader(topology_file: &str, trajectory_file: &str) -> Box<dyn 
             "xtc" => {
                 #[cfg(feature = "groan_rs")]
                 {
-                    Box::new(XtcData::load(topology_file, trajectory_file))
+                    Ok(Box::new(XtcData::load(topology_file, trajectory_file)?))
                 }
 
                 #[cfg(not(feature = "groan_rs"))]
                 {
-                    unimplemented!("This extension is not supported.");
+                    // unimplemented!("This extension is not supported.");
+                    // Err("This extension is not supported.".to_string())
+                    Err(anyhow::anyhow!("This extension is not supported."))
                 }
             }
             _ => {
-                unimplemented!("This extension is not supported.");
+                // unimplemented!("This extension is not supported.");
+                // Err("This extension is not supported.".to_string())
+                Err(anyhow::anyhow!("This extension is not supported."))
             }
         }
     } else {
-        panic!("trajectory_file: {} has no extension.", trajectory_file);
+        // panic!("trajectory_file: {} has no extension.", trajectory_file);
+        // Err(format!(
+        //     "trajectory_file: {} has no extension.",
+        //     trajectory_file
+        // ))
+        Err(anyhow::anyhow!(format!(
+            "trajectory_file: {} has no extension.",
+            trajectory_file
+        )))
     }
 }
 
@@ -34,7 +49,7 @@ pub trait TrajectoryData: Sync + Send {
         &self.frames()[frame_id]
     }
 
-    fn load(topology_file: &str, trajectory_file: &str) -> Self
+    fn load(topology_file: &str, trajectory_file: &str) -> Result<Self, anyhow::Error>
     where
         Self: Sized;
 

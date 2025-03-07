@@ -15,7 +15,7 @@ pub enum Selection {
     Not(Box<Selection>),
     And(Vec<Box<Selection>>),
     Or(Vec<Box<Selection>>),
-    Braket(Box<Selection>),
+    Bracket(Box<Selection>),
 }
 
 pub fn parse_selection(selection: &str) -> Result<Selection, String> {
@@ -88,14 +88,14 @@ fn parse_not(input: &str) -> nom::IResult<&str, Selection> {
 
 fn parse_primary(input: &str) -> nom::IResult<&str, Selection> {
     let (input, _) = nom::character::complete::space0.parse(input)?;
-    nom::branch::alt((parse_braket, parse_atom)).parse(input)
+    nom::branch::alt((parse_bracket, parse_atom)).parse(input)
 }
 
-fn parse_braket(input: &str) -> nom::IResult<&str, Selection> {
+fn parse_bracket(input: &str) -> nom::IResult<&str, Selection> {
     let (input, _) = nom::character::complete::char('(').parse(input)?;
     let (input, expr) = parse_expr.parse(input)?;
     let (input, _) = nom::character::complete::char(')').parse(input)?;
-    Ok((input, Selection::Braket(Box::new(expr))))
+    Ok((input, Selection::Bracket(Box::new(expr))))
 }
 
 fn parse_atom(input: &str) -> nom::IResult<&str, Selection> {
@@ -155,7 +155,7 @@ fn parse_resid(input: &str) -> nom::IResult<&str, Selection> {
             nom::bytes::complete::tag("resid"),
             nom::sequence::preceded(nom::character::complete::space1, parse_numbers),
         ),
-        |nums| Selection::ResId(nums),
+        Selection::ResId,
     )
     .parse(input)
 }
@@ -166,7 +166,7 @@ fn parse_index(input: &str) -> nom::IResult<&str, Selection> {
             nom::bytes::complete::tag("index"),
             nom::sequence::preceded(nom::character::complete::space1, parse_numbers),
         ),
-        |nums| Selection::Index(nums),
+        Selection::Index,
     )
     .parse(input)
 }
@@ -382,13 +382,13 @@ mod tests {
     }
 
     #[test]
-    fn braket() {
+    fn bracket() {
         let selection = "(resname ALA GLU) and name CA";
         let parsed = parse_selection(selection).unwrap();
         assert_eq!(
             parsed,
             Selection::And(vec![
-                Box::new(Selection::Braket(Box::new(Selection::ResName(vec![
+                Box::new(Selection::Bracket(Box::new(Selection::ResName(vec![
                     "ALA".to_string(),
                     "GLU".to_string()
                 ])))),
@@ -401,12 +401,12 @@ mod tests {
         assert_eq!(
             parsed,
             Selection::Or(vec![
-                Box::new(Selection::Braket(Box::new(Selection::Index(
+                Box::new(Selection::Bracket(Box::new(Selection::Index(
                     (10..=20).collect()
                 )))),
                 Box::new(Selection::And(vec![
                     Box::new(Selection::Protein),
-                    Box::new(Selection::Braket(Box::new(Selection::ResName(vec![
+                    Box::new(Selection::Bracket(Box::new(Selection::ResName(vec![
                         "ALA".to_string()
                     ])),))
                 ]))
@@ -451,6 +451,7 @@ mod tests {
 
     #[test]
     fn sample_eval() {
+        #[allow(non_local_definitions)]
         impl Selection {
             fn eval(&self, state: &State) -> bool {
                 match self {
@@ -462,7 +463,7 @@ mod tests {
                     Selection::Not(selection) => !selection.eval(state),
                     Selection::And(selections) => selections.iter().all(|s| s.eval(state)),
                     Selection::Or(selections) => selections.iter().any(|s| s.eval(state)),
-                    Selection::Braket(selection) => selection.eval(state),
+                    Selection::Bracket(selection) => selection.eval(state),
                     _ => false,
                     // Selection::Protein => state.is_protein(),
                     // Selection::Water => state.is_water(),

@@ -1,4 +1,5 @@
 use crate::structure_data::*;
+use itertools::Itertools;
 
 #[cfg(feature = "groan_rs")]
 use groan_rs::prelude::*;
@@ -11,16 +12,13 @@ pub struct GroData {
 
 #[cfg(feature = "groan_rs")]
 impl StructureData for GroData {
-    fn load(structure_file: &str) -> Self {
-        let mut id = 0;
-        let mut atoms = Vec::new();
-        let mut residues = Vec::new();
-
-        let mut system = System::from_file(structure_file).unwrap();
+    fn load(structure_file: &str) -> Result<Self, anyhow::Error> {
+        let system = System::from_file(structure_file).map_err(anyhow::Error::msg)?;
 
         let system_atoms = system.get_atoms_copy();
+        let mut atoms = Vec::with_capacity(system_atoms.len());
 
-        for atom in system_atoms {
+        for (id, atom) in system_atoms.iter().enumerate() {
             atoms.push(crate::structure_data::Atom {
                 id,
                 model_id: 0,
@@ -38,11 +36,26 @@ impl StructureData for GroData {
                 y: atom.get_position().unwrap().y * 10.0,
                 z: atom.get_position().unwrap().z * 10.0,
             });
-
-            id += 1;
         }
 
-        Self { atoms, residues }
+        let mut residues = Vec::with_capacity(system_atoms.len());
+        for (id, (_residue_id, group)) in (&atoms.iter().chunk_by(|a| a.residue_id))
+            .into_iter()
+            .enumerate()
+        {
+            let group_atoms: Vec<_> = group.cloned().collect();
+            let first_atom = group_atoms.clone().into_iter().next().unwrap();
+            residues.push(Residue {
+                id,
+                model_id: 0,
+                chain_name: first_atom.chain_name.clone(),
+                residue_id: first_atom.residue_id,
+                residue_name: first_atom.residue_name.clone(),
+                atoms: group_atoms,
+            });
+        }
+
+        Ok(Self { atoms, residues })
     }
 
     fn atoms(&self) -> &Vec<crate::structure_data::Atom> {

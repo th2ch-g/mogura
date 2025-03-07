@@ -10,8 +10,8 @@ pub struct PDBData {
 }
 
 impl StructureData for PDBData {
-    fn load(structure_file: &str) -> Self {
-        let content = std::fs::read_to_string(structure_file).unwrap();
+    fn load(structure_file: &str) -> Result<Self, anyhow::Error> {
+        let content = std::fs::read_to_string(structure_file)?;
         Self::load_from_content(&content)
     }
 
@@ -25,14 +25,22 @@ impl StructureData for PDBData {
 }
 
 impl PDBData {
-    pub fn load_from_content(content: &str) -> Self {
+    pub fn load_from_content(content: &str) -> Result<Self, anyhow::Error> {
         let reader = std::io::BufReader::new(std::io::Cursor::new(content));
-        let (input_pdb, _errors) = pdbtbx::open_pdb_raw(
-            reader,
-            pdbtbx::Context::show("a.pdb"), // random anme
-            pdbtbx::StrictnessLevel::Loose,
-        )
-        .unwrap();
+
+        // let (input_pdb, _errors) = pdbtbx::open_pdb_raw(
+        //     reader,
+        //     pdbtbx::Context::show("a.pdb"), // random name
+        //     pdbtbx::StrictnessLevel::Loose,
+        // )
+        // .unwrap();
+
+        let (input_pdb, _errors) = pdbtbx::ReadOptions::new()
+            .set_format(pdbtbx::Format::Pdb)
+            .set_level(pdbtbx::StrictnessLevel::Loose)
+            .read_raw(reader)
+            .map_err(|_| anyhow::anyhow!("Failed to read PDB"))?;
+
         let mut id = 0;
         let mut atoms = Vec::new();
         let mut residues = Vec::new();
@@ -86,7 +94,7 @@ impl PDBData {
             }
         }
 
-        Self { atoms, residues }
+        Ok(Self { atoms, residues })
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -98,7 +106,7 @@ impl PDBData {
         let content = response.text()?;
 
         if status_code == 200 {
-            Ok(Self::load_from_content(&content))
+            Ok(Self::load_from_content(&content)?)
         } else {
             Err(anyhow::anyhow!("Failed to download PDB file for {}", pdbid))
         }
@@ -110,16 +118,28 @@ impl PDBData {
         opts.method("GET");
         opts.mode(web_sys::RequestMode::Cors);
         let url = format!("https://files.rcsb.org/view/{}.pdb", pdbid);
-        let request = web_sys::Request::new_with_str_and_init(&url, &opts).unwrap();
+        let request = web_sys::Request::new_with_str_and_init(&url, &opts)
+            .map_err(|_| anyhow::anyhow!("Failed to create request"))?;
         let window = gloo::utils::window();
         let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request))
             .await
-            .unwrap();
-        let resp: web_sys::Response = resp_value.dyn_into().unwrap();
-        let text = wasm_bindgen_futures::JsFuture::from(resp.text().unwrap())
-            .await
-            .unwrap();
+            .map_err(|_| anyhow::anyhow!("Failed to fetch"))?;
+        let resp: web_sys::Response = resp_value
+            .dyn_into()
+            .map_err(|_| anyhow::anyhow!("Failed to get response"))?;
+        let text = wasm_bindgen_futures::JsFuture::from(
+            resp.text()
+                .map_err(|_| anyhow::anyhow!("Failed to get text"))?,
+        )
+        .await
+        .map_err(|_| anyhow::anyhow!("Failed to get text"))?;
 
-        Ok(Self::load_from_content(&text.as_string().unwrap()))
+        let content = match text.as_string() {
+            Some(content) => Ok(content.to_string()),
+            None => Err(()),
+        }
+        .map_err(|_| anyhow::anyhow!("Failed to get content"))?;
+
+        Ok(Self::load_from_content(&content)?)
     }
 }

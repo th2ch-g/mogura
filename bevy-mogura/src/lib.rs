@@ -12,19 +12,10 @@ pub mod prelude {
     pub use crate::MoguraPlugins;
 }
 
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct MoguraPlugins {
     pub input_structure_file: Option<String>,
     pub input_trajectory_file: Option<String>,
-}
-
-impl Default for MoguraPlugins {
-    fn default() -> Self {
-        Self {
-            input_structure_file: None,
-            input_trajectory_file: None,
-        }
-    }
 }
 
 impl Plugin for MoguraPlugins {
@@ -41,12 +32,71 @@ impl Plugin for MoguraPlugins {
             Shader::from_wgsl
         );
 
+        let mogura_selections = if self.input_structure_file.is_some() {
+            MoguraSelections::new(1)
+        } else {
+            MoguraSelections::new(0)
+        };
+
         app.insert_resource(mogura_state)
+            .insert_resource(mogura_selections)
+            // .add_systems(Startup, dbg::setup_test)
             .add_plugins(camera::MoguraCameraPlugins)
             .add_plugins(gui::MoguraGuiPlugins)
             .add_plugins(light::MoguraLightPlugins)
             .add_plugins(structure::MoguraStructurePlugins)
             .add_plugins(trajectory::MoguraTrajectoryPlugins);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EachSelection {
+    pub atom_selection: String,
+    pub drawing_method: structure::DrawingMethod,
+    pub selected_atoms: std::collections::HashSet<usize>,
+    pub selected_bonds: std::collections::HashSet<(usize, usize)>,
+    pub redraw: bool,
+    pub delete: bool,
+}
+
+impl EachSelection {
+    #[allow(clippy::borrowed_box)]
+    pub fn apply_selection(
+        &mut self,
+        structure_data: &Box<dyn StructureData>,
+    ) -> Result<(), String> {
+        let selection = mogura_asl::parse_selection(&self.atom_selection)?;
+        let (selected_atoms, selected_bonds) = {
+            let atoms = structure_data.as_ref().atoms();
+            let bonds = structure_data.as_ref().bonds_indirected();
+            let (selected_atoms, selected_bonds) = selection.select_atoms_bonds(atoms, &bonds);
+            (selected_atoms, selected_bonds)
+        };
+        self.selected_atoms = selected_atoms;
+        self.selected_bonds = selected_bonds;
+        Ok(())
+    }
+}
+
+impl Default for EachSelection {
+    fn default() -> Self {
+        Self {
+            atom_selection: "all".to_string(),
+            drawing_method: structure::DrawingMethod::BallAndStick,
+            selected_atoms: std::collections::HashSet::new(),
+            selected_bonds: std::collections::HashSet::new(),
+            redraw: true,
+            delete: false,
+        }
+    }
+}
+
+#[derive(Default, Resource)]
+pub struct MoguraSelections(Vec<EachSelection>);
+
+impl MoguraSelections {
+    pub fn new(init_num: usize) -> Self {
+        Self(vec![EachSelection::default(); init_num])
     }
 }
 
@@ -56,54 +106,55 @@ pub struct MoguraState {
     pub structure_data: Option<Box<dyn StructureData>>,
     pub trajectory_file: Option<String>,
     pub trajectory_data: Option<Box<dyn TrajectoryData>>,
-    pub drawing_method: structure::DrawingMethod,
-    pub redraw: bool,
     pub update_trajectory: bool,
     pub update_tmp_trajectory: bool,
     pub loop_trajectory: bool,
     pub current_frame_id: usize,
-    pub atom_selection: String,
-    pub selected_atoms: std::collections::HashSet<usize>,
-    pub selected_bonds: std::collections::HashSet<(usize, usize)>,
+    pub init_look_at: bool,
+    pub logs: Vec<String>,
+    // pub selections: Vec<EachSelection>,
 }
 
 impl MoguraState {
     pub fn new(structure_file: Option<String>, trajectory_file: Option<String>) -> Self {
-        let structure_data = if let Some(ref file) = structure_file {
-            Some(structure_loader(&file))
-        } else {
-            None
-        };
+        let structure_data = structure_file
+            .as_ref()
+            .map(|file| match structure_loader(file) {
+                Ok(data) => data,
+                Err(e) => {
+                    panic!("Failed to load structure file: {}", e);
+                }
+            });
         let trajectory_data = if let Some(ref str_file) = structure_file {
-            if let Some(ref traj_file) = trajectory_file {
-                Some(trajectory_loader(&str_file, &traj_file))
-            } else {
-                None
-            }
+            trajectory_file
+                .as_ref()
+                .map(|file| match trajectory_loader(str_file, file) {
+                    Ok(data) => data,
+                    Err(e) => {
+                        panic!("Failed to load trajectory file: {}", e);
+                    }
+                })
         } else {
             None
         };
+
         Self {
             structure_data,
             structure_file,
             trajectory_data,
             trajectory_file,
-            drawing_method: structure::DrawingMethod::Licorise,
-            redraw: true,
             update_trajectory: false,
             update_tmp_trajectory: false,
             loop_trajectory: false,
             current_frame_id: 0,
-            atom_selection: "all".to_string(),
-            selected_atoms: std::collections::HashSet::new(),
-            selected_bonds: std::collections::HashSet::new(),
+            init_look_at: true,
+            logs: Vec::new(),
+            // selections: vec![EachSelection::default()],
         }
     }
 
     pub fn n_frame(&self) -> Option<usize> {
-        self.trajectory_data
-            .as_ref()
-            .and_then(|td| Some(td.n_frame()))
+        self.trajectory_data.as_ref().map(|td| td.n_frame())
     }
 
     pub fn next_frame_id(&mut self) {
@@ -132,21 +183,9 @@ impl MoguraState {
             self.current_frame_id = 0;
         }
     }
-
-    pub fn apply_selection(&mut self) -> Result<(), String> {
-        let selection = mogura_asl::parse_selection(&self.atom_selection)?;
-        let (selected_atoms, selected_bonds) = {
-            let atoms = self.structure_data.as_ref().unwrap().atoms();
-            let bonds = self.structure_data.as_ref().unwrap().bonds_indirected();
-            let (selected_atoms, selected_bonds) = selection.select_atoms_bonds(&atoms, &bonds);
-            (selected_atoms, selected_bonds)
-        };
-        self.selected_atoms = selected_atoms;
-        self.selected_bonds = selected_bonds;
-        Ok(())
-    }
 }
 
+#[allow(dead_code)]
 mod dbg {
     use bevy::prelude::*;
     pub fn setup_test(

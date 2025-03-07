@@ -1,0 +1,13 @@
+[package]
+name = "mogura-ss"
+description = "secondary structure prediction algorithm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dev-dependencies]
+mogura-io = { path = "../mogura-io/", features = ["groan_rs"] }
+anyhow.workspace = true
+pollster = "0.4.0"
+itertools.workspace = true

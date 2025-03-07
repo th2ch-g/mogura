@@ -1,9 +1,5 @@
-use crate::camera;
-use crate::structure::*;
 use crate::*;
-use bevy::prelude::*;
 use bevy_trackball::prelude::*;
-use mogura_io::prelude::*;
 
 #[derive(Clone)]
 pub struct MoguraGuiPlugins;
@@ -12,7 +8,7 @@ impl Plugin for MoguraGuiPlugins {
     fn build(&self, app: &mut App) {
         app.init_resource::<OccupiedScreenSpace>()
             .add_plugins(bevy_egui::EguiPlugin)
-            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+            .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin)
             .add_systems(
                 PreUpdate,
                 (absorb_egui_inputs)
@@ -31,6 +27,7 @@ pub struct OccupiedScreenSpace {
     left: f32,
     top: f32,
     right: f32,
+    #[allow(unused)]
     bottom: f32,
 }
 
@@ -61,14 +58,25 @@ fn poll_rfd_trajectory(
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                if let Some(ref top_file) = mogura_state.structure_file {
-                    mogura_state.trajectory_data = Some(trajectory_loader(&top_file, &path));
+                if mogura_state.structure_file.is_none() {
+                    return;
+                }
+                let trajectory_data =
+                    trajectory_loader(mogura_state.structure_file.as_ref().unwrap(), &path);
+                match trajectory_data {
+                    Ok(trajectory_data) => {
+                        mogura_state.trajectory_data = Some(trajectory_data);
+                        mogura_state.logs.push("Trajectory file loaded".to_string());
+                    }
+                    Err(e) => {
+                        mogura_state.logs.push(e.to_string());
+                    }
                 }
             }
 
             #[cfg(target_arch = "wasm32")]
             {
-                let extension = std::path::Path::new(&path)
+                let _extension = std::path::Path::new(&path)
                     .extension()
                     .unwrap()
                     .to_str()
@@ -84,6 +92,7 @@ fn poll_rfd_structure(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut SelectedStructureFile)>,
     mut mogura_state: ResMut<MoguraState>,
+    mut mogura_selections: ResMut<MoguraSelections>,
 ) {
     for (entity, mut selected_file) in tasks.iter_mut() {
         if let Some(result) = bevy::tasks::futures_lite::future::block_on(
@@ -91,6 +100,7 @@ fn poll_rfd_structure(
         ) {
             commands.entity(entity).despawn_recursive();
 
+            #[allow(unused_variables)]
             let (path, content) = if let Some(result) = result {
                 result
             } else {
@@ -99,7 +109,17 @@ fn poll_rfd_structure(
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                mogura_state.structure_data = Some(structure_loader(&path));
+                match structure_loader(&path) {
+                    Ok(structure_data) => {
+                        mogura_state.structure_data = Some(structure_data);
+                        mogura_state
+                            .logs
+                            .push("Structure file loaded from path".to_string());
+                    }
+                    Err(e) => {
+                        mogura_state.logs.push(e.to_string());
+                    }
+                }
             }
 
             #[cfg(target_arch = "wasm32")]
@@ -109,12 +129,26 @@ fn poll_rfd_structure(
                     .unwrap()
                     .to_str()
                     .unwrap();
-                mogura_state.structure_data =
-                    Some(structure_loader_from_content(&content, &extension));
+
+                match structure_loader_from_content(&content, &extension) {
+                    Ok(structure_data) => {
+                        mogura_state.structure_data = Some(structure_data);
+                        mogura_state
+                            .logs
+                            .push("Structure file loaded from content".to_string());
+                    }
+                    Err(e) => {
+                        mogura_state.logs.push(e.to_string());
+                    }
+                }
             }
 
             mogura_state.structure_file = Some(path);
-            mogura_state.redraw = true;
+            mogura_state.init_look_at = true;
+            if mogura_selections.0.is_empty() {
+                mogura_selections.0.push(EachSelection::default());
+            }
+            mogura_selections.0[0].redraw = true;
         }
     }
 }
@@ -123,6 +157,7 @@ fn poll_downloadpdb(
     mut commands: Commands,
     mut tasks: Query<(Entity, &mut DownloadPDB)>,
     mut mogura_state: ResMut<MoguraState>,
+    mut mogura_selections: ResMut<MoguraSelections>,
 ) {
     for (entity, mut downloadded_pdb) in tasks.iter_mut() {
         if let Some(result) = bevy::tasks::futures_lite::future::block_on(
@@ -131,9 +166,18 @@ fn poll_downloadpdb(
             commands.entity(entity).despawn_recursive();
 
             if let Ok(structure_data) = result {
-                mogura_state.redraw = true;
+                if mogura_selections.0.is_empty() {
+                    mogura_selections.0.push(EachSelection::default());
+                }
+                mogura_selections.0[0].redraw = true;
                 mogura_state.structure_data = Some(Box::new(structure_data));
                 mogura_state.structure_file = None;
+                mogura_state.init_look_at = true;
+                mogura_state
+                    .logs
+                    .push("Structure file downloaded".to_string());
+            } else {
+                mogura_state.logs.push("Structure file download failed\nPDB ID may not correct. Or some PDB files have dirty format so pdbtbx could not parse".to_string());
             }
         }
     }
@@ -142,11 +186,13 @@ fn poll_downloadpdb(
 #[derive(Component)]
 pub struct DownloadPDB(bevy::tasks::Task<Result<PDBData, anyhow::Error>>);
 
+#[allow(clippy::too_many_arguments)]
 fn update_gui(
     mut commands: Commands,
     mut contexts: bevy_egui::EguiContexts,
     mut occupied_screen_space: ResMut<OccupiedScreenSpace>,
     mut mogura_state: ResMut<MoguraState>,
+    mut mogura_selections: ResMut<MoguraSelections>,
     mut target_pdbid: Local<String>,
     mut trackball_camera: Query<&mut TrackballCamera, With<Camera>>,
     mut open_help_window: Local<bool>,
@@ -159,213 +205,230 @@ fn update_gui(
         .resizable(true)
         .show(ctx, |ui| {
             ui.label("Controlpanel");
-
             ui.separator();
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                let _response = egui::TextEdit::singleline(&mut *target_pdbid)
+                    .hint_text("PDB ID here. e.g. 8GNG")
+                    .show(ui);
 
-            let _response = egui::TextEdit::singleline(&mut *target_pdbid)
-                .hint_text("PDB ID here. e.g. 8GNG")
-                .show(ui);
-
-            if ui.button("Start to download").clicked() {
-                let target_pdbid_clone = target_pdbid.clone();
-                let task =
-                    task_pool.spawn(async move { PDBData::download(&target_pdbid_clone).await });
-                commands.spawn(DownloadPDB(task));
-            }
-
-            ui.separator();
-
-            if let Some(top_file) = &mogura_state.structure_file {
-                ui.label(format!("File: {}", top_file));
-            } else {
-                ui.label("File: None");
-            }
-
-            ui.horizontal(|ui| {
-                if ui.button("Select Structure File").clicked() {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        let task = task_pool.spawn(async move {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                let content =
-                                    std::fs::read_to_string(path.display().to_string()).unwrap();
-                                Some((path.display().to_string(), content))
-                            } else {
-                                None
-                            }
-                        });
-                        commands.spawn(SelectedStructureFile(task));
-                    }
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        let task = task_pool.spawn(async move {
-                            let path = rfd::AsyncFileDialog::new().pick_file().await;
-                            if let Some(path) = path {
-                                let content = path.read().await;
-                                let content_str = String::from_utf8(content).unwrap();
-                                Some((path.file_name(), content_str))
-                            } else {
-                                None
-                            }
-                        });
-                        commands.spawn(SelectedStructureFile(task));
-                    }
+                if ui.button("Start to download").clicked() {
+                    let target_pdbid_clone = target_pdbid.clone();
+                    let task = task_pool
+                        .spawn(async move { PDBData::download(&target_pdbid_clone).await });
+                    commands.spawn(DownloadPDB(task));
                 }
 
-                if ui.button("Clear").clicked() {
-                    mogura_state.structure_file = None;
-                    mogura_state.structure_data = None;
-                    mogura_state.redraw = true;
+                ui.separator();
+
+                if let Some(top_file) = &mogura_state.structure_file {
+                    ui.label(format!("File: {}", top_file));
+                } else {
+                    ui.label("File: None");
                 }
-            });
 
-            ui.separator();
-
-            if let Some(traj_file) = &mogura_state.trajectory_file {
-                ui.label(format!("File: {}", traj_file));
-            } else {
-                ui.label("File: None");
-            }
-
-            ui.horizontal(|ui| {
-                if ui.button("Select Trajectory File").clicked() {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        let task = task_pool.spawn(async move {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                Some(path.display().to_string())
-                            } else {
-                                None
-                            }
-                        });
-                        commands.spawn(SelectedTrajectoryFile(task));
+                ui.horizontal(|ui| {
+                    if ui.button("Select Structure File").clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            let task = task_pool.spawn(async move {
+                                if let Some(path) = rfd::FileDialog::new()
+                                    .add_filter("structure file", &["pdb", "gro"])
+                                    .pick_file()
+                                {
+                                    let content =
+                                        std::fs::read_to_string(path.display().to_string())
+                                            .unwrap();
+                                    Some((path.display().to_string(), content))
+                                } else {
+                                    None
+                                }
+                            });
+                            commands.spawn(SelectedStructureFile(task));
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            let task = task_pool.spawn(async move {
+                                let path = rfd::AsyncFileDialog::new()
+                                    .add_filter("structure file", &["pdb"])
+                                    .pick_file()
+                                    .await;
+                                if let Some(path) = path {
+                                    let content = path.read().await;
+                                    let content_str = String::from_utf8(content).unwrap();
+                                    Some((path.file_name(), content_str))
+                                } else {
+                                    None
+                                }
+                            });
+                            commands.spawn(SelectedStructureFile(task));
+                        }
                     }
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        // let task = task_pool.spawn(async move {
-                        //     let path = rfd::AsyncFileDialog::new().pick_file().await;
-                        //     if let Some(path) = path {
-                        //         let content = path.read().await;
-                        //         let content_str = String::from_utf8(content).unwrap();
-                        //         Some((path.file_name(), content_str))
-                        //     } else {
-                        //         None
-                        //     }
-                        // });
-                        // commands.spawn(SelectedTrajectoryFile(task));
+
+                    if ui.button("Clear").clicked() {
+                        mogura_state.structure_file = None;
+                        mogura_state.structure_data = None;
+                        mogura_state.logs.push("Structure file cleared".to_string());
                     }
+                });
+
+                ui.separator();
+
+                if let Some(traj_file) = &mogura_state.trajectory_file {
+                    ui.label(format!("File: {}", traj_file));
+                } else {
+                    ui.label("File: None");
                 }
 
-                if ui.button("Clear").clicked() {
-                    mogura_state.trajectory_file = None;
-                    mogura_state.trajectory_data = None;
-                }
-            });
-            ui.separator();
+                ui.horizontal(|ui| {
+                    if ui.button("Select Trajectory File").clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            let task = task_pool.spawn(async move {
+                                rfd::FileDialog::new()
+                                    .add_filter("trajectory file", &["xtc"])
+                                    .pick_file()
+                                    .map(|path| path.display().to_string())
+                            });
+                            commands.spawn(SelectedTrajectoryFile(task));
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            // let task = task_pool.spawn(async move {
+                            //     let path = rfd::AsyncFileDialog::new().pick_file().await;
+                            //     if let Some(path) = path {
+                            //         let content = path.read().await;
+                            //         let content_str = String::from_utf8(content).unwrap();
+                            //         Some((path.file_name(), content_str))
+                            //     } else {
+                            //         None
+                            //     }
+                            // });
+                            // commands.spawn(SelectedTrajectoryFile(task));
+                            mogura_state
+                                .logs
+                                .push("Trajectory file not supported on WASM".to_string());
+                        }
+                    }
 
-            ui.label("Select Drawing Method");
-            let pre_drawing_method = mogura_state.drawing_method;
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                // NOTE
-                // webgpu cannot draw line as PolygonMode::Line
-                // if "webgpu" in bevy's features
-                // but webgl2 can draw
-                ui.radio_value(
-                    &mut mogura_state.drawing_method,
-                    DrawingMethod::Line,
-                    "Line",
-                );
-            }
-            ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::VDW, "VDW");
-            ui.radio_value(
-                &mut mogura_state.drawing_method,
-                DrawingMethod::Licorise,
-                "Licorise",
-            );
-            // ui.radio_value(&mut mogura_state.drawing_method, DrawingMethod::Cartoon, "Cartoon");
-            // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
-            ui.radio_value(
-                &mut mogura_state.drawing_method,
-                DrawingMethod::Bonds,
-                "Bonds",
-            );
-            if pre_drawing_method != mogura_state.drawing_method {
-                mogura_state.redraw = true;
-            }
+                    if ui.button("Clear").clicked() {
+                        mogura_state.trajectory_file = None;
+                        mogura_state.trajectory_data = None;
+                        mogura_state
+                            .logs
+                            .push("Trajectory file cleared".to_string());
+                    }
+                });
+                ui.separator();
 
-            ui.separator();
-
-            ui.label("Looking at Structure");
-            if ui.button("Look").clicked() {
-                match &mogura_state.structure_data {
-                    Some(structure_data) => {
+                ui.label("Looking at Center of Structure");
+                if ui.button("Look").clicked() {
+                    if let Some(structure_data) = &mogura_state.structure_data {
                         let center = structure_data.center();
                         let center_vec = Vec3::new(center[0], center[1], center[2]);
                         let mut trackball_camera = trackball_camera.single_mut();
                         trackball_camera.frame.set_target(center_vec.into());
+                        mogura_state
+                            .logs
+                            .push("Look at center of structure".to_string());
                     }
-                    None => (),
-                }
-            }
-
-            ui.separator();
-
-            ui.label("Trajectory Control");
-            ui.horizontal(|ui| {
-                if ui.button("Start").clicked() {
-                    mogura_state.update_trajectory = true;
                 }
 
-                if ui.button("Stop").clicked() {
-                    mogura_state.update_trajectory = false;
-                    mogura_state.update_tmp_trajectory = false;
-                    mogura_state.loop_trajectory = false;
-                }
+                ui.separator();
 
-                if ui.button("Loop").clicked() {
-                    mogura_state.loop_trajectory = !mogura_state.loop_trajectory;
-                }
-            });
-            if let Some(n_frame) = mogura_state.n_frame() {
-                ui.add(
-                    egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame - 1)
-                        .text(format!(" / {} frame", n_frame - 1)),
-                );
-                mogura_state.update_tmp_trajectory = true;
-            } else {
-                ui.add(egui::Slider::new(&mut 0, 0..=0).text(format!(" / {} frame", 0)));
-            }
+                ui.label("Trajectory Control");
+                ui.horizontal(|ui| {
+                    if ui.button("Start").clicked() {
+                        mogura_state.update_trajectory = true;
+                        mogura_state
+                            .logs
+                            .push("Start to update trajectory".to_string());
+                    }
 
-            ui.separator();
+                    if ui.button("Stop").clicked() {
+                        mogura_state.update_trajectory = false;
+                        mogura_state.update_tmp_trajectory = false;
+                        mogura_state.loop_trajectory = false;
+                        mogura_state
+                            .logs
+                            .push("Stop to update trajectory".to_string());
+                    }
 
-            if let Some(value) = diagnostics
-                .get(&bevy::diagnostic::FrameTimeDiagnosticsPlugin::FPS)
-                .and_then(|fps| fps.smoothed())
-            {
-                ui.label(format!("FPS: {:.2}", value));
-            } else {
-                ui.label("FPS: None");
-            }
-
-            ui.separator();
-
-            ui.label("Help");
-            if ui.button("Help").clicked() {
-                *open_help_window = !*open_help_window;
-            }
-
-            egui::Window::new("Help Window")
-                .open(&mut open_help_window)
-                .vscroll(true)
-                .hscroll(true)
-                .resizable(true)
-                .title_bar(true)
-                .collapsible(true)
-                .show(ctx, |ui| {
-                    use egui::special_emojis::GITHUB;
-                    ui.hyperlink_to(format!("{GITHUB} Github"), "https://github.com/mogura-rs");
+                    if ui.button("Loop").clicked() {
+                        if mogura_state.loop_trajectory {
+                            mogura_state
+                                .logs
+                                .push("Stop to loop trajectory".to_string());
+                        } else {
+                            mogura_state
+                                .logs
+                                .push("Start to loop trajectory".to_string());
+                        }
+                        mogura_state.loop_trajectory = !mogura_state.loop_trajectory;
+                    }
                 });
+                if let Some(n_frame) = mogura_state.n_frame() {
+                    ui.add(
+                        egui::Slider::new(&mut mogura_state.current_frame_id, 0..=n_frame - 1)
+                            .text(format!(" / {} frame", n_frame - 1)),
+                    );
+                    mogura_state.update_tmp_trajectory = true;
+                } else {
+                    ui.add(egui::Slider::new(&mut 0, 0..=0).text(format!(" / {} frame", 0)));
+                }
+
+                ui.separator();
+
+                if let Some(value) = diagnostics
+                    .get(&bevy::diagnostic::FrameTimeDiagnosticsPlugin::FPS)
+                    .and_then(|fps| fps.smoothed())
+                {
+                    ui.label(format!("FPS: {:.2}", value));
+                } else {
+                    ui.label("FPS: None");
+                }
+
+                ui.separator();
+
+                ui.label("Help");
+                if ui.button("Help").clicked() {
+                    *open_help_window = !*open_help_window;
+                }
+
+                egui::Window::new("Help Window")
+                    .open(&mut open_help_window)
+                    .vscroll(true)
+                    .hscroll(true)
+                    .resizable(true)
+                    .title_bar(true)
+                    .collapsible(true)
+                    .show(ctx, |ui| {
+                        use egui::special_emojis::GITHUB;
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            ui.heading("Help. native version");
+                            ui.separator();
+                            ui.add_space(5.0);
+
+                            ui.label("");
+                        }
+
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            ui.heading("Help. wasm version");
+                            ui.separator();
+                            ui.add_space(5.0);
+
+                            ui.label("");
+                        }
+
+                        ui.separator();
+                        ui.hyperlink_to(
+                            format!("See {GITHUB} Github repository for more information"),
+                            "https://github.com/mogura-rs/mogura",
+                        );
+                    });
+            });
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
@@ -377,25 +440,75 @@ fn update_gui(
         .resizable(true)
         .show(ctx, |ui| {
             ui.label("Selection panel");
-
             ui.separator();
+            let mut logs = Vec::with_capacity(10);
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                if let Some(structure_data) = &mogura_state.structure_data {
+                    for selection in mogura_selections.0.iter_mut() {
+                        let _response = egui::TextEdit::singleline(&mut selection.atom_selection)
+                            .hint_text("protein")
+                            .show(ui);
+                        if ui.button("Apply").clicked() {
+                            let selection_result = selection.apply_selection(structure_data);
+                            match selection_result {
+                                Ok(_) => {
+                                    selection.redraw = true;
+                                }
+                                Err(e) => {
+                                    logs.push(format!("Atom Selection Error: {}", e));
+                                }
+                            }
+                        }
 
-            if let Some(structure_data) = &mogura_state.structure_data {
-                let _response = egui::TextEdit::singleline(&mut mogura_state.atom_selection)
-                    .hint_text("protein")
-                    .show(ui);
-                if ui.button("Apply").clicked() {
-                    let selection_result = mogura_state.apply_selection();
-                    match selection_result {
-                        Ok(_) => {
-                            mogura_state.redraw = true;
+                        ui.label("Select Drawing Method");
+                        let pre_drawing_method = selection.drawing_method;
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            // NOTE
+                            // webgpu cannot draw line as PolygonMode::Line
+                            // if "webgpu" in bevy's features
+                            // but webgl2 can draw
+                            ui.radio_value(
+                                &mut selection.drawing_method,
+                                DrawingMethod::Line,
+                                "Line",
+                            );
                         }
-                        Err(e) => {
-                            ui.label(format!("Error: {}", e));
+                        ui.radio_value(
+                            &mut selection.drawing_method,
+                            DrawingMethod::BallAndStick,
+                            "BallAndStick",
+                        );
+                        ui.radio_value(&mut selection.drawing_method, DrawingMethod::Ball, "Ball");
+                        ui.radio_value(
+                            &mut selection.drawing_method,
+                            DrawingMethod::Stick,
+                            "Stick",
+                        );
+                        ui.radio_value(&mut selection.drawing_method, DrawingMethod::Tube, "Tube");
+                        // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
+                        // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
+                        if pre_drawing_method != selection.drawing_method {
+                            logs.push("Drawing method changed".to_string());
+                            selection.redraw = true;
                         }
+
+                        if ui.button("Clear").clicked() {
+                            selection.delete = true;
+                            logs.push("Selection cleared".to_string());
+                        }
+
+                        ui.separator();
+                    }
+
+                    if ui.button("+ Add New Selection").clicked() {
+                        mogura_selections.0.push(EachSelection::default());
+                        logs.push("New Selection added".to_string());
                     }
                 }
-            }
+            });
+
+            mogura_state.logs.extend(logs);
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
@@ -414,9 +527,15 @@ fn update_gui(
         .height();
 
     occupied_screen_space.bottom = egui::TopBottomPanel::bottom("bottom")
-        .resizable(true)
+        .max_height(90.0)
         .show(ctx, |ui| {
-            ui.label("Log panel");
+            ui.label("Log panel (the higher the newest)");
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.separator();
+                for log in mogura_state.logs.iter().rev() {
+                    ui.label(log);
+                }
+            });
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response

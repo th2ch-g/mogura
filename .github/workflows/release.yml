@@ -1,0 +1,64 @@
+name: release cd
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - name: "macOS aarch64"
+            os: macos-latest
+            target: aarch64-apple-darwin
+          - name: "macOS x86_64"
+            os: macos-latest
+            target: x86_64-apple-darwin
+          - name: "Windows x86_64"
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - name: "Windows aarch64"
+            os: windows-latest
+            target: aarch64-pc-windows-msvc
+          - name: "Linux x86_64 (gnu)"
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - name: "Linux x86_64 (musl)"
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - name: "Linux aarch64 (gnu)"
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+          - name: "Linux aarch64 (musl)"
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: build
+        run: cargo build -r --target ${{ matrix.target }}
+      - name: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: mogura-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/mogura${{ matrix.extension }}
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}

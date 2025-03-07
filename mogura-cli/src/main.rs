@@ -16,7 +16,6 @@ fn main() {
         .add_plugins(MoguraPlugins {
             input_structure_file: cli.structure_file,
             input_trajectory_file: cli.trajectory_file,
-            ..default()
         })
         .run();
 }

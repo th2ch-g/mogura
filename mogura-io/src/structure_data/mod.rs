@@ -3,53 +3,76 @@ pub mod pdb;
 use crate::structure_data::gro::GroData;
 use crate::structure_data::pdb::PDBData;
 
-pub(crate) const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
-pub(crate) const PROTEIN_RESNAME: [&str; 20] = [
+pub const GENERAL_BOND_CUTOFF: f32 = 1.6; // angstrom
+pub(crate) const PROTEIN_RESNAME: [&str; 24] = [
     "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
-    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL", "CYX", "HID", "HIE", "HIP",
 ];
+// ACE
+// NME
 
-pub fn structure_loader(structure_file: &str) -> Box<dyn StructureData> {
+pub fn structure_loader(structure_file: &str) -> Result<Box<dyn StructureData>, anyhow::Error> {
     let extension = std::path::Path::new(structure_file)
         .extension()
         .and_then(|ext| ext.to_str());
     if let Some(extension) = extension {
         match extension {
-            "pdb" => Box::new(PDBData::load(structure_file)),
+            "pdb" => Ok(Box::new(PDBData::load(structure_file)?)),
             "gro" => {
                 #[cfg(feature = "groan_rs")]
                 {
-                    Box::new(GroData::load(structure_file))
+                    Ok(Box::new(GroData::load(structure_file)?))
                 }
 
                 #[cfg(not(feature = "groan_rs"))]
                 {
-                    unimplemented!("This extension is not supported.");
+                    // unimplemented!("This extension is not supported.");
+                    // Err("This extension is not supported.".to_string())
+                    Err(anyhow::anyhow!("This extension is not supported."))
                 }
             }
             _ => {
-                unimplemented!("This extension is not supported.")
+                // unimplemented!("This extension is not supported.")
+                // Err("This extension is not supported.".to_string())
+                Err(anyhow::anyhow!("This extension is not supported."))
             }
         }
     } else {
-        panic!("structure_file: {} has no extension.", structure_file);
+        // panic!("structure_file: {} has no extension.", structure_file);
+        // Err(format!(
+        //     "structure_file: {} has no extension.",
+        //     structure_file
+        // ))
+        Err(anyhow::anyhow!(format!(
+            "structure_file: {} has no extension.",
+            structure_file
+        )))
     }
 }
 
-pub fn structure_loader_from_content(content: &str, extension: &str) -> Box<dyn StructureData> {
+pub fn structure_loader_from_content(
+    content: &str,
+    extension: &str,
+) -> Result<Box<dyn StructureData>, anyhow::Error> {
     match extension {
-        "pdb" => Box::new(PDBData::load_from_content(content)),
+        "pdb" => Ok(Box::new(PDBData::load_from_content(content)?)),
         "gro" => {
-            unimplemented!("gro is not supported for loading from content")
+            // unimplemented!("gro is not supported for loading from content")
+            // Err("gro is not supported for loading from content".to_string())
+            Err(anyhow::anyhow!(
+                "gro is not supported for loading from content"
+            ))
         }
         _ => {
-            unimplemented!("This extension is not supported.")
+            // unimplemented!("This extension is not supported.")
+            // Err("This extension is not supported.".to_string())
+            Err(anyhow::anyhow!("This extension is not supported."))
         }
     }
 }
 
 pub trait StructureData: Sync + Send {
-    fn load(structure_file: &str) -> Self
+    fn load(structure_file: &str) -> Result<Self, anyhow::Error>
     where
         Self: Sized;
     // fn export(output_path: &str);
@@ -75,6 +98,12 @@ pub trait StructureData: Sync + Send {
                 if i == j {
                     continue;
                 }
+                // TODO
+                // too heavy
+                // if (!atoms[i].is_protein() || !atoms[j].is_protein()) &&
+                //     (atoms[i].residue_name() != atoms[j].residue_name()) {
+                //     continue;
+                // }
                 if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
                     bonds.push((i, j));
                 }
@@ -91,6 +120,10 @@ pub trait StructureData: Sync + Send {
                 if i == j {
                     continue;
                 }
+                // if (!atoms[i].is_protein() || !atoms[j].is_protein()) &&
+                //     (atoms[i].residue_name() != atoms[j].residue_name()) {
+                //     continue;
+                // }
                 if atoms[i].distance(&atoms[j]) <= GENERAL_BOND_CUTOFF {
                     bonds.push((i, j));
                     bonds.push((j, i));
@@ -99,107 +132,30 @@ pub trait StructureData: Sync + Send {
         }
         bonds
     }
-    fn secondary_structure(
-        &self,
-        mode: SecondaryStructureAlgorithms,
-    ) -> Vec<SecondaryStructureType> {
-        let residues = self.residues();
-        let n = residues.len();
-        let mut sstype = vec![SecondaryStructureType::Loop; n];
-        let mut hydrogen_bonds = vec![vec![]; n];
-
-        match mode {
-            SecondaryStructureAlgorithms::DSSP => {
-                // check hydrogen bonds in all-pair
-                for i in 0..n {
-                    for j in 0..i {
-                        let prev_residue = &residues[i];
-                        let residue = &residues[j];
-
-                        let (prev_residue_o, _prev_residue_n, prev_residue_c, _prev_residue_ca) =
-                            if let Some(prev_residue) = prev_residue.backbone() {
-                                (
-                                    prev_residue.0,
-                                    prev_residue.1,
-                                    prev_residue.2,
-                                    prev_residue.3,
-                                )
-                            } else {
-                                continue;
-                            };
-                        let (residue_o, residue_n, residue_c, _residue_ca) =
-                            if let Some(residue) = residue.backbone() {
-                                (residue.0, residue.1, residue.2, residue.3)
-                            } else {
-                                continue;
-                            };
-
-                        let r_h = residue_c.distance(&residue_o);
-
-                        let r_on = prev_residue_o.distance(&residue_n);
-                        let r_ch = prev_residue_c.distance(&residue_n) + r_h;
-                        let r_oh = prev_residue_o.distance(&residue_c) + r_h;
-                        let r_cn = prev_residue_c.distance(&residue_o);
-
-                        let energy =
-                            0.084 * 332.0 * (1.0 / r_on + 1.0 / r_cn - 1.0 / r_oh - 1.0 / r_cn);
-
-                        if energy < -0.5 {
-                            hydrogen_bonds[i].push(j);
-                            hydrogen_bonds[j].push(i);
-                        }
-                    }
-                }
-                // determine sstype
-                // check DSSPType::H
-                for i in 0..n - 4 {
-                    if hydrogen_bonds[i].contains(&(i + 4)) {
-                        sstype[i] = SecondaryStructureType::H;
-                        sstype[i + 1] = SecondaryStructureType::H;
-                        sstype[i + 2] = SecondaryStructureType::H;
-                        sstype[i + 4] = SecondaryStructureType::H;
-                    }
-                }
-
-                // check DSSPType::E
-                // for i in 0..n {
-                //     // if hydrogen_bonds[i].len() > 0 {
-                //     //     sstype[i] = SecondaryStructureType::DSSPType(DSSPType::E);
-                //     // }
-                // }
-            }
-            _ => {
-                unimplemented!("{:?} is not supported", mode);
+    fn protein(&self) -> Vec<Atom> {
+        let atoms = self.atoms();
+        let mut atoms_in_protein = Vec::with_capacity(atoms.len());
+        for atom in atoms {
+            if PROTEIN_RESNAME.contains(&atom.residue_name()) {
+                atoms_in_protein.push(atom.clone());
             }
         }
-        sstype
+        atoms_in_protein
+    }
+    fn backbone(&self) -> Vec<Atom> {
+        let atoms = self.atoms();
+        let mut atoms_in_backbone = Vec::with_capacity(atoms.len());
+        for atom in atoms {
+            if atom.is_backbone() {
+                atoms_in_backbone.push(atom.clone());
+            }
+        }
+        atoms_in_backbone
     }
     fn residues(&self) -> &Vec<Residue>;
 }
 
-#[derive(Debug, Clone)]
-pub enum SecondaryStructureAlgorithms {
-    DSSP,
-    // STRIDE,
-    // SST,
-}
-
-#[derive(Debug, Clone)]
-pub enum SecondaryStructureType {
-    // DSSP v4.
-    // https://doi.org/10.1021/acs.jcim.3c01344
-    H,     // 4-helix (alpha-helix)
-    B,     // residue in isolated beta-bridge (beta-bridge)
-    E,     // extended strand participates in beta-ladder (beta-strand)
-    G,     // 3-helix (3_10-helix)
-    I,     // 5-helix (pi-helix)
-    P,     // kappa-helix (polyproline II helix)
-    S,     // bend
-    T,     // H-bonded turn
-    Break, // =, !, break
-    Loop,  // ~, <space> loop
-}
-
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Residue {
     id: usize,
@@ -214,6 +170,9 @@ impl Residue {
     pub fn atoms(&self) -> &Vec<Atom> {
         &self.atoms
     }
+    pub fn residue_name(&self) -> &str {
+        &self.residue_name
+    }
 
     pub fn center(&self) -> [f32; 3] {
         let mut center = [0., 0., 0.];
@@ -227,17 +186,19 @@ impl Residue {
         center[2] /= self.atoms.len() as f32;
         center
     }
-    pub fn backbone(&self) -> Option<(Atom, Atom, Atom, Atom)> {
+    pub fn backbone(&self) -> Option<(Atom, Atom, Atom, Atom, Atom)> {
         let atom_o = self.atoms.iter().find(|atom| atom.atom_name == "O")?;
         let atom_n = self.atoms.iter().find(|atom| atom.atom_name == "N")?;
         let atom_c = self.atoms.iter().find(|atom| atom.atom_name == "C")?;
         let atom_ca = self.atoms.iter().find(|atom| atom.atom_name == "CA")?;
+        let atom_ha = self.atoms.iter().find(|atom| atom.atom_name == "HA")?;
 
         Some((
             atom_o.clone(),
             atom_n.clone(),
             atom_c.clone(),
             atom_ca.clone(),
+            atom_ha.clone(),
         ))
     }
     pub fn is_water(&self) -> bool {
@@ -332,26 +293,17 @@ impl Atom {
     }
     pub fn is_backbone(&self) -> bool {
         if self.is_protein() {
-            if self.atom_name == "N"
+            self.atom_name == "N"
                 || self.atom_name == "CA"
                 || self.atom_name == "C"
                 || self.atom_name == "O"
                 || self.atom_name == "HA"
-            {
-                true
-            } else {
-                false
-            }
         } else {
             false
         }
     }
     pub fn is_sidechain(&self) -> bool {
-        if self.is_protein() && !self.is_backbone() {
-            true
-        } else {
-            false
-        }
+        self.is_protein() && !self.is_backbone()
     }
 }
 

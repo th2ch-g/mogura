@@ -1,0 +1,9 @@
+[default.extend-identifiers]
+# amono acid name
+THR = "THR"
+
+# atom name
+Ba = "Ba"
+Nd = "Nd"
+BA = "BA"
+ND = "ND"

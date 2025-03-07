@@ -4,6 +4,7 @@ description = "mogura wasm deploy"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 
 [dependencies]
 bevy-mogura = { path = "../bevy-mogura" }

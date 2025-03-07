@@ -4,11 +4,17 @@ description = "mogura command-line-interface"
 authors.workspace = true
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 
 [dependencies]
 bevy.workspace = true
 clap.workspace = true
-bevy-mogura = { path = "../bevy-mogura", features = ["groan_rs"] }
+bevy-mogura = { path = "../bevy-mogura", optional = true }
+
+[features]
+default = ["bevy-mogura/groan_rs"]
+no_groan_rs = ["bevy-mogura/default"]
+
 
 [[bin]]
 name = "mogura"
