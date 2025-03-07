@@ -18,27 +18,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: true
-
+      - uses: Swatinem/rust-cache@v2
       - name: setup trunk
         uses: jetli/trunk-action@v0.4.0
         with:
             version: latest
-
       - name: add wasm32
         run: rustup target add wasm32-unknown-unknown
-
       - name: build
         run: RUSTFLAGS="--cfg web_sys_unstable_apis" trunk build --release --public-url .
         working-directory: ./mogura-wasm
-
+      - name: Check wasm size before wasm-opt
+        run: ls -lh ./mogura-wasm/dist
       - name: wasm-opt
         uses: NiklasEi/wasm-opt-action@v2
         with:
           file: ./mogura-wasm/dist/mogura-wasm*.wasm
           optimize_all: true
-
+      - name: Check wasm size after wasm-opt
+        run: ls -lh ./mogura-wasm/dist
       - name: deploy
         uses: peaceiris/actions-gh-pages@v3
         with:

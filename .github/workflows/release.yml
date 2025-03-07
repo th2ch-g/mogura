@@ -1,14 +1,11 @@
 name: release cd
-
 permissions:
   contents: write
-
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
-
 jobs:
   build:
     strategy:
@@ -17,33 +14,42 @@ jobs:
           - name: "macOS aarch64"
             os: macos-latest
             target: aarch64-apple-darwin
+            extension: ""
           - name: "macOS x86_64"
             os: macos-latest
             target: x86_64-apple-darwin
+            extension: ""
           - name: "Windows x86_64"
             os: windows-latest
             target: x86_64-pc-windows-msvc
+            extension: ".exe"
           - name: "Windows aarch64"
             os: windows-latest
             target: aarch64-pc-windows-msvc
+            extension: ".exe"
           - name: "Linux x86_64 (gnu)"
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            extension: ""
           - name: "Linux x86_64 (musl)"
             os: ubuntu-latest
             target: x86_64-unknown-linux-musl
+            extension: ""
           - name: "Linux aarch64 (gnu)"
             os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
+            extension: ""
           - name: "Linux aarch64 (musl)"
             os: ubuntu-latest
             target: aarch64-unknown-linux-musl
+            extension: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: build
-        run: cargo build -r --target ${{ matrix.target }}
+        run: |
+          cargo build -r --target ${{ matrix.target }}
       - name: upload
         uses: actions/upload-artifact@v3
         with:
