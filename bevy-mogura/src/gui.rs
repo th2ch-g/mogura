@@ -231,7 +231,10 @@ fn update_gui(
                         #[cfg(not(target_arch = "wasm32"))]
                         {
                             let task = task_pool.spawn(async move {
-                                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                if let Some(path) = rfd::FileDialog::new()
+                                    .add_filter("structure file", &["pdb", "gro"])
+                                    .pick_file()
+                                {
                                     let content =
                                         std::fs::read_to_string(path.display().to_string())
                                             .unwrap();
@@ -245,7 +248,10 @@ fn update_gui(
                         #[cfg(target_arch = "wasm32")]
                         {
                             let task = task_pool.spawn(async move {
-                                let path = rfd::AsyncFileDialog::new().pick_file().await;
+                                let path = rfd::AsyncFileDialog::new()
+                                    .add_filter("structure file", &["pdb"])
+                                    .pick_file()
+                                    .await;
                                 if let Some(path) = path {
                                     let content = path.read().await;
                                     let content_str = String::from_utf8(content).unwrap();
@@ -279,6 +285,7 @@ fn update_gui(
                         {
                             let task = task_pool.spawn(async move {
                                 rfd::FileDialog::new()
+                                    .add_filter("trajectory file", &["xtc"])
                                     .pick_file()
                                     .map(|path| path.display().to_string())
                             });
@@ -297,6 +304,9 @@ fn update_gui(
                             //     }
                             // });
                             // commands.spawn(SelectedTrajectoryFile(task));
+                            mogura_state
+                                .logs
+                                .push("Trajectory file not supported on WASM".to_string());
                         }
                     }
 
@@ -393,7 +403,30 @@ fn update_gui(
                     .collapsible(true)
                     .show(ctx, |ui| {
                         use egui::special_emojis::GITHUB;
-                        ui.hyperlink_to(format!("{GITHUB} Github"), "https://github.com/mogura-rs");
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            ui.heading("Help. native version");
+                            ui.separator();
+                            ui.add_space(5.0);
+
+                            ui.label("");
+                        }
+
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            ui.heading("Help. wasm version");
+                            ui.separator();
+                            ui.add_space(5.0);
+
+                            ui.label("");
+                        }
+
+                        ui.separator();
+                        ui.hyperlink_to(
+                            format!("See {GITHUB} Github repository for more information"),
+                            "https://github.com/mogura-rs/mogura",
+                        );
                     });
             });
 
