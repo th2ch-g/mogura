@@ -26,13 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-      - name: Install dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwayland-dev libxkbcommon-dev libssl-dev
-          OPENSSL_DIR=$(find target -type d -name 'openssl-sys-*' -print -quit)/out/openssl-build
-          echo "OPENSSL_DIR=$OPENSSL_DIR" >> $GITHUB_ENV
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
       - name: Install cross
         if: matrix.job.use-cross
         run: cargo install cross
