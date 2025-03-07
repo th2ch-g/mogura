@@ -24,8 +24,13 @@ jobs:
           - { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: .exe }
           - { os: windows-latest , target: aarch64-pc-windows-msvc         , use-cross: false , extension: .exe }
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Rustup
+        run: |
+          rustup self update
+          rustup update
+          rustc -V
       - name: Build
         run: cargo build -r --target ${{ matrix.job.target }}
       - name: Rename artifacts
