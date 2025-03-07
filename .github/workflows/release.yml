@@ -31,7 +31,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwayland-dev libxkbcommon-dev libssl-dev
-          echo "OPENSSL_DIR=/usr/lib/ssl" >> $GITHUB_ENV
+          OPENSSL_DIR=$(find target -type d -name 'openssl-sys-*' -print -quit)/out/openssl-build
+          echo "OPENSSL_DIR=$OPENSSL_DIR" >> $GITHUB_ENV
       - name: Install cross
         if: matrix.job.use-cross
         run: cargo install cross
