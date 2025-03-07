@@ -34,6 +34,9 @@ fn update_trajectory(
         && mogura_state.structure_data.is_some()
         && mogura_state.trajectory_data.is_some()
     {
+        if mogura_selections.0.is_empty() {
+            return;
+        }
         let current_frame_id = mogura_state.current_frame_id;
         let frame = mogura_state
             .trajectory_data

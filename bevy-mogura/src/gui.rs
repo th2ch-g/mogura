@@ -317,6 +317,9 @@ fn update_gui(
                         let center_vec = Vec3::new(center[0], center[1], center[2]);
                         let mut trackball_camera = trackball_camera.single_mut();
                         trackball_camera.frame.set_target(center_vec.into());
+                        mogura_state
+                            .logs
+                            .push("Look at center of structure".to_string());
                     }
                 }
 
@@ -326,15 +329,30 @@ fn update_gui(
                 ui.horizontal(|ui| {
                     if ui.button("Start").clicked() {
                         mogura_state.update_trajectory = true;
+                        mogura_state
+                            .logs
+                            .push("Start to update trajectory".to_string());
                     }
 
                     if ui.button("Stop").clicked() {
                         mogura_state.update_trajectory = false;
                         mogura_state.update_tmp_trajectory = false;
                         mogura_state.loop_trajectory = false;
+                        mogura_state
+                            .logs
+                            .push("Stop to update trajectory".to_string());
                     }
 
                     if ui.button("Loop").clicked() {
+                        if mogura_state.loop_trajectory {
+                            mogura_state
+                                .logs
+                                .push("Stop to loop trajectory".to_string());
+                        } else {
+                            mogura_state
+                                .logs
+                                .push("Start to loop trajectory".to_string());
+                        }
                         mogura_state.loop_trajectory = !mogura_state.loop_trajectory;
                     }
                 });
@@ -390,6 +408,7 @@ fn update_gui(
         .show(ctx, |ui| {
             ui.label("Selection panel");
             ui.separator();
+            let mut logs = Vec::with_capacity(10);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 if let Some(structure_data) = &mogura_state.structure_data {
                     for selection in mogura_selections.0.iter_mut() {
@@ -403,7 +422,7 @@ fn update_gui(
                                     selection.redraw = true;
                                 }
                                 Err(e) => {
-                                    ui.label(format!("Error: {}", e));
+                                    logs.push(format!("Atom Selection Error: {}", e));
                                 }
                             }
                         }
@@ -437,11 +456,13 @@ fn update_gui(
                         // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
                         // ui.radio_value(&mut mogura_state.drawingMethod, DrawingMethod::NewCartoon, "NewCartoon");
                         if pre_drawing_method != selection.drawing_method {
+                            logs.push("Drawing method changed".to_string());
                             selection.redraw = true;
                         }
 
                         if ui.button("Clear").clicked() {
                             selection.delete = true;
+                            logs.push("Selection cleared".to_string());
                         }
 
                         ui.separator();
@@ -449,9 +470,12 @@ fn update_gui(
 
                     if ui.button("+ Add New Selection").clicked() {
                         mogura_selections.0.push(EachSelection::default());
+                        logs.push("New Selection added".to_string());
                     }
                 }
             });
+
+            mogura_state.logs.extend(logs);
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
