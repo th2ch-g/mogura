@@ -37,16 +37,17 @@ mogura init.gro input.mol.compact.xtc
 
 <table>
   <tr>
-    <td><img src="assets/simple_8gng.png" alt="simple_8gng" width="400"/></td>
-    <td><img src="assets/selected_8gng.png" alt="selected_8gng" width="400"/></td>
-    <td><img src="assets/chignolin_trajectory.gif" alt="chignolin_trajectory" width="250"/></td>
+    <td><img src="assets/simple_8gng.png" alt="simple_8gng" style="height: 150px; object-fit: contain;"></td>
+    <td><img src="assets/selected_8gng.png" alt="selected_8gng" style="height: 150px; object-fit: contain;"></td>
+    <td><img src="assets/simple_5awl.png" alt="simple_5awl" style="height: 150px; object-fit: contain;"></td>
   </tr>
   <tr>
-    <td><img src="assets/simple_5awl.png" alt="simple_5awl" width="400"/></td>
-    <td><img src="assets/3jac_demo.gif" alt="3jac_demo" width="250"/></td>
-    <td><img src="assets/a2a_demo.gif" alt="a2a_demo" width="250"/></td>
+    <td><img src="assets/chignolin_trajectory.gif" alt="chignolin_trajectory" style="height: 150px; object-fit: contain;"></td>
+    <td><img src="assets/3jac_demo.gif" alt="3jac_demo" style="height: 150px; object-fit: contain;"></td>
+    <td><img src="assets/a2a_demo.gif" alt="a2a_demo" style="height: 150px; object-fit: contain;"></td>
   </tr>
 </table>
+
 
 Input files are available [here](https://github.com/mogura-rs/example-inputs)
 
