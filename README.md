@@ -43,7 +43,7 @@ mogura init.gro input.mol.compact.xtc
   </tr>
   <tr>
     <td><img src="assets/simple_5awl.png" alt="simple_5awl" width="400"/></td>
-    <td><img src="assets/3jac_demo.gif" alt="3jac_demo" width="400"/></td>
+    <td><img src="assets/3jac_demo.gif" alt="3jac_demo" width="250"/></td>
     <td><img src="assets/a2a_demo.gif" alt="a2a_demo" width="250"/></td>
   </tr>
 </table>
