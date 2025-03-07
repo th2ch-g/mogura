@@ -20,15 +20,30 @@ cargo install --git https://github.com/mogura-rs/mogura mogura --locked
 
 ### Run mogura
 ~~~bash
-# visualize PDB: 8GNG
+# start mogura
+mogura
+
+# show help
+mogura -h
+
+# visualize PDB: 8GNG (Or you can load them after staring mogura)
 mogura 8gng.pdb
-# visualize MD simulation of chignolin
+
+# visualize MD simulation of chignolin (Or you can load them after staring mogura)
 mogura init.gro input.mol.compact.xtc
 ~~~
 
 ## Gallery
-Input files are available [here](https://github.com/mogura-rs/example-inputs)
 
+<table>
+  <tr>
+    <td><img src="assets/simple_8gng.png" alt="simple_8gng" width="200"/></td>
+    <td><img src="assets/selected_8gng.png" alt="selected_8gng" width="200"/></td>
+    <td><img src="assets/chignolin_trajectory.gif" alt="chignolin_trajectory" width="200"/></td>
+  </tr>
+</table>
+
+Input files are available [here](https://github.com/mogura-rs/example-inputs)
 
 ## Feature
 - Visualize PDB, GRO format

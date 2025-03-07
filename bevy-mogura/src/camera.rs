@@ -13,7 +13,7 @@ impl Plugin for MoguraCameraPlugins {
 }
 
 fn setup_camera(mut commands: Commands) {
-    let [target, eye, up] = [Vec3::ZERO, Vec3::Z * 30., Vec3::Y];
+    let [target, eye, up] = [Vec3::ZERO, Vec3::Z * 300., Vec3::Y];
     commands.spawn((
         TrackballController::default(),
         TrackballCamera::look_at(target, eye, up),
