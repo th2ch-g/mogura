@@ -4,7 +4,10 @@
 
 <head>
     <link rel="icon" href="./mogumi-97d358f87ac596a0.png" integrity="sha384&#x2D;URkasi1Ixo&#x2F;McglCRyQmQNJ0GWgBpwt2rjknj3u6pTyfSGS&#x2B;s&#x2B;WQUSIOTDRJ5vlp"/>
+    <link rel="icon" href="./og-588b02a55b8e4627.png" integrity="sha384&#x2D;c&#x2F;8ee8liGJ&#x2B;91uT8o1GtbbW&#x2B;ILQ3XC96y1dph5Ixq4kOse9teABQ68EA50ttdWsc"/>
     <link rel="icon" href="./mogumi.png" type="image/png">
+    <link rel="icon" href="./og.png" type="image/png">
+    <meta property="og:image" content="https://raw.githubusercontent.com/mogura-rs/mogura/main/mogura-wasm/og.png" />
     <title>mogura-wasm</title>
     <style>
         html {
@@ -38,8 +41,8 @@
 <body oncontextmenu="return false;">
 
 <script type="module">
-import init, * as bindings from './mogura-wasm-4ec0981f48d13a12.js';
-const wasm = await init({ module_or_path: './mogura-wasm-4ec0981f48d13a12_bg.wasm' });
+import init, * as bindings from './mogura-wasm-c2524d9ba1927c0f.js';
+const wasm = await init({ module_or_path: './mogura-wasm-c2524d9ba1927c0f_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -49,4 +52,4 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script></body>
 
-<link rel="modulepreload" href="./mogura-wasm-4ec0981f48d13a12.js" crossorigin="anonymous" integrity="sha384-J6QBm44/SZxLMItzkqT37MB8TeQC4TrwHYbU7Rus31xMY9MOU7xdFwm/fyjYMNLv"><link rel="preload" href="./mogura-wasm-4ec0981f48d13a12_bg.wasm" crossorigin="anonymous" integrity="sha384-EpuAW6pvNJYaoVM9r1CuHZAX2biOvzue7AtII3o3PdJ8lsbD0Sw+89A09ZVzB+w4" as="fetch" type="application/wasm"></html>
+<link rel="modulepreload" href="./mogura-wasm-c2524d9ba1927c0f.js" crossorigin="anonymous" integrity="sha384-6Jtz9hMIn68Pq40FmuDvC3PMIVP26Zy2QdbEkuYR2TKxfwrUb5Iptb1+I/nqOAc5"><link rel="preload" href="./mogura-wasm-c2524d9ba1927c0f_bg.wasm" crossorigin="anonymous" integrity="sha384-Oeapvg+s/JzXD36wrQCAxLqe4L/ef2q58hkUJP/e9HOOfi7DQJd2+ptaKpsCy4B5" as="fetch" type="application/wasm"></html>
