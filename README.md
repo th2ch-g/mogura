@@ -9,6 +9,8 @@
 > [!WARNING]
 > RAM $\geq$ 8GB, CPU $\geq$ 8cores and GPU are desirable.
 >
+> Do not load too large structure files.
+>
 > There are some limitation for WASM version.
 > See [Feature](#feature)
 
