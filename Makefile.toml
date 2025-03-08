@@ -51,6 +51,10 @@ script = '''
 trunk -V
 cd mogura-wasm
 trunk build --release --public-url .
+WASM_FILE_NAME=$(ls dist/*.wasm)
+ls -lh dist
+wasm-opt -Os -o ${WASM_FILE_NAME} ${WASM_FILE_NAME}
+ls -lh dist
 rm -f $WASM_TMP_DIR/index.html
 rm -f $WASM_TMP_DIR/mogura-*.js
 rm -f $WASM_TMP_DIR/mogura-*.wasm
