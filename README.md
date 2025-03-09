@@ -1,5 +1,8 @@
 # mogura: A molecular graphic toy visualizer in Rust
 
+![mogumi](./mogura-wasm/og.png)
+
+
 <div align="center">
 
 --> [Try demo with WASM using WebGPU](https://mogura-rs.github.io/mogura/) <--
@@ -87,6 +90,12 @@ $$
 
 mogura also means "Mole".
 
+## About Mogumi
+Mogumi is the mascot character of Mogura. For details, see [mogumi-storage](https://github.com/mogura-rs/mogumi-chan).
+
+<div align="center">
+  <img src="./mogura-wasm/mogumi.png" alt="mogumi" width="300" height="300">
+</div>
 
 ## Useful Reference
 
